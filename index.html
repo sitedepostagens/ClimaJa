@@ -347,17 +347,18 @@
             }
         }
 
-        function updateUserPosition(lat, lng) {
-            if(userMarker) map.removeLayer(userMarker);
-            userMarker = L.marker([lat, lng], {
-                icon: L.divIcon({
-                    className: 'user-marker',
-                    html: '<i class="fas fa-map-marker-alt"></i>',
-                    iconSize: [40, 40]
-                })
-            }).addTo(map);
-            map.flyTo([lat, lng], 15);
-        }
+       function updateUserPosition(lat, lng) {
+        if(userMarker) map.removeLayer(userMarker);
+        userMarker = L.marker([lat, lng], {
+            icon: L.icon({
+                iconUrl: 'user-marker.png',
+                iconSize: [40, 40],       // Tamanho da imagem
+                iconAnchor: [20, 40],     // Ponto de ancoragem (centro na parte inferior)
+                popupAnchor: [0, -40]    // Onde o popup aparece relativo ao ícone
+            })
+        }).addTo(map);
+        map.flyTo([lat, lng], 15);
+    }
 
         // Sistema de Clima
         async function getWeatherData(lat, lon) {
