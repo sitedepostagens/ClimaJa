@@ -129,7 +129,7 @@
             <div id="pedestre-form">
               <div class="mb-3">
                 <label class="form-label">Nível da Água</label>
-                <select class="form-select" id="water-level" required>
+                <select class="form-select" id="water-level">
                   <option value="">Selecione o nível</option>
                   <option value="0.2">Tornozelo (0-0.2m)</option>
                   <option value="0.5">Panturrilha (0.2-0.5m)</option>
@@ -146,20 +146,14 @@
                 <label class="form-label">Modelo do Veículo</label>
                 <div class="position-relative">
                   <input type="text" class="form-control" id="vehicle-model"
-                         placeholder="Ex: Fiat Uno 1.0" required autocomplete="off">
+                         placeholder="Ex: Fiat Uno 1.0" autocomplete="off">
                   <div id="vehicle-suggestions" class="vehicle-suggestions"></div>
                 </div>
                 <small class="text-muted">Comece a digitar o modelo do veículo</small>
               </div>
               <div class="mb-3">
-                <label class="form-label">Ano do Veículo</label>
-                <select class="form-select" id="vehicle-year" required>
-                  <option value="">Selecione o ano</option>
-                </select>
-              </div>
-              <div class="mb-3">
                 <label class="form-label">Nível de Submersão</label>
-                <select class="form-select" id="car-water-level" required>
+                <select class="form-select" id="car-water-level">
                   <option value="">Selecione o nível</option>
                   <option value="25">Rodas (25%)</option>
                   <option value="50">Portas (50%)</option>
@@ -175,7 +169,7 @@
               <div class="position-relative">
                 <div class="input-group">
                   <input type="text" class="form-control" id="address"
-                         placeholder="Digite um endereço" autocomplete="off" required>
+                         placeholder="Digite um endereço" autocomplete="off">
                   <button class="btn btn-outline-secondary" type="button" onclick="searchLocation()">
                     <i class="fas fa-search"></i>
                   </button>

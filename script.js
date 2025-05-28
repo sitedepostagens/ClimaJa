@@ -5,6 +5,7 @@ let geocodeTimeout, vehicleTimeout;
 let currentReportType = 'pedestre';
 let selectedVehicle = null;
 const FIPE_API = 'https://parallelum.com.br/fipe/api/v1/carros/marcas';
+let vehicleCache = {};
 
 function initMap() {
   map = L.map('map', { center: [-15.788, -47.879], zoom: 4, renderer: L.canvas() });
@@ -17,6 +18,7 @@ function initMap() {
   applyTheme(currentTheme);
   loadSavedReports();
   locateUser(true);
+  preloadVehicleBrands();
 }
 
 function toggleTheme() {
@@ -167,46 +169,52 @@ function updateReportMarker(lat, lng) {
 // Envio do formulário
 document.getElementById('reportForm').addEventListener('submit', async e => {
   e.preventDefault();
+  
+  // Validação da localização
   if (!reportMarker) {
     showNotification('Selecione uma localização no mapa', 'warning');
     return;
   }
+  
   let valid = true;
-  if (currentReportType==='pedestre') {
-    if (!document.getElementById('water-level').value) {
+  const waterLevel = document.getElementById('water-level');
+  const carWaterLevel = document.getElementById('car-water-level');
+  
+  if (currentReportType === 'pedestre') {
+    if (!waterLevel.value) {
       showNotification('Selecione o nível da água', 'warning');
       valid = false;
     }
   } else {
-    if (!selectedVehicle || !document.getElementById('vehicle-year').value) {
+    if (!selectedVehicle) {
       showNotification('Selecione um veículo válido', 'warning');
       valid = false;
     }
-    if (!document.getElementById('car-water-level').value) {
+    if (!carWaterLevel.value) {
       showNotification('Selecione o nível de submersão', 'warning');
       valid = false;
     }
   }
+  
   if (!valid) return;
 
   const photo = await readPhoto();
   const report = {
     type: currentReportType,
     location: reportMarker.getLatLng(),
-    details: currentReportType==='pedestre' 
+    details: currentReportType === 'pedestre' 
       ? {
-         waterLevel: document.getElementById('water-level').value,
-         levelText: document.getElementById('water-level').selectedOptions[0].text
+         waterLevel: waterLevel.value,
+         levelText: waterLevel.selectedOptions[0].text
         }
       : {
          vehicle: {
            fipeCode: selectedVehicle.codigo,
            brand: selectedVehicle.marca,
-           model: selectedVehicle.nome,
-           year: document.getElementById('vehicle-year').selectedOptions[0].text
+           model: selectedVehicle.nome
          },
-         submersionLevel: document.getElementById('car-water-level').value,
-         levelText: document.getElementById('car-water-level').selectedOptions[0].text
+         submersionLevel: carWaterLevel.value,
+         levelText: carWaterLevel.selectedOptions[0].text
         },
     photo,
     timestamp: new Date()
@@ -217,7 +225,6 @@ document.getElementById('reportForm').addEventListener('submit', async e => {
   showNotification('Relato enviado com sucesso!', 'success');
   document.getElementById('reportForm').reset();
   selectedVehicle = null;
-  document.getElementById('vehicle-year').innerHTML = '<option value="">Selecione o ano</option>';
 });
 
 function readPhoto() {
@@ -233,7 +240,7 @@ function readPhoto() {
 
 function addReportToMap(report) {
   const iconHtml = `<div style="background:${getColorByLevel(report)}" class="report-marker">
-                      ${ report.type==='pedestre' ? '🚶' : '🚗' }
+                      ${ report.type === 'pedestre' ? '🚶' : '🚗' }
                     </div>`;
   const mk = L.marker([report.location.lat, report.location.lng], {
     icon: L.divIcon({ html: iconHtml })
@@ -244,27 +251,25 @@ function addReportToMap(report) {
 function getColorByLevel(report) {
   const levels = {
     pedestre: { '0.2':'#10B981','0.5':'#F59E0B','1.0':'#EF4444','1.5':'#DC2626','2.0':'#7C3AED' },
-    motorista:{ '25':'#10B981','50':'#F59E0B','75':'#EF4444','100':'#DC2626' }
+    motorista: { '25':'#10B981','50':'#F59E0B','75':'#EF4444','100':'#DC2626' }
   };
-  const key = report.type==='pedestre'
+  const key = report.type === 'pedestre'
     ? report.details.waterLevel
     : report.details.submersionLevel;
   return levels[report.type][key];
 }
 
-// Cria o conteúdo do popup sem quebrar em pedestre
 function createPopupContent(report) {
   let vehicleHTML = '';
-  if (report.type==='motorista' && report.details.vehicle) {
+  if (report.type === 'motorista' && report.details.vehicle) {
     vehicleHTML = `
       <div class="mb-2">
-        <strong>Veículo:</strong> ${report.details.vehicle.brand} ${report.details.vehicle.model}<br>
-        <strong>Ano:</strong> ${report.details.vehicle.year}
+        <strong>Veículo:</strong> ${report.details.vehicle.brand} ${report.details.vehicle.model}
       </div>`;
   }
   return `
     <div style="min-width:250px">
-      <h6>${report.type==='pedestre' ? 'Relato de Pedestre' : 'Relato de Motorista'}</h6>
+      <h6>${report.type === 'pedestre' ? 'Relato de Pedestre' : 'Relato de Motorista'}</h6>
       <div class="mb-2">
         <strong>Nível:</strong> ${report.details.levelText}
       </div>
@@ -274,15 +279,14 @@ function createPopupContent(report) {
     </div>`;
 }
 
-// Salva e recarrega com proteção
 function saveReport(report) {
-  const arr = JSON.parse(localStorage.getItem('floodReports')||'[]');
+  const arr = JSON.parse(localStorage.getItem('floodReports') || '[]');
   arr.push(report);
   localStorage.setItem('floodReports', JSON.stringify(arr));
 }
 
 function loadSavedReports() {
-  const arr = JSON.parse(localStorage.getItem('floodReports')||'[]');
+  const arr = JSON.parse(localStorage.getItem('floodReports') || '[]');
   arr.forEach(r => {
     try {
       addReportToMap(r);
@@ -292,18 +296,88 @@ function loadSavedReports() {
   });
 }
 
+// Pré-carrega as marcas de veículos
+async function preloadVehicleBrands() {
+  try {
+    const brandsResp = await fetch(FIPE_API);
+    const brands = await brandsResp.json();
+    
+    // Armazena as marcas para uso posterior
+    vehicleCache.brands = brands;
+    
+    // Pré-carrega os modelos das 5 marcas mais populares
+    const popularBrands = brands.slice(0, 5);
+    for (const brand of popularBrands) {
+      try {
+        const modelsResp = await fetch(`${FIPE_API}/${brand.codigo}/modelos`);
+        const modelData = await modelsResp.json();
+        
+        // Armazena os modelos em cache
+        if (!vehicleCache.models) vehicleCache.models = {};
+        vehicleCache.models[brand.codigo] = modelData.modelos;
+      } catch (e) {
+        console.error(`Erro ao pré-carregar modelos para ${brand.nome}:`, e);
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao carregar marcas de veículos:', error);
+  }
+}
+
+// Busca de veículos com cache e paralelismo
 async function searchVehicles(query) {
   try {
-    const brands = await (await fetch(FIPE_API)).json();
+    // Se já temos marcas em cache, usa elas
+    const brands = vehicleCache.brands || await (await fetch(FIPE_API)).json();
+    
+    // Se não temos modelos em cache, cria a estrutura
+    if (!vehicleCache.models) vehicleCache.models = {};
+    
+    const lowerQuery = query.toLowerCase();
     let models = [];
-    for (let b of brands.slice(0,3)) {
-      const mm = await (await fetch(`${FIPE_API}/${b.codigo}/modelos`)).json();
-      models.push(...mm.modelos.filter(m => m.nome.toLowerCase().includes(query.toLowerCase()))
-        .map(m => ({...m, marca:b.nome, codigoMarca:b.codigo})));
-    }
-    return models.slice(0,5);
-  } catch {
-    showNotification('Erro ao buscar modelos de veículos','danger');
+    
+    // Usa Promise.all para buscar em paralelo
+    const brandPromises = brands.map(async brand => {
+      // Verifica se já temos os modelos em cache
+      if (!vehicleCache.models[brand.codigo]) {
+        try {
+          const modelsResp = await fetch(`${FIPE_API}/${brand.codigo}/modelos`);
+          const modelData = await modelsResp.json();
+          vehicleCache.models[brand.codigo] = modelData.modelos;
+        } catch (e) {
+          console.error(`Erro ao buscar modelos para ${brand.nome}:`, e);
+          return [];
+        }
+      }
+      
+      // Filtra os modelos que correspondem à consulta
+      return vehicleCache.models[brand.codigo]
+        .filter(m => m.nome.toLowerCase().includes(lowerQuery))
+        .map(m => ({
+          ...m,
+          marca: brand.nome,
+          codigoMarca: brand.codigo
+        }));
+    });
+    
+    // Espera todas as buscas terminarem
+    const results = await Promise.all(brandPromises);
+    models = results.flat();
+    
+    // Ordena por relevância (modelos que começam com a query primeiro)
+    models.sort((a, b) => {
+      const aStarts = a.nome.toLowerCase().startsWith(lowerQuery);
+      const bStarts = b.nome.toLowerCase().startsWith(lowerQuery);
+      
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      return 0;
+    });
+    
+    return models.slice(0, 15); // Limita a 15 resultados
+  } catch (error) {
+    console.error('Erro geral na busca de veículos:', error);
+    showNotification('Erro ao buscar modelos de veículos', 'danger');
     return [];
   }
 }
@@ -312,35 +386,43 @@ document.getElementById('vehicle-model').addEventListener('input', e => {
   clearTimeout(vehicleTimeout);
   const q = e.target.value.trim();
   const sug = document.getElementById('vehicle-suggestions');
-  if (q.length<3) return sug.style.setProperty('display','none');
-  vehicleTimeout = setTimeout(async()=>{
-    const res = await searchVehicles(q);
-    sug.innerHTML = '';
-    if (!res.length) return sug.style.setProperty('display','none');
-    res.forEach(v=>{
-      const d = document.createElement('div');
-      d.className = 'vehicle-item';
-      d.textContent = `${v.marca} ${v.nome}`;
-      d.onclick = ()=>selectVehicle(v);
-      sug.appendChild(d);
-    });
-    sug.style.setProperty('display','block');
-  },500);
+  
+  if (q.length < 3) {
+    sug.style.display = 'none';
+    return;
+  }
+  
+  // Mostra indicador de carregamento
+  sug.innerHTML = '<div class="vehicle-item">Buscando veículos...</div>';
+  sug.style.display = 'block';
+  
+  vehicleTimeout = setTimeout(async () => {
+    try {
+      const res = await searchVehicles(q);
+      sug.innerHTML = '';
+      
+      if (!res.length) {
+        sug.innerHTML = '<div class="vehicle-item">Nenhum veículo encontrado</div>';
+        return;
+      }
+      
+      res.forEach(v => {
+        const d = document.createElement('div');
+        d.className = 'vehicle-item';
+        d.textContent = `${v.marca} ${v.nome}`;
+        d.onclick = () => selectVehicle(v);
+        sug.appendChild(d);
+      });
+    } catch (error) {
+      sug.innerHTML = '<div class="vehicle-item">Erro na busca</div>';
+    }
+  }, 300);
 });
 
-async function selectVehicle(v) {
+function selectVehicle(v) {
   selectedVehicle = v;
   document.getElementById('vehicle-model').value = `${v.marca} ${v.nome}`;
   document.getElementById('vehicle-suggestions').style.display = 'none';
-  const years = await (await fetch(`${FIPE_API}/${v.codigoMarca}/modelos/${v.codigo}/anos`)).json();
-  const sel = document.getElementById('vehicle-year');
-  sel.innerHTML = '<option value="">Selecione o ano</option>';
-  years.forEach(y=>{
-    const o = document.createElement('option');
-    o.value = y.codigo;
-    o.textContent = y.nome;
-    sel.appendChild(o);
-  });
 }
 
 function showNotification(msg, type) {
@@ -348,7 +430,7 @@ function showNotification(msg, type) {
   a.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
   a.textContent = msg;
   document.body.appendChild(a);
-  setTimeout(()=>a.remove(),3000);
+  setTimeout(() => a.remove(), 3000);
 }
 
 document.addEventListener('click', e => {
