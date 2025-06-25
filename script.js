@@ -8,17 +8,33 @@ const FIPE_API = 'https://parallelum.com.br/fipe/api/v1/carros/marcas';
 let vehicleCache = {};
 
 function initMap() {
-  map = L.map('map', { center: [-15.788, -47.879], zoom: 4, renderer: L.canvas() });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-  markers = L.markerClusterGroup();
-  map.addLayer(markers);
+  // Só inicializa se o elemento #map existir e estiver visível
+  const mapContainer = document.getElementById('map');
+  if (!mapContainer) {
+    console.warn('Elemento #map não encontrado.');
+    return;
+  }
+  // Corrige erro de múltiplas inicializações
+  if (mapContainer._leaflet_id) {
+    mapContainer._leaflet_id = null;
+    mapContainer.innerHTML = '';
+  }
+  try {
+    map = L.map('map', { center: [-15.788, -47.879], zoom: 4, renderer: L.canvas() });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    markers = L.markerClusterGroup();
+    map.addLayer(markers);
 
-  applyTheme(currentTheme);
-  loadSavedReports();
-  locateUser(true);
-  preloadVehicleBrands();
+    applyTheme(currentTheme);
+    loadSavedReports();
+    locateUser(true);
+    preloadVehicleBrands();
+  } catch (e) {
+    mapContainer.innerHTML = '<div style="color:#dc2626;padding:2rem;text-align:center;font-weight:600;">Erro ao carregar o mapa. Tente recarregar a página.</div>';
+    console.error('Erro ao inicializar o mapa:', e);
+  }
 }
 
 function toggleTheme() {
@@ -433,11 +449,105 @@ function showNotification(msg, type) {
   setTimeout(() => a.remove(), 3000);
 }
 
-document.addEventListener('click', e => {
-  if (!e.target.closest('#address') && !e.target.closest('#address-suggestions'))
-    document.getElementById('address-suggestions').classList.remove('show');
-  if (!e.target.closest('#vehicle-model') && !e.target.closest('#vehicle-suggestions'))
-    document.getElementById('vehicle-suggestions').style.display = 'none';
+// Função para exibir o formulário de relato na área correta
+function showRelatoArea() {
+  const area = document.getElementById('relato-area');
+  if (!area) return;
+  area.innerHTML = `
+    <form id="reportForm">
+      <div class="mb-3">
+        <label for="address" class="form-label">Endereço</label>
+        <input type="text" class="form-control" id="address" placeholder="Digite o endereço ou selecione no mapa" required autocomplete="off">
+        <div id="address-suggestions" class="dropdown-menu" style="width:100%"></div>
+      </div>
+      <div class="mb-3">
+        <label for="water-level" class="form-label">Nível da Água</label>
+        <select class="form-select" id="water-level" required>
+          <option value="">Selecione</option>
+          <option value="0.2">Até o tornozelo</option>
+          <option value="0.5">Até o joelho</option>
+          <option value="1.0">Até a cintura</option>
+          <option value="1.5">Acima da cintura</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="flood-photo" class="form-label">Foto (opcional)</label>
+        <input type="file" class="form-control" id="flood-photo" accept="image/*">
+      </div>
+      <button type="submit" class="btn btn-modern">Enviar Relato</button>
+    </form>
+  `;
+
+  // Adiciona listeners após renderizar o formulário
+  const addressInput = document.getElementById('address');
+  const addressSuggestions = document.getElementById('address-suggestions');
+  if (addressInput) {
+    addressInput.addEventListener('input', () => {
+      clearTimeout(geocodeTimeout);
+      if (addressInput.value.length < 3) {
+        addressSuggestions.classList.remove('show');
+        return;
+      }
+      geocodeTimeout = setTimeout(searchLocation, 500);
+    });
+  }
+  if (addressSuggestions) {
+    addressSuggestions.onclick = function(e) {
+      e.stopPropagation();
+    };
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#address') && !e.target.closest('#address-suggestions'))
+      addressSuggestions.classList.remove('show');
+  });
+
+  // Envio do formulário
+  const reportForm = document.getElementById('reportForm');
+  if (reportForm) {
+    reportForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      // Validação da localização
+      if (!reportMarker) {
+        showNotification('Selecione uma localização no mapa', 'warning');
+        return;
+      }
+      let valid = true;
+      const waterLevel = document.getElementById('water-level');
+      if (!waterLevel.value) {
+        showNotification('Selecione o nível da água', 'warning');
+        valid = false;
+      }
+      if (!valid) return;
+      const photo = await readPhoto();
+      const report = {
+        type: 'pedestre',
+        location: reportMarker.getLatLng(),
+        details: {
+          waterLevel: waterLevel.value,
+          levelText: waterLevel.selectedOptions[0].text
+        },
+        photo,
+        timestamp: new Date()
+      };
+      addReportToMap(report);
+      saveReport(report);
+      showNotification('Relato enviado com sucesso!', 'success');
+      reportForm.reset();
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Exibir o formulário ao acessar a aba Relatar
+  const relatarTab = document.querySelector('a[data-bs-toggle="pill"][href="#relatar"]');
+  if (relatarTab) {
+    relatarTab.addEventListener('shown.bs.tab', showRelatoArea);
+  }
+  // Exibir o formulário ao carregar a página se a aba Relatar já estiver ativa
+  const relatarPane = document.querySelector('.tab-pane#relatar');
+  if (relatarPane && relatarPane.classList.contains('show')) {
+    showRelatoArea();
+  }
 });
 
 initMap();
