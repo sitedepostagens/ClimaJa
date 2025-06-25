@@ -27,7 +27,6 @@ function initMap() {
     markers = L.markerClusterGroup();
     map.addLayer(markers);
 
-    applyTheme(currentTheme);
     loadSavedReports();
     locateUser(true);
     preloadVehicleBrands();
