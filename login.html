@@ -3,19 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-    <link rel="icon" type="image/png" href="logo.png">
-
-<script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>
-<script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>
-<script async src="//www.ezojs.com/ezoic/sa.min.js"></script>
-<script>
-    window.ezstandalone = window.ezstandalone || {};
-    ezstandalone.cmd = ezstandalone.cmd || [];
-</script>
-
-  <title>Login - ClimaJá</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <title>Login</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <div class="container">
@@ -25,8 +14,19 @@
       <input type="password" id="login-password" placeholder="Senha" required />
       <button type="submit">Entrar</button>
     </form>
-    <a href="/register.html">Não tem conta? Cadastrar</a>
+    <div class="mt-3">
+      <span>Não tem conta?</span>
+      <a href="register.html" class="alt-link fw-bold">Cadastre-se</a>
+    </div>
   </div>
-  <script type="module" src="/js/script1.js"></script>
+  <script type="module" src="./js/script.js"></script>
+  <script>
+    // Intercala para cadastro ao pressionar Enter no último campo
+    document.getElementById('login-password').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        document.getElementById('login-form').dispatchEvent(new Event('submit'));
+      }
+    });
+  </script>
 </body>
 </html>
