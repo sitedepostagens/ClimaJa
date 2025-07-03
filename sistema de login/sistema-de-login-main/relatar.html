@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/sistema de login/sistema-de-login-main/css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Bem-vindo à Dashboard</h2>
+    <p id="user-email">Carregando usuário...</p>
+    <button id="logout-btn">Sair</button>
+  </div>
+  <script type="module">
+    import { auth } from "./sistema de login/sistema-de-login-main/firebase/firebase-config.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
+
+    const userEmail = document.getElementById("user-email");
+    const logoutBtn = document.getElementById("logout-btn");
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userEmail.textContent = `Logado como: ${user.email}`;
+      } else {
+        window.location.href = "index.html";
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
