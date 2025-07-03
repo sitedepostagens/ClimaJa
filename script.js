@@ -132,6 +132,31 @@ function updateUserPosition(lat, lng) {
   map.flyTo([lat, lng], 15);
 }
 
+function addUserMarker(lat, lng, accuracy) {
+  if (window.userMarker) {
+    map.removeLayer(window.userMarker);
+  }
+  window.userMarker = L.marker([lat, lng], {
+    icon: L.icon({
+      iconUrl: 'user-marker.png', // Use um ícone personalizado se quiser
+      iconSize: [38, 38],
+      iconAnchor: [19, 38],
+      popupAnchor: [0, -38]
+    })
+  }).addTo(map);
+  // Círculo de precisão
+  if (window.userAccuracyCircle) {
+    map.removeLayer(window.userAccuracyCircle);
+  }
+  window.userAccuracyCircle = L.circle([lat, lng], {
+    radius: accuracy,
+    color: '#2563eb',
+    fillColor: '#38bdf8',
+    fillOpacity: 0.2
+  }).addTo(map);
+  map.setView([lat, lng], 16);
+}
+
 async function getWeatherData(lat, lon) {
   try {
     const resp = await fetch(
