@@ -1,4 +1,4 @@
-import { auth } from "./sistema de login/sistema-de-login-main/firebase/firebase-config.js";
+import { auth } from "/firebase/firebase-config.js";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword
@@ -28,12 +28,12 @@ if (loginForm) {
     const email = document.getElementById("login-email").value;
     const senha = document.getElementById("login-password").value;
 
-   signInWithEmailAndPassword(auth, email, password)
-  .then((userCredential) => {
-    // Usuário autenticado com sucesso
-    window.location.href = "../../index.html"; // Redireciona para a página principal
-  })
-  .catch((error) => { // Trate o erro de login aqui
-  });
+    signInWithEmailAndPassword(auth, email, senha)
+      .then((userCredential) => {
+        window.location.href = "index.html";
+      })
+      .catch((error) => {
+        alert("Erro ao fazer login: " + error.message);
+      });
   });
 }
