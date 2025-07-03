@@ -1,5 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap');
 
+:root {
+  --primary: #2563EB;
+  --secondary: #38bdf8;
+  --accent: #fbbf24;
+  --background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%);
+  --card-bg: #ffffffee;
+  --border: #38bdf8;
+  --shadow: 0 8px 32px -8px #2563eb33, 0 1.5px 12px #38bdf822;
+  --gradient-strong: linear-gradient(120deg, #2563eb 0%, #38bdf8 100%);
+  --gradient-soft: linear-gradient(120deg, #f0f9ff 60%, #e0f2fe 100%);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -8,77 +20,188 @@
 }
 
 body {
-  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-  height: 100vh;
+  background: var(--background);
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  transition: background 0.4s;
 }
 
 .container {
-  background: #121212;
-  padding: 40px;
-  border-radius: 15px;
-  box-shadow: 0 0 30px rgba(0,0,0,0.8);
+  background: var(--gradient-soft);
+  padding: 44px 36px 36px 36px;
+  border-radius: 1.7rem;
+  box-shadow: var(--shadow);
   width: 100%;
-  max-width: 400px;
+  max-width: 410px;
   text-align: center;
-  color: #fff;
-  animation: fadeIn 1s ease;
+  color: #1e293b;
+  border: 2.5px solid var(--border);
+  position: relative;
+  animation: fadeIn 1s cubic-bezier(.23,1.02,.32,1);
+  margin: 32px 0;
 }
 
 h2 {
-  margin-bottom: 20px;
-  color: #00ffd5;
+  margin-bottom: 22px;
+  color: var(--primary);
+  font-weight: 900;
+  font-size: 2.2rem;
+  letter-spacing: 1.2px;
+  text-shadow: 0 2px 12px #2563eb22;
 }
 
 input {
   width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border: none;
-  border-radius: 8px;
-  outline: none;
-  background: #1e1e1e;
-  color: #00ffd5;
-  transition: 0.3s;
+  padding: 13px 14px;
+  margin: 12px 0 8px 0;
+  border: 1.5px solid var(--border);
+  border-radius: 1.2rem;
+  background: #f8fafc;
+  font-size: 1.1rem;
+  transition: border 0.2s, box-shadow 0.2s;
 }
 
 input:focus {
-  background: #272727;
-  transform: scale(1.03);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px #2563eb33;
 }
 
 button {
   width: 100%;
-  padding: 12px;
+  padding: 13px 0;
+  margin-top: 12px;
+  background: var(--gradient-strong);
+  color: #fff;
   border: none;
-  background: #00ffd5;
-  color: #000;
-  font-weight: bold;
-  border-radius: 8px;
-  margin-top: 15px;
+  border-radius: 1.2rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px #2563eb22;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
-  background: #00c9aa;
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 6px 24px -4px #2563eb44;
 }
 
-a {
-  display: block;
-  margin-top: 20px;
-  color: #aaa;
+.alt-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  margin-left: 4px;
+  transition: color 0.2s;
+}
+
+.alt-link:hover {
+  color: var(--secondary);
+}
+
+/* Link de alternância entre login/cadastro como botão estilizado */
+.alt-link {
+  display: inline-block;
+  margin-top: 22px;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 8px;
+  padding: 8px 22px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.5px;
   text-decoration: none;
-  transition: color 0.3s;
+  box-shadow: 0 2px 8px #2563eb22;
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s, transform 0.2s;
+  text-shadow: 0 1px 6px #38bdf822;
+  border: none;
+}
+.alt-link:hover {
+  background: var(--accent);
+  color: #2563eb;
+  box-shadow: 0 8px 24px -8px #fbbf2444;
+  transform: scale(1.05);
 }
 
-a:hover {
-  color: #00ffd5;
+/* Intercalação visual entre login/cadastro */
+.container::before {
+  content: '';
+  position: absolute;
+  top: -18px; left: 50%;
+  transform: translateX(-50%);
+  width: 70px; height: 7px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+  opacity: 0.85;
+}
+
+.container {
+  border-image: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent)) 1;
 }
 
 @keyframes fadeIn {
   from {opacity: 0; transform: translateY(-20px);}
   to {opacity: 1; transform: translateY(0);}
+}
+
+/* Responsivo */
+@media (max-width: 500px) {
+  .container {
+    padding: 24px 8px 18px 8px;
+    max-width: 98vw;
+  }
+  h2 {
+    font-size: 1.4rem;
+  }
+  .alt-link {
+    padding: 8px 10px;
+    font-size: 0.98rem;
+  }
+}
+
+/* Suave animação de foco para inputs */
+input, button, .alt-link {
+  outline: none;
+}
+input:focus, button:focus, .alt-link:focus {
+  box-shadow: 0 0 0 3px #38bdf855;
+}
+
+/* Suporte a dark mode */
+[data-theme="dark"] body {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #f8fafc;
+}
+[data-theme="dark"] .container {
+  background: linear-gradient(120deg, #1e293b 60%, #0f172a 100%);
+  color: #f8fafc;
+  border-color: #60a5fa;
+}
+[data-theme="dark"] h2 {
+  color: #60a5fa;
+  text-shadow: 0 2px 12px #60a5fa33;
+}
+[data-theme="dark"] input {
+  background: #1e293b;
+  color: #60a5fa;
+  border-color: #334155;
+}
+[data-theme="dark"] input:focus {
+  background: #22305a;
+  border-color: #60a5fa;
+}
+[data-theme="dark"] button {
+  background: linear-gradient(90deg, #60a5fa 60%, #2563eb 100%);
+  color: #fff;
+}
+[data-theme="dark"] .alt-link {
+  background: #60a5fa;
+  color: #1e293b;
+}
+[data-theme="dark"] .alt-link:hover {
+  background: #fbbf24;
+  color: #2563eb;
 }
