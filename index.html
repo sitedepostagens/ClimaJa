@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ClimaJá</title>
+  <title>ClimaJá!</title>
   <link rel="icon" type="image/png" href="logo.png">
 
 <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>
@@ -226,6 +226,20 @@
       color: #60a5fa !important;
       filter: drop-shadow(0 2px 8px #60a5fa33);
     }
+    .footer-logo-img {
+      height: 48px;
+      width: auto;
+      max-width: 120px;
+      object-fit: contain;
+      background: transparent;
+      border-radius: 0.7rem;
+      transition: background 0.3s;
+      box-shadow: 0 2px 8px #2563eb11;
+      padding: 2px 8px;
+    }
+    [data-theme="dark"] .footer-logo-img {
+      background: #fff;
+    }
   </style>
 </head>
 <body>
@@ -243,13 +257,15 @@
     </div>
    <!-- ...código anterior... -->
 <div class="d-flex justify-content-end align-items-center pe-3" style="position:absolute;top:1.5rem;right:0;z-index:10;">
-  <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="cadastrar-btn" href="/register.html">
+  <a class="btn btn-gradient btn-sm fw-bold me-2 d-none" id="perfil-header" href="#">
+    <i class="fas fa-user-circle me-1"></i><span id="perfil-nome">Perfil</span>
+  </a>
+  <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="cadastrar-btn" href="./sistema de login/sistema-de-login-main/register.html">
     <i class="fas fa-user-plus me-1"></i>Cadastrar
   </a>
-  <a class="btn btn-outline-light btn-sm fw-bold" id="entrar-btn" href="/login.html">
+  <a class="btn btn-outline-light btn-sm fw-bold" id="entrar-btn" href="./sistema de login/sistema-de-login-main/login.html">
     <i class="fas fa-sign-in-alt me-1"></i>Entrar
   </a>
-  <div id="perfil-header" class="d-none ms-2"></div>
 </div>
 <!-- ...código seguinte... -->
   </header>
@@ -365,6 +381,16 @@
         <div class="main-card animada" id="relato-area">
           <!-- O conteúdo do formulário será controlado via JS -->
         </div>
+        <div id="relato-login-msg" class="text-center my-3 d-none">
+          <div class="alert alert-warning d-inline-block px-4 py-2" style="font-size:1.1rem;">
+            <i class="fas fa-lock me-2"></i>Você precisa estar logado para enviar um relato.<br>
+            <a href="./sistema de login/sistema-de-login-main/login.html" class="btn btn-primary btn-sm mt-2 me-2">Entrar</a>
+            <a href="./sistema de login/sistema-de-login-main/register.html" class="btn btn-outline-primary btn-sm mt-2">Cadastrar</a>
+          </div>
+        </div>
+        <div id="relatos-publicos" class="mt-4">
+          <!-- Relatos públicos serão exibidos aqui via JS -->
+        </div>
       </div>
     
 
@@ -376,6 +402,10 @@
         <a href="#" class="me-2 text-primary"><i class="fab fa-github fa-lg"></i></a>
         <a href="#" class="me-2 text-primary"><i class="fab fa-linkedin fa-lg"></i></a>
         <a href="#" class="text-primary"><i class="fab fa-twitter fa-lg"></i></a>
+      </div>
+      <div class="d-flex justify-content-center align-items-center gap-4 my-3">
+        <img src="cria.png" alt="Logo CRIA" class="footer-logo-img" loading="lazy">
+        <img src="clube.png" alt="Logo Clube" class="footer-logo-img" loading="lazy">
       </div>
       <p class="text-muted small">Entre em contato: <a href="mailto:oclimaja@hotmail.com">oclimaja@hotmail.com</a></p>
     </div>
@@ -412,15 +442,16 @@
     function showRelatoArea() {
       const area = document.getElementById('relato-area');
       if (!area) return;
+      const desabilitado = !usuarioEstaLogado();
       area.innerHTML = `
         <form id="reportForm">
           <div class="mb-3">
             <label for="address" class="form-label">Endereço</label>
-            <input type="text" class="form-control" id="address" placeholder="Digite o endereço ou selecione no mapa" required>
+            <input type="text" class="form-control" id="address" placeholder="Digite o endereço ou selecione no mapa" required ${desabilitado ? 'disabled' : ''}>
           </div>
           <div class="mb-3">
             <label for="water-level" class="form-label">Nível da Água</label>
-            <select class="form-select" id="water-level" required>
+            <select class="form-select" id="water-level" required ${desabilitado ? 'disabled' : ''}>
               <option value="">Selecione</option>
               <option value="0.2">Até o tornozelo</option>
               <option value="0.5">Até o joelho</option>
@@ -430,12 +461,61 @@
           </div>
           <div class="mb-3">
             <label for="flood-photo" class="form-label">Foto (opcional)</label>
-            <input type="file" class="form-control" id="flood-photo" accept="image/*">
+            <input type="file" class="form-control" id="flood-photo" accept="image/*" ${desabilitado ? 'disabled' : ''}>
           </div>
-          <button type="submit" class="btn btn-modern">Enviar Relato</button>
+          <button type="submit" class="btn btn-modern" ${desabilitado ? 'disabled' : ''}>Enviar Relato</button>
         </form>
+        ${desabilitado ? `<div class='alert alert-warning mt-3'><i class='fas fa-lock me-2'></i>Você precisa estar logado para enviar um relato.<br><a href='./sistema de login/sistema-de-login-main/login.html' class='btn btn-primary btn-sm mt-2 me-2'>Entrar</a><a href='./sistema de login/sistema-de-login-main/register.html' class='btn btn-outline-primary btn-sm mt-2'>Cadastrar</a></div>` : ''}
       `;
     }
+    // Exibe sempre a área de relato
+    function atualizarAreaRelato() {
+      showRelatoArea();
+    }
+    // Chama ao abrir a aba Relatar
+    document.querySelector('a[href="#relatar"]').addEventListener('shown.bs.tab', atualizarAreaRelato);
+    // Chama ao carregar a página
+    atualizarAreaRelato();
+    // Localização mais precisa
+    function locateUser(preciso) {
+      if (!navigator.geolocation) {
+        alert('Geolocalização não suportada.');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        if (typeof setMapCenter === 'function') {
+          setMapCenter(pos.coords.latitude, pos.coords.longitude);
+        }
+        // Adiciona um marcador no mapa para o usuário
+        if (typeof addUserMarker === 'function') {
+          addUserMarker(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+        }
+        // Não exibe mais alert, apenas mostra no mapa
+      }, function(err) {
+        alert('Erro ao obter localização: ' + err.message);
+      }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    }
+    function atualizarHeaderLogin() {
+  const logado = usuarioEstaLogado();
+  const btnCadastro = document.getElementById('cadastrar-btn');
+  const btnEntrar = document.getElementById('entrar-btn');
+  const perfil = document.getElementById('perfil-header');
+  if (logado) {
+    btnCadastro.classList.add('d-none');
+    btnEntrar.classList.add('d-none');
+    perfil.classList.remove('d-none');
+    // Exemplo: mostrar nome fictício
+    document.getElementById('perfil-nome').textContent = 'Meu Perfil';
+  } else {
+    btnCadastro.classList.remove('d-none');
+    btnEntrar.classList.remove('d-none');
+    perfil.classList.add('d-none');
+  }
+}
+document.addEventListener('DOMContentLoaded', atualizarHeaderLogin);
+window.addEventListener('storage', atualizarHeaderLogin);
+// Atualiza header ao logar/deslogar
+setInterval(atualizarHeaderLogin, 1000);
   </script>
 </body>
 </html>
