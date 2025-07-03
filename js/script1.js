@@ -1,4 +1,4 @@
-import { auth } from "/firebase/firebase-config.js";
+import { auth } from "./sistema de login/sistema-de-login-main/firebase/firebase-config.js";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword
@@ -10,10 +10,9 @@ if (registerForm) {
     e.preventDefault();
     const email = document.getElementById("register-email").value;
     const senha = document.getElementById("register-password").value;
-
     try {
       await createUserWithEmailAndPassword(auth, email, senha);
-      alert("Usuário cadastrado com sucesso!");
+      localStorage.setItem('usuarioLogado', 'true');
       window.location.href = "login.html";
     } catch (error) {
       alert("Erro: " + error.message);
@@ -27,13 +26,13 @@ if (loginForm) {
     e.preventDefault();
     const email = document.getElementById("login-email").value;
     const senha = document.getElementById("login-password").value;
-
     signInWithEmailAndPassword(auth, email, senha)
       .then((userCredential) => {
-        window.location.href = "index.html";
+        localStorage.setItem('usuarioLogado', 'true');
+        window.location.href = "../../index.html";
       })
       .catch((error) => {
-        alert("Erro ao fazer login: " + error.message);
+        alert("Erro: " + error.message);
       });
   });
 }
