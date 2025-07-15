@@ -176,15 +176,21 @@ class ParanoidSecuritySystem {
     
     inspectRequest(url, options = {}) {
         const ip = this.getClientIP();
-        const path = new URL(url, location.origin).pathname.toLowerCase();
+        const urlObj = new URL(url, location.origin);
+        const path = urlObj.pathname.toLowerCase();
         const method = options.method || 'GET';
-        
+
+        // Permite requisições para domínios do Firebase
+        if (urlObj.hostname.includes('googleapis.com') || urlObj.hostname.includes('firebaseio.com')) {
+            return true;
+        }
+
         // Verificação de IP banido
         if (this.isIPBanned(ip)) {
             this.log(`Tentativa de acesso de IP banido: ${ip}`, 'block');
             return false;
         }
-        
+
         // Honeypot trap
         if (this.isHoneypot(path)) {
             this.trapHits.add(ip);
@@ -192,19 +198,19 @@ class ParanoidSecuritySystem {
             this.log(`Scanner detectado (honeypot): ${ip}`, 'alert');
             return false;
         }
-        
+
         // Verificação de rate limiting
         if (!this.applyRateLimiting(ip, path, method)) {
             return false;
         }
-        
+
         // Detecção de injeção
         if (this.detectInjection(options.body || '')) {
             this.upgradeBanLevel(ip, 'Tentativa de injeção');
             this.log(`Tentativa de injeção detectada de ${ip}`, 'alert');
             return false;
         }
-        
+
         // Verificação CSRF para métodos modificadores
         if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
             if (!this.verifyCSRFToken(options)) {
@@ -212,19 +218,19 @@ class ParanoidSecuritySystem {
                 return false;
             }
         }
-        
+
         // Detecção de scanner
         if (this.detectScannerActivity(path, ip)) {
             return false;
         }
-        
+
         // Atualiza perfil comportamental
         this.updateBehaviorProfile(ip, {
             path,
             method,
             time: Date.now()
         });
-        
+
         return true;
     }
     

@@ -1,3 +1,32 @@
+window.addEventListener('DOMContentLoaded', function() {
+  if (window.auth && window.firebase && window.firebase.auth) {
+    window.firebase.auth().onAuthStateChanged(function(user) {
+      updateAuthUI(user);
+    });
+  } else if (window.auth && window.onAuthStateChanged) {
+    window.onAuthStateChanged(window.auth, function(user) {
+      updateAuthUI(user);
+    });
+  }
+});
+window.addEventListener('DOMContentLoaded', function() {
+  var logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (window.auth && window.signOut) {
+        window.signOut(window.auth).then(function() {
+          showNotification('Logout realizado com sucesso!', 'success');
+          setTimeout(function(){ window.location.reload(); }, 800);
+        }).catch(function(){
+          alert('Erro ao sair. Tente novamente.');
+        });
+      } else {
+        alert('Erro ao sair. Tente novamente.');
+      }
+    });
+  }
+});
 let map, markers, userMarker, reportMarker = null;
 let currentTheme = 'light';
 const API_KEY = '71907d1b560a5fae3ee6d175e1d9129b';
@@ -7,44 +36,48 @@ let selectedVehicle = null;
 const FIPE_API = 'https://parallelum.com.br/fipe/api/v1/carros/marcas';
 let vehicleCache = {};
 
-// --- Funções de interação com o 'Banco de Dados' (Substituem localStorage) ---
-// No futuro, essas funções farão chamadas à sua API de backend
-async function saveThemeToDB(theme) {
-  console.log('Simulando salvamento do tema no DB:', theme);
-  // Exemplo de como você faria uma requisição real:
-  // await fetch('/api/settings/theme', { method: 'POST', body: JSON.stringify({ theme }) });
-  return new Promise(resolve => setTimeout(() => resolve(), 100)); // Simula um atraso
-}
+// --- Firebase Realtime Database ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
+import { child, get, getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 
-async function loadThemeFromDB() {
-  console.log('Simulando carregamento do tema do DB.');
-  // Exemplo de como você faria uma requisição real:
-  // const response = await fetch('/api/settings/theme');
-  // const data = await response.json();
-  // return data.theme || 'light'; // Retorna o tema do DB ou 'light' como padrão
-  return new Promise(resolve => setTimeout(() => resolve('light'), 100)); // Por enquanto, sempre retorna 'light'
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyCMTSLhey7MMtXy_xV2oSuPe18Tl7sLucY",
+  authDomain: "asenha-project-site.firebaseapp.com",
+  projectId: "asenha-project-site",
+  storageBucket: "asenha-project-site.appspot.com",
+  messagingSenderId: "393532682519",
+  appId: "1:393532682519:web:d16a441d5428c676128752",
+  measurementId: "G-38CG9H4XV8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 async function saveReportToDB(report) {
-  console.log('Simulando salvamento do relato no DB:', report);
-  // Exemplo de como você faria uma requisição real:
-  // await fetch('/api/reports', { method: 'POST', body: JSON.stringify(report) });
-  return new Promise(resolve => setTimeout(() => {
-    console.log('Relato salvo (simulado) no DB.');
-    resolve({ success: true, message: 'Relato salvo com sucesso!' });
-  }, 500)); // Simula um atraso de rede
+  try {
+    await set(ref(db, 'relatos/' + Date.now()), report);
+    console.log('Relato salvo no Realtime Database:', report);
+    return { success: true, message: 'Relato salvo com sucesso!' };
+  } catch (e) {
+    console.error('Erro ao salvar relato:', e.message);
+    return { success: false, message: e.message };
+  }
 }
 
 async function loadReportsFromDB() {
-  console.log('Simulando carregamento de relatos do DB.');
-  // Exemplo de como você faria uma requisição real:
-  // const response = await fetch('/api/reports');
-  // const data = await response.json();
-  // return data; // Retorna os relatos do DB
-  return new Promise(resolve => setTimeout(() => {
-    console.log('Relatos carregados (simulado) do DB.');
-    return resolve([]); // Por enquanto, retorna um array vazio
-  }, 500));
+  try {
+    const snapshot = await get(child(ref(db), 'relatos'));
+    if (snapshot.exists()) {
+      console.log('Relatos carregados do Realtime Database:', snapshot.val());
+      return snapshot.val();
+    } else {
+      console.log('Nenhum relato encontrado.');
+      return {};
+    }
+  } catch (e) {
+    console.error('Erro ao carregar relatos:', e.message);
+    return {};
+  }
 }
 // -------------------------------------------------------------------------
 
@@ -89,24 +122,7 @@ async function loadInitialData() {
 }
 
 
-async function toggleTheme() {
-  currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-  await saveThemeToDB(currentTheme); // Usa a função de salvar no "DB"
-  applyTheme(currentTheme);
-}
-
-function applyTheme(theme) {
-  document.body.setAttribute('data-theme', theme);
-  document.querySelector('.theme-switcher i').className =
-    theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-  if (map) {
-    const tiles = document.querySelector('.leaflet-layer');
-    tiles.style.filter =
-      theme === 'dark'
-        ? 'invert(1) hue-rotate(180deg) brightness(0.9)'
-        : 'none';
-  }
-}
+// Funções de alternância de tema removidas
 
 function locateUser(initial = false) {
   if (navigator.geolocation) {
@@ -129,7 +145,7 @@ function updateUserPosition(lat, lng) {
   userMarker = L.marker([lat, lng], {
     icon: L.icon({ iconUrl: 'user-marker.png', iconSize: [40,40], iconAnchor: [20,40], popupAnchor: [0,-40] })
   }).addTo(map);
-  map.flyTo([lat, lng], 15);
+  map.flyTo([lat, lng], 17); // Zoom maior para precisão
 }
 
 function addUserMarker(lat, lng, accuracy) {
@@ -154,7 +170,7 @@ function addUserMarker(lat, lng, accuracy) {
     fillColor: '#38bdf8',
     fillOpacity: 0.2
   }).addTo(map);
-  map.setView([lat, lng], 16);
+  map.setView([lat, lng], 17); // Zoom maior para precisão
 }
 
 async function getWeatherData(lat, lon) {
@@ -620,5 +636,32 @@ document.addEventListener('DOMContentLoaded', function() {
     showRelatoArea();
   }
 });
+
+function updateAuthUI(user) {
+  const cadastrarBtn = document.getElementById('cadastrar-btn');
+  const entrarBtn = document.getElementById('entrar-btn');
+  const perfilArea = document.getElementById('perfil-area');
+  const perfilNomeArea = document.getElementById('perfil-nome-area');
+  if (user) {
+    if (cadastrarBtn) cadastrarBtn.style.display = 'none';
+    if (entrarBtn) entrarBtn.style.display = 'none';
+    if (perfilArea) perfilArea.classList.remove('d-none');
+    if (perfilNomeArea) perfilNomeArea.textContent = user.displayName || user.email || 'Perfil';
+    // Preencher área de perfil com dados do usuário
+    const perfilDados = document.getElementById('perfil-dados');
+    if (perfilDados) {
+      perfilDados.innerHTML = `<strong>Email:</strong> ${user.email}<br>
+        <strong>Nome:</strong> ${user.displayName || 'Não informado'}<br>
+        <strong>UID:</strong> ${user.uid}`;
+    }
+  } else {
+    if (cadastrarBtn) cadastrarBtn.style.display = '';
+    if (entrarBtn) entrarBtn.style.display = '';
+    if (perfilArea) perfilArea.classList.add('d-none');
+    if (perfilNomeArea) perfilNomeArea.textContent = 'Perfil';
+    const perfilDados = document.getElementById('perfil-dados');
+    if (perfilDados) perfilDados.innerHTML = 'Carregando dados...';
+  }
+}
 
 initMap();

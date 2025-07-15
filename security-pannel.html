@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./pannel.css">
+    <link rel="icon" type="image/png" href="./img/abrir-fechadura.png">
+    <title>ADM - LOGS</title>
+</head>
+<body>
+    <body>
+<script>
+  // Redireciona para login se não estiver autenticado
+  if (localStorage.getItem('adminAuthenticated') !== 'true') {
+    window.location.href = 'login-admin.html';
+  }
+</script>
+    <div id="security-monitor" class="security-monitor">
+    <h2>Painel de Segurança</h2>
+    <div class="monitor-controls">
+        <button id="refresh-logs">Atualizar Logs</button>
+        <button id="export-logs">Exportar Logs</button>
+    </div>
+    <div class="access-logs">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>IP</th>
+                    <th>Localização</th>
+                    <th>Navegador</th>
+                    <th>Email</th>
+                    <th>Tipo de Acesso</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="access-log-table">
+                <!-- Logs serão inseridos aqui -->
+            </tbody>
+        </table>
+    </div>
+    <div class="attack-alerts">
+        <h3>Alertas de Ataque</h3>
+        <ul id="attack-alerts-list">
+            <!-- Alertas serão inseridos aqui -->
+        </ul>
+    </div>
+</div>
+
+<script src="./pannel-script.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+.security-monitor {
+    font-family: 'Courier New', monospace;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 30px;
+    border: 1px solid #ff0000;
+}
+
+.monitor-controls {
+    margin-bottom: 15px;
+}
+
+.monitor-controls button {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    margin-right: 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.monitor-controls button:hover {
+    background-color: #555;
+}
+
+.access-logs table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.access-logs th, .access-logs td {
+    border: 1px solid #444;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.access-logs th {
+    background-color: #333;
+    position: sticky;
+    top: 0;
+}
+
+.access-logs tr:nth-child(even) {
+    background-color: #252525;
+}
+
+.access-logs tr:hover {
+    background-color: #333;
+}
+
+.attack-alerts {
+    background-color: #2a0000;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.attack-alerts h3 {
+    color: #ff4444;
+    margin-top: 0;
+}
+
+#attack-alerts-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#attack-alerts-list li {
+    padding: 8px;
+    margin-bottom: 5px;
+    background-color: #3a0000;
+    border-left: 3px solid #ff0000;
+}
+
+.flag-malicious {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.flag-suspicious {
+    color: #ff9900;
+    font-weight: bold;
+}
+
+.flag-normal {
+    color: #00aa00;
+}

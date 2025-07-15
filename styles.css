@@ -205,31 +205,6 @@ body {
   transform: translateY(-6px) scale(1.07);
 }
 
-.theme-switcher {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: var(--card-bg);
-  border: 2px solid var(--primary);
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  box-shadow: var(--shadow);
-  z-index: 1000;
-  transition: background 0.2s, border 0.2s;
-}
-.theme-switcher:hover {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--secondary);
-}
-.theme-switcher i {
-  font-size: 1.5rem;
-  transition: color 0.2s;
-}
 
 .report-marker {
   background: #dc2626;

@@ -46,10 +46,37 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="animacao-global.css">
   <style>
+    /* HEADER: degradê surpreendente, harmônico e temático (clima/meteorologia) */
     .main-header {
-      background: linear-gradient(90deg, #1e40af 0%, #2563eb 60%, #38bdf8 100%);
+      /* Fundo: gradiente multicolorido com "aurora boreal" + "céu" + "chuva" + "sol" */
+      background: linear-gradient(120deg,
+        #232946 0%,      /* noite/aurora escura */
+        #3a506b 10%,     /* azul petróleo/frio */
+        #5ee7df 22%,     /* verde água/aurora */
+        #b3e0ff 35%,     /* azul claro/inverno */
+        #f9f871 55%,     /* amarelo sol */
+        #fbbf24 65%,     /* dourado quente */
+        #fca5a5 75%,     /* rosa/aurora */
+        #a5b4fc 85%,     /* lilás/chuva */
+        #232946 100%     /* noite/aurora escura */
+      );
+      background-size: 300% 300%;
+      animation: gradienteAnimado 16s ease-in-out infinite alternate;
+    @keyframes gradienteAnimado {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+      background-size: 300% 300%;
+      animation: gradienteAnimado 16s ease-in-out infinite alternate;
       color: #fff;
-      box-shadow: 0 8px 32px -8px #2563eb44;
+      box-shadow: 0 8px 32px -8px #2563eb44, 0 0 120px 0 #5ee7df33 inset;
       padding: 2.2rem 1.2rem 1.5rem 1.2rem;
       margin-bottom: 2.5rem;
       display: flex;
@@ -57,11 +84,62 @@
       gap: 2rem;
       justify-content: center;
       flex-wrap: wrap;
-      border-radius: 0;
-      border: 2px solid #2563eb;
+      border-radius: 0 0 2.5rem 2.5rem;
+      border: 2px solid #38bdf8;
       position: relative;
       overflow: hidden;
+      transition: background 0.7s;
+      /* Efeito "neblina"/"aurora" animada */
+      isolation: isolate;
     }
+
+    @keyframes gradienteAnimado {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+    .main-header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse 80% 40% at 60% 0%, #f9f87155 0%, #fbbf2433 40%, transparent 100%),
+                  radial-gradient(ellipse 60% 30% at 20% 20%, #5ee7df44 0%, #a5b4fc33 60%, transparent 100%),
+                  radial-gradient(ellipse 40% 20% at 80% 80%, #fca5a522 0%, transparent 100%);
+      opacity: 0.85;
+      animation: auroraMove 12s ease-in-out infinite alternate;
+    }
+    @keyframes auroraMove {
+      0% { background-position: 60% 0%, 20% 20%, 80% 80%; }
+      100% { background-position: 50% 10%, 30% 30%, 70% 70%; }
+    }
+    .main-header::after {
+      /* Efeito "chuva" sutil */
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background-image: repeating-linear-gradient(120deg, #fff2 0 2px, transparent 2px 20px);
+      opacity: 0.13;
+      animation: chuvaMove 7s linear infinite;
+    }
+    @keyframes chuvaMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 60px; }
+    }
+    .main-header > * {
+      position: relative;
+      z-index: 2;
+    }
+    /* Remove degradês individuais, agora é um só harmônico */
     .main-header .logo-box {
       background: none; /* Remove o fundo branco */
       border-radius: 1.5rem;
@@ -243,9 +321,7 @@
   </style>
 </head>
 <body>
-  <div class="theme-switcher" onclick="toggleTheme()">
-    <i class="fas fa-moon"></i>
-  </div>
+  <!-- Botão de modo escuro removido -->
 
   <header class="main-header">
     <div class="logo-box">
@@ -257,7 +333,7 @@
     </div>
    <!-- ...código anterior... -->
 <div class="d-flex justify-content-end align-items-center pe-3" style="position:absolute;top:1.5rem;right:0;z-index:10;">
-  <a class="btn btn-gradient btn-sm fw-bold me-2 d-none" id="perfil-header" href="#">
+    <a class="btn btn-gradient btn-sm fw-bold me-2" id="perfil-header" href="#">
     <i class="fas fa-user-circle me-1"></i><span id="perfil-nome">Perfil</span>
   </a>
   <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="cadastrar-btn" href="register.html">
@@ -266,6 +342,19 @@
   <a class="btn btn-outline-light btn-sm fw-bold" id="entrar-btn" href="login.html">
     <i class="fas fa-sign-in-alt me-1"></i>Entrar
   </a>
+    <div id="perfil-area" class="d-none">
+      <div class="dropdown">
+        <button class="btn btn-gradient btn-sm fw-bold dropdown-toggle" type="button" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fas fa-user-circle me-1"></i><span id="perfil-nome-area">Perfil</span>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="perfilDropdown">
+          <li><div class="dropdown-item" id="perfil-dados">Carregando dados...</div></li>
+          <li><a class="dropdown-item" href="#" id="perfil-relatos">Meus Relatos</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" href="#" id="logout-btn"><i class="fas fa-sign-out-alt me-1"></i>Sair</a></li>
+        </ul>
+      </div>
+    </div>
 </div>
 <!-- ...código seguinte... -->
   </header>
@@ -288,7 +377,7 @@
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="pill" href="#relatar">
+        <a class="nav-link" data-bs-toggle="pill" href="#relatar" id="aba-relatar">
           <i class="fas fa-edit me-2"></i>Relatar
         </a>
       </li>
@@ -316,10 +405,7 @@
           <h2 class="mb-3"><i class="fas fa-user me-2"></i>Sobre Nós</h2>
           <img src="logo.png" alt="Avatar" style="width:80px;height:80px;border-radius:50%;box-shadow:0 2px 8px #2563eb22;margin-bottom:1rem;">
           <p class="mb-1">Olá! Nós somos da <strong>Escola Técnica Estadual Ginásio Pernambucano</strong>, uma equipe apaixonada por tecnologia, meteorologia e soluções inovadoras para a sociedade. O ClimaJá! foi criado para ajudar pessoas a monitorar o clima e compartilhar informações importantes sobre alagamentos em tempo real.</p>
-          <div class="mb-2">
-            <a href="mailto:oclimaja@hotmail.com" class="btn btn-modern btn-sm me-2"><i class="fas fa-envelope"></i> Email</a>
-            <a href="#" class="btn btn-modern btn-sm"><i class="fab fa-linkedin"></i> LinkedIn</a>
-          </div>
+          <!-- Ícones de email e LinkedIn removidos -->
           <p class="text-muted small">Entre em contato: <a href="mailto:oclimaja@hotmail.com">oclimaja@hotmail.com</a></p>
         </div>
       </div>
@@ -379,13 +465,59 @@
       <!-- === Aba Relatar === -->
       <div class="tab-pane fade" id="relatar">
         <div class="main-card animada" id="relato-area">
-          <!-- O conteúdo do formulário será controlado via JS -->
+          <form id="reportForm">
+            <!-- O campo de endereço será preenchido automaticamente via JS ao abrir a aba Relatar -->
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
+            <div class="mb-3">
+              <label for="address" class="form-label">Endereço do Ocorrido</label>
+              <input type="text" class="form-control" id="address" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
+              <div id="address-suggestions" class="dropdown-menu" style="width:100%"></div>
+              <small class="form-text text-muted">Exemplo: Rua Exemplo, 123, Bairro, Cidade</small>
+            </div>
+            <div class="mb-3">
+              <label for="tipo-ocorrencia" class="form-label">Tipo de Ocorrência</label>
+              <select class="form-select" id="tipo-ocorrencia" required>
+                <option value="">Selecione</option>
+                <option value="alagamento">💧 Alagamento</option>
+                <option value="enxurrada">🌊 Enxurrada</option>
+                <option value="obstrucao">🚧 Obstrução de via</option>
+                <option value="deslizamento">⛰️ Deslizamento</option>
+                <option value="fio-duvidoso">⚡ Fio duvidoso</option>
+                <option value="outro">❓ Outro</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="water-level" class="form-label">Nível da Água</label>
+              <select class="form-select" id="water-level" required>
+                <option value="">Selecione</option>
+                <option value="0.2">Até o tornozelo (baixo)</option>
+                <option value="0.5">Até o joelho (moderado)</option>
+                <option value="1.0">Até a cintura (alto)</option>
+                <option value="1.5">Acima da cintura (grave)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="descricao" class="form-label">Descrição detalhada</label>
+              <textarea class="form-control" id="descricao" rows="3" placeholder="Descreva o que aconteceu, pontos de referência, impactos, etc." required></textarea>
+              <small class="form-text text-muted">Inclua detalhes como horário, danos, pessoas afetadas, etc.</small>
+            </div>
+            <div class="mb-3">
+              <label for="data-hora" class="form-label">Data e Hora do Evento</label>
+              <input type="hidden" class="form-control" id="data-hora" name="data-hora">
+            </div>
+            <div class="mb-3">
+              <label for="flood-photo" class="form-label">Fotos (opcional, até 3)</label>
+              <input type="file" class="form-control" id="flood-photo" accept="image/*" multiple>
+              <small class="form-text text-muted">Você pode anexar até 3 fotos do local.</small>
+            </div>
+            <button type="submit" class="btn btn-modern">Enviar Relato</button>
+          </form>
         </div>
         <div id="relato-login-msg" class="text-center my-3 d-none">
           <div class="alert alert-warning d-inline-block px-4 py-2" style="font-size:1.1rem;">
             <i class="fas fa-lock me-2"></i>Você precisa estar logado para enviar um relato.<br>
-            <a href="./sistema de login/sistema-de-login-main/login.html" class="btn btn-primary btn-sm mt-2 me-2">Entrar</a>
-            <a href="./sistema de login/sistema-de-login-main/register.html" class="btn btn-outline-primary btn-sm mt-2">Cadastrar</a>
+            <!-- Links de cadastro/login removidos, área de relato só aparece para logados -->
           </div>
         </div>
         <div id="relatos-publicos" class="mt-4">
@@ -416,104 +548,376 @@
   <script src="./paranoid-security.js"></script>
   <!-- Nosso JS -->
   <script src="script.js"></script>
+  <!-- Firebase SDK -->
+<!-- Firebase removido temporariamente -->
   <script>
-    // Inicializa o mapa apenas uma vez, na primeira vez que a aba "Mapa" for exibida
-    let mapaJaIniciado = false;
-    document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
-      tab.addEventListener('shown.bs.tab', function (e) {
-        if (e.target.getAttribute('href') === '#mapa' && !mapaJaIniciado) {
-          setTimeout(function() {
-            if (typeof initMap === 'function') {
-              initMap();
-              mapaJaIniciado = true;
-            }
-          }, 200);
-        }
-      });
-    });
-    // Adiciona CSS para garantir que o mapa sempre receba eventos
-    const style = document.createElement('style');
-    style.innerHTML = `#map { pointer-events: auto !important; }`;
-    document.head.appendChild(style);
+    // Firebase removido temporariamente
+    // ...código anterior...
+    // Funções de clima e mapa permanecem iguais
+    // Localização global do usuário
+    let userLocation = null;
 
-    // Garante que a função showRelatoArea está definida
-    function showRelatoArea() {
-      const area = document.getElementById('relato-area');
-      if (!area) return;
-      const desabilitado = !usuarioEstaLogado();
-      area.innerHTML = `
-        <form id="reportForm">
-          <div class="mb-3">
-            <label for="address" class="form-label">Endereço</label>
-            <input type="text" class="form-control" id="address" placeholder="Digite o endereço ou selecione no mapa" required ${desabilitado ? 'disabled' : ''}>
-          </div>
-          <div class="mb-3">
-            <label for="water-level" class="form-label">Nível da Água</label>
-            <select class="form-select" id="water-level" required ${desabilitado ? 'disabled' : ''}>
-              <option value="">Selecione</option>
-              <option value="0.2">Até o tornozelo</option>
-              <option value="0.5">Até o joelho</option>
-              <option value="1.0">Até a cintura</option>
-              <option value="1.5">Acima da cintura</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="flood-photo" class="form-label">Foto (opcional)</label>
-            <input type="file" class="form-control" id="flood-photo" accept="image/*" ${desabilitado ? 'disabled' : ''}>
-          </div>
-          <button type="submit" class="btn btn-modern" ${desabilitado ? 'disabled' : ''}>Enviar Relato</button>
-        </form>
-        ${desabilitado ? `<div class='alert alert-warning mt-3'><i class='fas fa-lock me-2'></i>Você precisa estar logado para enviar um relato.<br><a href='./sistema de login/sistema-de-login-main/login.html' class='btn btn-primary btn-sm mt-2 me-2'>Entrar</a><a href='./sistema de login/sistema-de-login-main/register.html' class='btn btn-outline-primary btn-sm mt-2'>Cadastrar</a></div>` : ''}
-      `;
+    // Solicita localização ao carregar o site
+    function pedirLocalizacaoInicial() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          userLocation = {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude
+          };
+          // Usar localização para clima e mapa
+          atualizarClimaComLocalizacao();
+          centralizarMapaNaLocalizacao();
+        }, function() {
+          // Usuário negou ou erro
+          userLocation = null;
+        });
+      }
     }
-    // Exibe sempre a área de relato
-    function atualizarAreaRelato() {
-      showRelatoArea();
+
+    // Atualiza aba Clima com localização
+    function atualizarClimaComLocalizacao() {
+      if (!userLocation) return;
+      // Buscar bairro via Nominatim
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lon}&addressdetails=1`)
+        .then(res => res.json())
+        .then(addrData => {
+          let bairro = 'Localização';
+          if (addrData && addrData.address) {
+            bairro = addrData.address.suburb || addrData.address.neighbourhood || addrData.address.village || addrData.address.town || addrData.address.city || 'Localização';
+          }
+          // Buscar clima
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current_weather=true`)
+            .then(res => res.json())
+            .then(data => {
+              if (data && data.current_weather) {
+                document.getElementById('current-temp').textContent = `${data.current_weather.temperature}°C`;
+                document.getElementById('city-name').textContent = bairro;
+                document.getElementById('humidity').textContent = data.current_weather.relative_humidity ? `${data.current_weather.relative_humidity}%` : '--%';
+                document.getElementById('wind-speed').textContent = `${data.current_weather.windspeed} km/h`;
+                document.getElementById('pressure').textContent = data.current_weather.pressure ? `${data.current_weather.pressure} hPa` : '--';
+                document.getElementById('rain').textContent = data.current_weather.precipitation ? `${data.current_weather.precipitation} mm` : '--mm';
+              }
+            });
+        });
     }
-    // Chama ao abrir a aba Relatar
-    document.querySelector('a[href="#relatar"]').addEventListener('shown.bs.tab', atualizarAreaRelato);
-    // Chama ao carregar a página
-    atualizarAreaRelato();
-    // Localização mais precisa
-    function locateUser(preciso) {
-      if (!navigator.geolocation) {
-        alert('Geolocalização não suportada.');
+
+    // Centraliza o mapa na localização do usuário
+    function centralizarMapaNaLocalizacao() {
+      if (!userLocation || !window.meuMapa) return;
+      window.meuMapa.setView([userLocation.lat, userLocation.lon], 15);
+      if (!window.userMarker) {
+        window.userMarker = L.marker([userLocation.lat, userLocation.lon], {icon: L.icon({iconUrl: 'user-marker.png', iconSize: [32,32]})}).addTo(window.meuMapa);
+      } else {
+        window.userMarker.setLatLng([userLocation.lat, userLocation.lon]);
+      }
+    }
+
+    // Função para localizar usuário via botão no mapa
+    function locateUser(btn) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          userLocation = {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude
+          };
+          centralizarMapaNaLocalizacao();
+        });
+      }
+    }
+
+    // Função para preencher o campo de endereço com a localização atual ao abrir a aba Relatar
+    function preencherEnderecoAtual() {
+      const addressInput = document.getElementById('address');
+      const latInput = document.getElementById('latitude');
+      const lonInput = document.getElementById('longitude');
+      if (!addressInput) return;
+      if (userLocation) {
+        latInput.value = userLocation.lat;
+        lonInput.value = userLocation.lon;
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lon}&addressdetails=1`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.display_name) {
+              addressInput.value = data.display_name;
+            }
+          });
+      } else if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          latInput.value = pos.coords.latitude;
+          lonInput.value = pos.coords.longitude;
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`)
+            .then(res => res.json())
+            .then(data => {
+              if (data && data.display_name) {
+                addressInput.value = data.display_name;
+              }
+            });
+        });
+      }
+    }
+
+    // Função para preencher o campo de endereço com a localização atual ao abrir a aba Relatar
+    function preencherEnderecoAtual() {
+      const addressInput = document.getElementById('address');
+      const latInput = document.getElementById('latitude');
+      const lonInput = document.getElementById('longitude');
+      if (!addressInput || !navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        if (latInput) latInput.value = lat;
+        if (lonInput) lonInput.value = lon;
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.display_name) {
+              addressInput.value = data.display_name;
+            }
+          });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Solicita localização ao abrir o site
+      pedirLocalizacaoInicial();
+
+      // Preencher automaticamente ao abrir aba Relatar
+      document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
+        tab.addEventListener('shown.bs.tab', function (e) {
+          if (e.target.getAttribute('href') === '#relatar') {
+            preencherEnderecoAtual();
+          }
+          if (e.target.getAttribute('href') === '#clima') {
+            atualizarClimaComLocalizacao();
+          }
+          if (e.target.getAttribute('href') === '#mapa') {
+            inicializarMapaLeaflet();
+            centralizarMapaNaLocalizacao();
+          }
+        });
+      });
+
+      // Inicializa o mapa Leaflet se não existir
+      function inicializarMapaLeaflet() {
+        if (window.meuMapa) return;
+        const mapDiv = document.getElementById('map');
+        if (!mapDiv) return;
+        window.meuMapa = L.map('map').setView([-8.05, -34.9], 12); // Recife como padrão
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(window.meuMapa);
+      }
+      // Relatos locais (em memória) - agora global
+      window.relatosLocais = window.relatosLocais || [];
+      const reportForm = document.getElementById('reportForm');
+      if (reportForm) {
+        reportForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          // Coleta dados do formulário
+          const latitude = document.getElementById('latitude').value;
+          const longitude = document.getElementById('longitude').value;
+          const address = document.getElementById('address').value;
+          const tipo = document.getElementById('tipo-ocorrencia').value;
+          const nivel = document.getElementById('water-level').value;
+          const descricao = document.getElementById('descricao').value;
+          const dataHora = new Date().toISOString();
+          let fotos = [];
+          const photoInput = document.getElementById('flood-photo');
+          if (photoInput && photoInput.files.length > 0) {
+            for (let i = 0; i < Math.min(photoInput.files.length, 3); i++) {
+              const file = photoInput.files[i];
+              fotos.push(file.name);
+            }
+          }
+          // Adiciona relato localmente (global)
+          window.relatosLocais.unshift({
+            latitude,
+            longitude,
+            address,
+            tipo,
+            nivel,
+            descricao,
+            dataHora,
+            fotos,
+            status: 'publico'
+          });
+          // Troca para a aba do mapa para mostrar o marcador
+          const mapaTab = document.querySelector('a[href="#mapa"]');
+          if (mapaTab) {
+            var tab = new bootstrap.Tab(mapaTab);
+            tab.show();
+            // Aguarda a aba do mapa ser exibida antes de atualizar os marcadores
+            setTimeout(function() {
+              if (typeof inicializarMapaLeaflet === 'function') {
+                inicializarMapaLeaflet();
+              }
+              if (window.meuMapa) {
+                window.meuMapa.invalidateSize();
+              }
+              carregarRelatosPublicos();
+            }, 350);
+          } else {
+            if (typeof inicializarMapaLeaflet === 'function') {
+              inicializarMapaLeaflet();
+            }
+            if (window.meuMapa) {
+              window.meuMapa.invalidateSize();
+            }
+            carregarRelatosPublicos();
+          }
+          alert('Relato enviado com sucesso!');
+          reportForm.reset();
+        });
+      }
+      // Exibe relatos locais ao carregar
+      carregarRelatosPublicos();
+    });
+
+    // Função para carregar relatos públicos
+    function carregarRelatosPublicos() {
+      const relatosDiv = document.getElementById('relatos-publicos');
+      if (!relatosDiv) return;
+      if (!window.relatosLocais || window.relatosLocais.length === 0) {
+        relatosDiv.innerHTML = '<div class="text-center text-muted">Nenhum relato enviado nesta sessão.</div>';
+        // Limpa marcadores de relatos do mapa
+        if (window.relatosMarkers && window.meuMapa) {
+          window.relatosMarkers.forEach(m => window.meuMapa.removeLayer(m));
+          window.relatosMarkers = [];
+        }
         return;
       }
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        if (typeof setMapCenter === 'function') {
-          setMapCenter(pos.coords.latitude, pos.coords.longitude);
+      let html = '';
+      // Limpa marcadores antigos
+      if (window.relatosMarkers && window.meuMapa) {
+        window.relatosMarkers.forEach(m => window.meuMapa.removeLayer(m));
+      }
+      window.relatosMarkers = [];
+      // Mapeia tipo para emoji
+      const tipoEmoji = {
+        'alagamento': '💧',
+        'enxurrada': '🌊',
+        'obstrucao': '🚧',
+        'deslizamento': '⛰️',
+        'fio-duvidoso': '⚡',
+        'outro': '❓'
+      };
+      window.relatosLocais.forEach(function(r) {
+        const emoji = tipoEmoji[r.tipo] || '❓';
+        html += `<div class="card mb-3"><div class="card-body">
+          <h5 class="card-title">${emoji} ${r.tipo ? r.tipo : 'Relato'}</h5>
+          <p class="card-text"><strong>Endereço:</strong> ${r.address || 'Não informado'}</p>
+          <p class="card-text"><strong>Nível da água:</strong> ${r.nivel || '--'}</p>
+          <p class="card-text"><strong>Descrição:</strong> ${r.descricao || ''}</p>
+          <p class="card-text"><small class="text-muted">${new Date(r.dataHora).toLocaleString('pt-BR')}</small></p>
+        </div></div>`;
+        // Adiciona marcador no mapa com ícone personalizado e efeito 3D/pulso
+        if (window.meuMapa && r.latitude && r.longitude && !isNaN(parseFloat(r.latitude)) && !isNaN(parseFloat(r.longitude))) {
+          // Cor da borda do marcador conforme nível
+          let nivelCor = '#38bdf8';
+          if (r.nivel === '0.2') nivelCor = '#38bdf8';
+          else if (r.nivel === '0.5') nivelCor = '#fbbf24';
+          else if (r.nivel === '1.0') nivelCor = '#f87171';
+          else if (r.nivel === '1.5') nivelCor = '#dc2626';
+          // Ícone com efeito 3D, sombra e animação de pulso
+          const iconHtml = `
+            <div class="relato-marker-3d" style="--cor:${nivelCor};">
+              <span class="relato-marker-emoji">${emoji}</span>
+              <span class="relato-marker-pulse"></span>
+            </div>
+            <style>
+              .relato-marker-3d {
+                position: relative;
+                width: 44px; height: 44px;
+                display: flex; align-items: center; justify-content: center;
+                background: linear-gradient(145deg,#fff 60%,#e0f2fe 100%);
+                border-radius: 50%;
+                border: 3.5px solid var(--cor,#38bdf8);
+                box-shadow: 0 6px 24px #2563eb33, 0 2px 12px #38bdf822, 0 0 0 6px #fff8;
+                z-index: 2;
+                animation: markerPop 0.7s cubic-bezier(.23,1.02,.32,1);
+                transition: border 0.3s, box-shadow 0.3s;
+              }
+              .relato-marker-3d:hover {
+                box-shadow: 0 12px 36px #2563eb55, 0 4px 16px #38bdf855, 0 0 0 10px #bae6fd55;
+                transform: scale(1.08) translateY(-3px);
+              }
+              .relato-marker-emoji {
+                font-size: 2.1rem;
+                line-height: 1.1;
+                z-index: 3;
+                filter: drop-shadow(0 2px 8px #2563eb22);
+                user-select: none;
+              }
+              .relato-marker-pulse {
+                position: absolute;
+                left: 50%; top: 50%;
+                width: 44px; height: 44px;
+                transform: translate(-50%,-50%);
+                border-radius: 50%;
+                background: radial-gradient(circle, var(--cor,#38bdf8) 0%, transparent 70%);
+                opacity: 0.25;
+                z-index: 1;
+                animation: markerPulse 1.5s infinite cubic-bezier(.23,1.02,.32,1);
+              }
+              @keyframes markerPulse {
+                0% { opacity: 0.25; transform: translate(-50%,-50%) scale(1); }
+                60% { opacity: 0.12; transform: translate(-50%,-50%) scale(1.5); }
+                100% { opacity: 0; transform: translate(-50%,-50%) scale(2.1); }
+              }
+              @keyframes markerPop {
+                0% { transform: scale(0.7) translateY(20px); opacity: 0; }
+                60% { transform: scale(1.1) translateY(-6px); opacity: 1; }
+                100% { transform: scale(1) translateY(0); opacity: 1; }
+              }
+            </style>
+          `;
+          const customIcon = L.divIcon({
+            className: '',
+            html: iconHtml,
+            iconSize: [48, 48],
+            iconAnchor: [24, 44],
+            popupAnchor: [0, -44]
+          });
+          const marker = L.marker([parseFloat(r.latitude), parseFloat(r.longitude)], {icon: customIcon, riseOnHover:true}).addTo(window.meuMapa);
+          // Popup detalhado com efeito de entrada
+          const tipoTag = `<span style="display:inline-block;background:linear-gradient(90deg,#38bdf8 60%,#2563eb 100%);color:#fff;font-weight:600;font-size:0.98rem;padding:2px 10px;border-radius:1rem;margin-right:6px;box-shadow:0 2px 8px #2563eb22;letter-spacing:0.5px;">${emoji} ${r.tipo ? r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1) : 'Relato'}</span>`;
+          const nivelTag = `<span style="display:inline-block;background:${nivelCor};color:#222;font-weight:600;font-size:0.97rem;padding:2px 10px;border-radius:1rem;margin-left:0;box-shadow:0 2px 8px #2563eb22;">${r.nivel ? r.nivel.replace('0.2','Baixo').replace('0.5','Moderado').replace('1.0','Alto').replace('1.5','Grave') : '--'}</span>`;
+          const popupHtml = `
+            <div class="popup-anim" style="min-width:220px;max-width:320px;padding:13px 10px 10px 10px;border-radius:1.2rem;background:linear-gradient(120deg,#f0f9ff 60%,#bae6fd 100%);box-shadow:0 4px 24px #2563eb33,0 1.5px 12px #38bdf822;border:2.5px solid #38bdf8;position:relative;overflow:hidden;transition:box-shadow 0.3s;">
+              <div style="position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 40% at 60% 0%,#f9f87133 0%,#fbbf2433 40%,transparent 100%),radial-gradient(ellipse 60% 30% at 20% 20%,#5ee7df33 0%,#a5b4fc22 60%,transparent 100%),radial-gradient(ellipse 40% 20% at 80% 80%,#fca5a522 0%,transparent 100%);opacity:0.7;"></div>
+              <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.7rem;z-index:1;position:relative;">
+                <span style="font-size:2.3rem;line-height:1.1;display:inline-block;background:#fff;border-radius:50%;border:2.5px solid #38bdf8;box-shadow:0 2px 8px #2563eb33;padding:2px 13px 2px 13px;">${emoji}</span>
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                  ${tipoTag}
+                  ${nivelTag}
+                </div>
+              </div>
+              <div style="font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;"><i class='fas fa-map-marker-alt' style='color:#38bdf8;'></i> <b>Endereço:</b> <span style='color:#222;'>${r.address || 'Não informado'}</span></div>
+              <div style="font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;"><b>Descrição:</b> <span style='color:#222;'>${r.descricao || ''}</span></div>
+              <div style="font-size:0.97rem;color:#2563eb;margin-top:7px;text-align:right;z-index:1;position:relative;"><i class='far fa-clock' style='color:#38bdf8;'></i> ${new Date(r.dataHora).toLocaleString('pt-BR')}</div>
+              <style>
+                .leaflet-popup-content-wrapper { box-shadow: 0 8px 32px #2563eb33 !important; border-radius: 1.2rem !important; border: 2.5px solid #38bdf8 !important; }
+                .leaflet-popup-content { margin: 0.5rem 0.2rem !important; }
+                .popup-anim { animation: popupFadeIn 0.7s cubic-bezier(.23,1.02,.32,1); }
+                @keyframes popupFadeIn {
+                  0% { opacity: 0; transform: scale(0.92) translateY(30px); }
+                  60% { opacity: 1; transform: scale(1.04) translateY(-8px); }
+                  100% { opacity: 1; transform: scale(1) translateY(0); }
+                }
+                @media (max-width: 500px) {
+                  .leaflet-popup-content { font-size: 0.97rem !important; }
+                }
+              </style>
+            </div>
+          `;
+          marker.bindPopup(popupHtml);
+          window.relatosMarkers.push(marker);
         }
-        // Adiciona um marcador no mapa para o usuário
-        if (typeof addUserMarker === 'function') {
-          addUserMarker(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-        }
-        // Não exibe mais alert, apenas mostra no mapa
-      }, function(err) {
-        alert('Erro ao obter localização: ' + err.message);
-      }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      });
+      relatosDiv.innerHTML = html;
     }
-    function atualizarHeaderLogin() {
-  const logado = usuarioEstaLogado();
-  const btnCadastro = document.getElementById('cadastrar-btn');
-  const btnEntrar = document.getElementById('entrar-btn');
-  const perfil = document.getElementById('perfil-header');
-  if (logado) {
-    btnCadastro.classList.add('d-none');
-    btnEntrar.classList.add('d-none');
-    perfil.classList.remove('d-none');
-    // Exemplo: mostrar nome fictício
-    document.getElementById('perfil-nome').textContent = 'Meu Perfil';
-  } else {
-    btnCadastro.classList.remove('d-none');
-    btnEntrar.classList.remove('d-none');
-    perfil.classList.add('d-none');
-  }
-}
-document.addEventListener('DOMContentLoaded', atualizarHeaderLogin);
-window.addEventListener('storage', atualizarHeaderLogin);
-// Atualiza header ao logar/deslogar
-setInterval(atualizarHeaderLogin, 1000);
+    // ...existing code...
   </script>
 </body>
 </html>
