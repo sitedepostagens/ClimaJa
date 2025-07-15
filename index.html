@@ -692,6 +692,7 @@
               <label for="water-level" class="form-label">Nível da Água</label>
               <select class="form-select" id="water-level" required>
                 <option value="">Selecione</option>
+                <option value="0">Sem água no momento</option>
                 <option value="0.2">Até o tornozelo (baixo)</option>
                 <option value="0.5">Até o joelho (moderado)</option>
                 <option value="1.0">Até a cintura (alto)</option>
@@ -1002,12 +1003,26 @@
         'fio-duvidoso': '⚡',
         'outro': '❓'
       };
+      // Se houver relato "Sem água no momento" para o mesmo endereço, anula relatos anteriores de alagamento
+      let relatosFiltrados = [];
       window.relatosLocais.forEach(function(r) {
-        const emoji = tipoEmoji[r.tipo] || '❓';
+        if (r.nivel === '0') {
+          // Remove relatos anteriores de alagamento para o mesmo endereço
+          relatosFiltrados = relatosFiltrados.filter(rel => rel.address !== r.address);
+          relatosFiltrados.push(r);
+        } else {
+          // Só adiciona se não houver relato "Sem água" para o mesmo endereço
+          if (!relatosFiltrados.some(rel => rel.address === r.address && rel.nivel === '0')) {
+            relatosFiltrados.push(r);
+          }
+        }
+      });
+      relatosFiltrados.forEach(function(r) {
+        const emoji = r.nivel === '0' ? '✅' : (tipoEmoji[r.tipo] || '❓');
         html += `<div class="card mb-3"><div class="card-body">
-          <h5 class="card-title">${emoji} ${r.tipo ? r.tipo : 'Relato'}</h5>
+          <h5 class="card-title">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (r.tipo ? r.tipo : 'Relato')}</h5>
           <p class="card-text"><strong>Endereço:</strong> ${r.address || 'Não informado'}</p>
-          <p class="card-text"><strong>Nível da água:</strong> ${r.nivel || '--'}</p>
+          <p class="card-text"><strong>Nível da água:</strong> ${r.nivel === '0' ? 'Sem água no momento' : (r.nivel || '--')}</p>
           <p class="card-text"><strong>Descrição:</strong> ${r.descricao || ''}</p>
           <p class="card-text"><small class="text-muted">${new Date(r.dataHora).toLocaleString('pt-BR')}</small></p>
         </div></div>`;
@@ -1015,7 +1030,8 @@
         if (window.meuMapa && r.latitude && r.longitude && !isNaN(parseFloat(r.latitude)) && !isNaN(parseFloat(r.longitude))) {
           // Cor da borda do marcador conforme nível
           let nivelCor = '#38bdf8';
-          if (r.nivel === '0.2') nivelCor = '#38bdf8';
+          if (r.nivel === '0') nivelCor = '#22c55e';
+          else if (r.nivel === '0.2') nivelCor = '#38bdf8';
           else if (r.nivel === '0.5') nivelCor = '#fbbf24';
           else if (r.nivel === '1.0') nivelCor = '#f87171';
           else if (r.nivel === '1.5') nivelCor = '#dc2626';
@@ -1081,8 +1097,8 @@
           });
           const marker = L.marker([parseFloat(r.latitude), parseFloat(r.longitude)], {icon: customIcon, riseOnHover:true}).addTo(window.meuMapa);
           // Popup detalhado com efeito de entrada
-          const tipoTag = `<span style="display:inline-block;background:linear-gradient(90deg,#38bdf8 60%,#2563eb 100%);color:#fff;font-weight:600;font-size:0.98rem;padding:2px 10px;border-radius:1rem;margin-right:6px;box-shadow:0 2px 8px #2563eb22;letter-spacing:0.5px;">${emoji} ${r.tipo ? r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1) : 'Relato'}</span>`;
-          const nivelTag = `<span style="display:inline-block;background:${nivelCor};color:#222;font-weight:600;font-size:0.97rem;padding:2px 10px;border-radius:1rem;margin-left:0;box-shadow:0 2px 8px #2563eb22;">${r.nivel ? r.nivel.replace('0.2','Baixo').replace('0.5','Moderado').replace('1.0','Alto').replace('1.5','Grave') : '--'}</span>`;
+          const tipoTag = `<span style="display:inline-block;background:linear-gradient(90deg,#38bdf8 60%,#2563eb 100%);color:#fff;font-weight:600;font-size:0.98rem;padding:2px 10px;border-radius:1rem;margin-right:6px;box-shadow:0 2px 8px #2563eb22;letter-spacing:0.5px;">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (r.tipo ? r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1) : 'Relato')}</span>`;
+          const nivelTag = `<span style="display:inline-block;background:${nivelCor};color:#222;font-weight:600;font-size:0.97rem;padding:2px 10px;border-radius:1rem;margin-left:0;box-shadow:0 2px 8px #2563eb22;">${r.nivel === '0' ? 'Sem água no momento' : (r.nivel ? r.nivel.replace('0.2','Baixo').replace('0.5','Moderado').replace('1.0','Alto').replace('1.5','Grave') : '--')}</span>`;
           const popupHtml = `
             <div class="popup-anim" style="min-width:220px;max-width:320px;padding:13px 10px 10px 10px;border-radius:1.2rem;background:linear-gradient(120deg,#f0f9ff 60%,#bae6fd 100%);box-shadow:0 4px 24px #2563eb33,0 1.5px 12px #38bdf822;border:2.5px solid #38bdf8;position:relative;overflow:hidden;transition:box-shadow 0.3s;">
               <div style="position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 40% at 60% 0%,#f9f87133 0%,#fbbf2433 40%,transparent 100%),radial-gradient(ellipse 60% 30% at 20% 20%,#5ee7df33 0%,#a5b4fc22 60%,transparent 100%),radial-gradient(ellipse 40% 20% at 80% 80%,#fca5a522 0%,transparent 100%);opacity:0.7;"></div>
