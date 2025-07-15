@@ -13,7 +13,7 @@
     window.ezstandalone = window.ezstandalone || {};
     ezstandalone.cmd = ezstandalone.cmd || [];
 </script>
-<meta name="keywords" content="ClimaJá, clima, humidade, temperatura, mapa tempo, clima tempo, climaja, site de clima, onde ver a temperatura, etc, meteorologia, monitoramento">
+<meta name="keywords" content="ClimaJá, clima, umidade, temperatura, mapa tempo, clima tempo, climaja, site de clima, onde ver a temperatura, etc, meteorologia, monitoramento">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -45,6 +45,173 @@
   <!-- Nosso CSS -->
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="animacao-global.css">
+  <style>
+    /* Área de login/cadastro: visual moderno, espaçamento, gradiente, bordas arredondadas */
+    .login-cadastro-area {
+      display: flex;
+      gap: 0.7rem;
+      align-items: center;
+      padding: 0.5rem 1.2rem;
+      background: linear-gradient(90deg, #e0f2fe 60%, #f9f871 100%);
+      border-radius: 1.2rem;
+      box-shadow: 0 2px 12px #2563eb22;
+      border: 2px solid #38bdf8;
+      margin-right: 1.2rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .login-cadastro-area .btn {
+      border-radius: 0.7rem;
+      font-weight: 700;
+      box-shadow: 0 2px 8px #2563eb11;
+      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+    }
+    .login-cadastro-area .btn-outline-primary {
+      background: #fff;
+      color: #2563eb;
+      border: 2px solid #38bdf8;
+    }
+    .login-cadastro-area .btn-outline-primary:hover {
+      background: #bae6fd;
+      color: #232946;
+      box-shadow: 0 2px 12px #38bdf822;
+    }
+    .login-cadastro-area .btn-outline-light {
+      background: #f9f871;
+      color: #232946;
+      border: 2px solid #fbbf24;
+    }
+    .login-cadastro-area .btn-outline-light:hover {
+      background: #fbbf24;
+      color: #fff;
+      box-shadow: 0 2px 12px #fbbf2433;
+    }
+    @media (max-width: 600px) {
+      .login-cadastro-area {
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.3rem 0.5rem;
+        margin-right: 0.2rem;
+      }
+    }
+    /* Garante que a área de dados do perfil nunca muda de cor, nem em hover, focus ou active */
+    #perfil-dados.dropdown-item,
+    #perfil-dados.dropdown-item:hover,
+    #perfil-dados.dropdown-item:focus,
+    #perfil-dados.dropdown-item:active {
+      background: inherit !important;
+      color: inherit !important;
+      cursor: default;
+      box-shadow: none !important;
+    }
+    /* Não aplicar hover na área de dados do perfil */
+    #perfil-dados.dropdown-item:hover {
+      background: inherit !important;
+      color: inherit !important;
+      cursor: default;
+    }
+    /* Perfil Dropdown: Gradiente, bordas arredondadas, paleta azul/aqua/amarelo */
+    .dropdown-menu[aria-labelledby="perfilDropdown"] {
+      background: #fff;
+      border-radius: 1.5rem;
+      box-shadow: 0 8px 32px -8px #2563eb44, 0 0 40px 0 #5ee7df33 inset;
+      border: 2px solid #38bdf8;
+      padding: 1.2rem 1rem 1rem 1rem;
+      animation: sobreFadeIn 0.8s cubic-bezier(.23,1.02,.32,1) both;
+    }
+    .dropdown-menu[aria-labelledby="perfilDropdown"] .dropdown-item {
+      border-radius: 1rem;
+      margin-bottom: 0.5rem;
+      background: rgba(255,255,255,0.85);
+      color: #232946;
+      font-weight: 600;
+      transition: background 0.3s, color 0.3s;
+    }
+    .dropdown-menu[aria-labelledby="perfilDropdown"] .dropdown-item:hover {
+      background: rgba(56, 189, 248, 0.09); /* azul claro, ainda mais transparente */
+      color: #2563eb;
+    }
+    #perfil-dados {
+      background: linear-gradient(120deg, #e0f2fe 60%, #f9f871 100%);
+      border-radius: 1.2rem;
+      box-shadow: 0 2px 12px #2563eb22;
+      padding: 1rem 0.5rem 0.7rem 0.5rem;
+      margin-bottom: 0.7rem;
+    }
+    #perfil-dados img {
+      border: 3px solid #38bdf8;
+      box-shadow: 0 2px 12px #5ee7df44;
+    }
+    #perfil-nome {
+      color: #2563eb;
+      font-weight: 800;
+      font-size: 1.3rem;
+      text-shadow: 0 2px 8px #bae6fd99;
+    }
+    #perfil-email {
+      color: #3a506b;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .badge.bg-primary {
+      background: linear-gradient(90deg, #38bdf8 60%, #f9f871 100%);
+      color: #232946;
+      font-weight: 700;
+      border-radius: 0.7rem;
+      box-shadow: 0 2px 8px #2563eb22;
+    }
+    #logout-btn {
+      border-radius: 0.7rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #f87171 60%, #fbbf24 100%);
+      color: #232946;
+      border: none;
+      box-shadow: 0 2px 8px #f8717133;
+      transition: background 0.3s, color 0.3s;
+    }
+    #logout-btn:hover {
+      background: linear-gradient(90deg, #fbbf24 60%, #f87171 100%);
+      color: #fff;
+    }
+    @media (max-width: 600px) {
+      .dropdown-menu[aria-labelledby="perfilDropdown"] {
+        min-width: 90vw;
+        padding: 1.1rem 0.3rem 1rem 0.3rem;
+      }
+      #perfil-dados {
+        padding: 0.7rem 0.2rem 0.5rem 0.2rem;
+      }
+    }
+    [data-theme="dark"] .dropdown-menu[aria-labelledby="perfilDropdown"] {
+      background: linear-gradient(120deg, #1e293b 60%, #0f172a 100%) !important;
+      color: #f8fafc !important;
+      border-color: #60a5fa;
+    }
+    [data-theme="dark"] #perfil-dados {
+      background: linear-gradient(120deg, #334155 60%, #1e293b 100%) !important;
+      color: #f8fafc !important;
+      border-color: #60a5fa;
+    }
+    [data-theme="dark"] #perfil-nome {
+      color: #60a5fa !important;
+      text-shadow: 0 2px 8px #0f172a99;
+    }
+    [data-theme="dark"] #perfil-email {
+      color: #f8fafc !important;
+    }
+    [data-theme="dark"] .badge.bg-primary {
+      background: linear-gradient(90deg, #60a5fa 60%, #f9f871 100%) !important;
+      color: #232946 !important;
+    }
+    [data-theme="dark"] #logout-btn {
+      background: linear-gradient(90deg, #f87171 60%, #fbbf24 100%) !important;
+      color: #232946 !important;
+    }
+    [data-theme="dark"] #logout-btn:hover {
+      background: linear-gradient(90deg, #fbbf24 60%, #f87171 100%) !important;
+      color: #fff !important;
+    }
+  </style>
   <style>
     /* HEADER: degradê surpreendente, harmônico e temático (clima/meteorologia) */
     .main-header {
@@ -333,29 +500,43 @@
     </div>
    <!-- ...código anterior... -->
 <div class="d-flex justify-content-end align-items-center pe-3" style="position:absolute;top:1.5rem;right:0;z-index:10;">
-    <a class="btn btn-gradient btn-sm fw-bold me-2" id="perfil-header" href="#">
-    <i class="fas fa-user-circle me-1"></i><span id="perfil-nome">Perfil</span>
-  </a>
+  <!-- Botão de perfil substitui login/cadastro quando logado -->
+  <div id="perfil-area" class="d-none">
+    <div class="dropdown">
+      <button class="btn btn-gradient btn-sm fw-bold dropdown-toggle d-flex align-items-center" type="button" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <img src="logo.png" alt="Avatar" style="width:32px;height:32px;border-radius:50%;margin-right:8px;box-shadow:0 2px 8px #2563eb22;">
+        <span id="perfil-nome-area" style="font-weight:600;">Perfil</span>
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="perfilDropdown" style="min-width:260px;border-radius:0;">
+        <li>
+          <div class="dropdown-item text-center" id="perfil-dados" style="min-width:220px;padding-bottom:10px;">
+            <img src="logo.png" alt="Avatar" style="width:72px;height:72px;border-radius:50%;box-shadow:0 2px 8px #2563eb22;margin-bottom:10px;">
+            <div style="font-size:1.25rem;font-weight:800;color:#2563eb;margin-bottom:2px;" id="perfil-nome">-</div>
+            <div style="font-size:1rem;color:#555;margin-bottom:8px;" id="perfil-email">-</div>
+            <span class="badge bg-primary mb-2" style="font-size:0.9rem;">Usuário ClimaJá!</span>
+            <hr style="margin:10px 0 6px 0;">
+            <button class="btn btn-danger btn-sm fw-bold w-100" id="logout-btn" type="button">
+              <i class="fas fa-sign-out-alt me-1"></i>Sair
+            </button>
+          </div>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#" id="perfil-relatos"><i class="fas fa-list me-1 text-primary"></i>Meus Relatos</a></li>
+        <li><a class="dropdown-item" href="#" id="perfil-editar"><i class="fas fa-user-edit me-1 text-success"></i>Editar Perfil</a></li>
+        <li><a class="dropdown-item" href="#" id="perfil-ajuda"><i class="fas fa-question-circle me-1 text-info"></i>Ajuda</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><hr class="dropdown-divider"></li>
+      </ul>
+    </div>
+  </div>
   <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="cadastrar-btn" href="register.html">
     <i class="fas fa-user-plus me-1"></i>Cadastrar
   </a>
   <a class="btn btn-outline-light btn-sm fw-bold" id="entrar-btn" href="login.html">
     <i class="fas fa-sign-in-alt me-1"></i>Entrar
   </a>
-    <div id="perfil-area" class="d-none">
-      <div class="dropdown">
-        <button class="btn btn-gradient btn-sm fw-bold dropdown-toggle" type="button" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="fas fa-user-circle me-1"></i><span id="perfil-nome-area">Perfil</span>
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="perfilDropdown">
-          <li><div class="dropdown-item" id="perfil-dados">Carregando dados...</div></li>
-          <li><a class="dropdown-item" href="#" id="perfil-relatos">Meus Relatos</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item text-danger" href="#" id="logout-btn"><i class="fas fa-sign-out-alt me-1"></i>Sair</a></li>
-        </ul>
-      </div>
-    </div>
 </div>
+<!-- Controle de autenticação e exibição do perfil/relato é feito apenas pelo script.js -->
 <!-- ...código seguinte... -->
   </header>
 
@@ -386,7 +567,27 @@
           <i class="fas fa-user me-2"></i>Sobre Nós
         </a>
       </li>
-      <li class="nav-item d-none" id="nav-login-item">
+      <li class="nav-item" id="nav-login-item">
+        <!-- Área de perfil: só aparece para logados -->
+        <div id="perfil-area" class="d-none">
+          <div class="dropdown">
+            <button class="btn btn-gradient btn-sm fw-bold dropdown-toggle" type="button" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-user-circle me-1"></i>
+              <span id="perfil-nome-area">Perfil</span>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="perfilDropdown">
+              <li>
+            <div class="dropdown-item" id="perfil-dados">
+              <div><strong>Email:</strong> <span id="perfil-email">-</span></div>
+              <div><strong>Nome:</strong> <span id="perfil-nome">-</span></div>
+                </div>
+              </li>
+              <li><a class="dropdown-item" href="#" id="perfil-relatos">Meus Relatos</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" id="logout-btn"><i class="fas fa-sign-out-alt me-1"></i>Sair</a></li>
+            </ul>
+          </div>
+        </div>
       </li>
     </ul>
 
@@ -517,7 +718,6 @@
         <div id="relato-login-msg" class="text-center my-3 d-none">
           <div class="alert alert-warning d-inline-block px-4 py-2" style="font-size:1.1rem;">
             <i class="fas fa-lock me-2"></i>Você precisa estar logado para enviar um relato.<br>
-            <!-- Links de cadastro/login removidos, área de relato só aparece para logados -->
           </div>
         </div>
         <div id="relatos-publicos" class="mt-4">
@@ -547,7 +747,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="./paranoid-security.js"></script>
   <!-- Nosso JS -->
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
   <!-- Firebase SDK -->
 <!-- Firebase removido temporariamente -->
   <script>
@@ -919,5 +1119,25 @@
     }
     // ...existing code...
   </script>
+  <script>
+  // Força updateAuthUI após login
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.auth && window.firebase && window.firebase.auth) {
+      window.firebase.auth().onAuthStateChanged(function(user) {
+        // updateAuthUI(user); // Removido, controle feito pelo script.js
+      });
+    } else if (window.auth && window.onAuthStateChanged) {
+      window.onAuthStateChanged(window.auth, function(user) {
+        // updateAuthUI(user); // Removido, controle feito pelo script.js
+      });
+    } else {
+      var user = null;
+      try {
+        user = JSON.parse(localStorage.getItem('user')) || null;
+      } catch {}
+      // updateAuthUI(user); // Removido, controle feito pelo script.js
+    }
+  });
+</script>
 </body>
 </html>

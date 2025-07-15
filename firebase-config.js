@@ -24,3 +24,4 @@ const analytics = getAnalytics(app);
 // Export Firebase Auth for use in other scripts
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 export const auth = getAuth(app);
+window.auth = auth;

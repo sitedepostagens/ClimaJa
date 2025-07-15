@@ -1,14 +1,57 @@
-window.addEventListener('DOMContentLoaded', function() {
-  if (window.auth && window.firebase && window.firebase.auth) {
-    window.firebase.auth().onAuthStateChanged(function(user) {
-      updateAuthUI(user);
-    });
-  } else if (window.auth && window.onAuthStateChanged) {
-    window.onAuthStateChanged(window.auth, function(user) {
-      updateAuthUI(user);
-    });
+window.addEventListener('DOMContentLoaded', async function() {
+  // Inicializa Firebase Auth localmente
+  const firebaseAppModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js');
+  const firebaseAuthModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
+  const firebaseConfig = {
+    apiKey: "AIzaSyCMTSLhey7MMtXy_xV2oSuPe18Tl7sLucY",
+    authDomain: "asenha-project-site.firebaseapp.com",
+    databaseURL: "https://asenha-project-site-default-rtdb.firebaseio.com",
+    projectId: "asenha-project-site",
+    storageBucket: "asenha-project-site.appspot.com",
+    messagingSenderId: "393532682519",
+    appId: "1:393532682519:web:d16a441d5428c676128752",
+    measurementId: "G-38CG9H4XV8"
+  };
+  let app;
+  if (firebaseAppModule.getApps && firebaseAppModule.getApps().length) {
+    app = firebaseAppModule.getApps()[0];
+  } else {
+    app = firebaseAppModule.initializeApp(firebaseConfig);
   }
+  const auth = firebaseAuthModule.getAuth(app);
+  window.auth = auth; // <-- Torna global para logout
+  // Listener de autenticação
+  firebaseAuthModule.onAuthStateChanged(auth, function(user) {
+    updateAuthUI(user);
+    handleProfileAndRelato(user);
+  });
+  // Expor signOut globalmente para logout
+  window.signOut = firebaseAuthModule.signOut;
 });
+
+function handleProfileAndRelato(user) {
+  // Área de perfil
+  var perfilArea = document.getElementById('perfil-area');
+  if (perfilArea) {
+    if (user && user.email) {
+      perfilArea.classList.remove('d-none');
+    } else {
+      perfilArea.classList.add('d-none');
+    }
+  }
+  // Área de relato
+  var relatoArea = document.getElementById('relato-area');
+  var relatoLoginMsg = document.getElementById('relato-login-msg');
+  if (relatoArea && relatoLoginMsg) {
+    if (user && user.email) {
+      relatoArea.classList.remove('d-none');
+      relatoLoginMsg.classList.add('d-none');
+    } else {
+      relatoArea.classList.add('d-none');
+      relatoLoginMsg.classList.remove('d-none');
+    }
+  }
+}
 window.addEventListener('DOMContentLoaded', function() {
   var logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
@@ -637,31 +680,106 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+function setupProfileButtons() {
+  const relatosBtn = document.getElementById('perfil-relatos');
+  const editarBtn = document.getElementById('perfil-editar');
+  const ajudaBtn = document.getElementById('perfil-ajuda');
+
+  if (relatosBtn) {
+    relatosBtn.onclick = function(e) {
+      e.preventDefault();
+      showNotification('Funcionalidade "Meus Relatos" em desenvolvimento!', 'info');
+      // Aqui você pode abrir um modal ou navegar para uma página de relatos do usuário
+    };
+  }
+  if (editarBtn) {
+    editarBtn.onclick = function(e) {
+      e.preventDefault();
+      showNotification('Funcionalidade "Editar Perfil" em breve!', 'info');
+      // Aqui você pode abrir um modal de edição de perfil
+    };
+  }
+  if (ajudaBtn) {
+    ajudaBtn.onclick = function(e) {
+      e.preventDefault();
+      alert('Para dúvidas, envie um email para oclimaja@hotmail.com ou acesse a aba Sobre Nós.');
+    };
+  }
+}
+
 function updateAuthUI(user) {
-  const cadastrarBtn = document.getElementById('cadastrar-btn');
-  const entrarBtn = document.getElementById('entrar-btn');
-  const perfilArea = document.getElementById('perfil-area');
-  const perfilNomeArea = document.getElementById('perfil-nome-area');
-  if (user) {
+  var cadastrarBtn = document.getElementById('cadastrar-btn');
+  var entrarBtn = document.getElementById('entrar-btn');
+  var perfilArea = document.getElementById('perfil-area');
+  var perfilEmail = document.getElementById('perfil-email');
+  var perfilNome = document.getElementById('perfil-nome');
+  var perfilNomeArea = document.getElementById('perfil-nome-area');
+  var logoutBtn = document.getElementById('logout-btn');
+
+  if (user && user.email) {
     if (cadastrarBtn) cadastrarBtn.style.display = 'none';
     if (entrarBtn) entrarBtn.style.display = 'none';
-    if (perfilArea) perfilArea.classList.remove('d-none');
-    if (perfilNomeArea) perfilNomeArea.textContent = user.displayName || user.email || 'Perfil';
-    // Preencher área de perfil com dados do usuário
-    const perfilDados = document.getElementById('perfil-dados');
-    if (perfilDados) {
-      perfilDados.innerHTML = `<strong>Email:</strong> ${user.email}<br>
-        <strong>Nome:</strong> ${user.displayName || 'Não informado'}<br>
-        <strong>UID:</strong> ${user.uid}`;
+    if (perfilArea) {
+      perfilArea.classList.remove('d-none');
+      perfilArea.style.display = '';
     }
+    if (perfilEmail) perfilEmail.textContent = user.email;
+    if (perfilNome) perfilNome.textContent = user.displayName || 'Não informado';
+    if (perfilNomeArea) perfilNomeArea.textContent = user.displayName || user.email || 'Perfil';
+    if (logoutBtn) {
+      logoutBtn.style.display = '';
+      logoutBtn.removeAttribute('hidden');
+      logoutBtn.onclick = function(e) {
+        e.preventDefault();
+        if (window.auth && window.signOut) {
+          window.signOut(window.auth).then(function() {
+            showNotification('Logout realizado com sucesso!', 'success');
+            setTimeout(function(){ window.location.reload(); }, 800);
+          }).catch(function(){
+            alert('Erro ao sair. Tente novamente.');
+          });
+        } else {
+          alert('Erro ao sair. Tente novamente.');
+        }
+      };
+    }
+    setupProfileButtons();
   } else {
     if (cadastrarBtn) cadastrarBtn.style.display = '';
     if (entrarBtn) entrarBtn.style.display = '';
-    if (perfilArea) perfilArea.classList.add('d-none');
+    if (perfilArea) {
+      perfilArea.classList.add('d-none');
+      perfilArea.style.display = '';
+    }
+    if (perfilEmail) perfilEmail.textContent = '-';
+    if (perfilNome) perfilNome.textContent = '-';
     if (perfilNomeArea) perfilNomeArea.textContent = 'Perfil';
-    const perfilDados = document.getElementById('perfil-dados');
-    if (perfilDados) perfilDados.innerHTML = 'Carregando dados...';
+    if (logoutBtn) {
+      logoutBtn.style.display = 'none';
+      logoutBtn.setAttribute('hidden', 'true');
+      logoutBtn.onclick = null;
+    }
   }
 }
+
+// Garante que updateAuthUI é chamada ao carregar a página
+window.addEventListener('DOMContentLoaded', function() {
+  if (window.auth && window.firebase && window.firebase.auth) {
+    window.firebase.auth().onAuthStateChanged(function(user) {
+      updateAuthUI(user);
+    });
+  } else if (window.auth && window.onAuthStateChanged) {
+    window.onAuthStateChanged(window.auth, function(user) {
+      updateAuthUI(user);
+    });
+  } else {
+    // Fallback: tenta buscar usuário do localStorage
+    var user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('user')) || null;
+    } catch {}
+    updateAuthUI(user);
+  }
+});
 
 initMap();

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/png" href="logo.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ClimaJá - Login</title>
@@ -14,16 +16,192 @@
 </script>
 
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Floating label effect for inputs */
+    .form-group {
+      position: relative;
+      margin-bottom: 1.2rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 1.1rem 1rem 0.5rem 2.5rem;
+      border-radius: 0.8rem;
+      border: 2px solid #38bdf8;
+      background: #f0f9ff;
+      color: #232946;
+      font-size: 1.1rem;
+      font-weight: 500;
+      box-shadow: 0 2px 8px #2563eb11;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+    .form-group input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 2px 12px #38bdf822;
+      outline: none;
+    }
+    .form-group label {
+      position: absolute;
+      left: 2.5rem;
+      top: 1.1rem;
+      color: #2563eb;
+      font-size: 1rem;
+      font-weight: 600;
+      pointer-events: none;
+      transition: 0.2s;
+      background: #fff;
+      padding: 0 0.3rem;
+      border-radius: 0.3rem;
+    }
+    .form-group input:focus + label,
+    .form-group input:not(:placeholder-shown) + label {
+      top: -0.7rem;
+      left: 1.2rem;
+      font-size: 0.85rem;
+      color: #fbbf24;
+      background: #f0f9ff;
+    }
+    .form-group .input-icon {
+      position: absolute;
+      left: 0.7rem;
+      top: 1.1rem;
+      color: #38bdf8;
+      font-size: 1.2rem;
+      pointer-events: none;
+    }
+    button[type="submit"] {
+      background: linear-gradient(90deg, #38bdf8 60%, #f9f871 100%);
+      color: #232946;
+      font-weight: 700;
+      border: none;
+      border-radius: 0.8rem;
+      padding: 0.9rem 1.2rem;
+      font-size: 1.15rem;
+      box-shadow: 0 2px 8px #2563eb22;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s, transform 0.2s;
+    }
+    button[type="submit"]:hover {
+      background: linear-gradient(90deg, #f9f871 60%, #38bdf8 100%);
+      color: #2563eb;
+      transform: scale(1.04);
+    }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(120deg, #5ee7df 0%, #b3e0ff 60%, #f9f871 100%);
+      background-size: 300% 300%;
+      animation: gradienteAnimado 16s ease-in-out infinite alternate;
+    }
+    @keyframes gradienteAnimado {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(120deg, #5ee7df 0%, #b3e0ff 60%, #f9f871 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .container {
+      background: #fff;
+      border-radius: 1.5rem;
+      box-shadow: 0 8px 32px -8px #2563eb44, 0 0 40px 0 #5ee7df33 inset;
+      padding: 2.5rem 2.2rem 2rem 2.2rem;
+      max-width: 370px;
+      width: 100%;
+      margin: 2rem auto;
+      text-align: center;
+    }
+    h2 {
+      color: #2563eb;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      font-size: 2.1rem;
+      letter-spacing: 1px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+    input[type="email"], input[type="password"] {
+      padding: 0.8rem 1rem;
+      border-radius: 0.8rem;
+      border: 2px solid #38bdf8;
+      font-size: 1.1rem;
+      background: #f0f9ff;
+      color: #232946;
+      font-weight: 500;
+      box-shadow: 0 2px 8px #2563eb11;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+    input[type="email"]:focus, input[type="password"]:focus {
+      border-color: #2563eb;
+      box-shadow: 0 2px 12px #38bdf822;
+      outline: none;
+    }
+    button[type="submit"] {
+      background: linear-gradient(90deg, #38bdf8 60%, #f9f871 100%);
+      color: #232946;
+      font-weight: 700;
+      border: none;
+      border-radius: 0.8rem;
+      padding: 0.8rem 1rem;
+      font-size: 1.1rem;
+      box-shadow: 0 2px 8px #2563eb22;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+    }
+    button[type="submit"]:hover {
+      background: linear-gradient(90deg, #f9f871 60%, #38bdf8 100%);
+      color: #2563eb;
+    }
+    a {
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: none;
+      margin: 0 0.5rem;
+      transition: color 0.3s;
+    }
+    a:hover {
+      color: #fbbf24;
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 1.2rem 0.5rem 1rem 0.5rem;
+        max-width: 98vw;
+      }
+      h2 {
+        font-size: 1.3rem;
+      }
+      input, button {
+        font-size: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h2>Login</h2>
+    <h2><i class="fas fa-user-circle" style="color:#38bdf8;margin-right:8px;"></i>Login</h2>
     <form id="login-form">
-      <input type="email" id="login-email" placeholder="Email" required />
-      <input type="password" id="login-password" placeholder="Senha" required />
-      <a href="/index.html">Voltar</a>
-      <a href="/register.html">Cadastre-se</a>
-      <button type="submit">Entrar</button>
+      <div class="form-group">
+        <span class="input-icon"><i class="fas fa-envelope"></i></span>
+        <input type="email" id="login-email" placeholder=" " required />
+        <label for="login-email">Email</label>
+      </div>
+      <div class="form-group">
+        <span class="input-icon"><i class="fas fa-lock"></i></span>
+        <input type="password" id="login-password" placeholder=" " required />
+        <label for="login-password">Senha</label>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:1rem;">
+        <a href="/index.html">Voltar</a>
+        <a href="/register.html">Cadastre-se</a>
+      </div>
+      <button type="submit"><span>Entrar</span></button>
     </form>
   </div>
   <script type="module" src="/js/script1.js"></script>
