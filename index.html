@@ -666,55 +666,119 @@
       <!-- === Aba Relatar === -->
       <div class="tab-pane fade" id="relatar">
         <div class="main-card animada" id="relato-area">
-          <form id="reportForm">
-            <!-- O campo de endereço será preenchido automaticamente via JS ao abrir a aba Relatar -->
-            <input type="hidden" id="latitude" name="latitude">
-            <input type="hidden" id="longitude" name="longitude">
-            <div class="mb-3">
-              <label for="address" class="form-label">Endereço do Ocorrido</label>
-              <input type="text" class="form-control" id="address" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
-              <div id="address-suggestions" class="dropdown-menu" style="width:100%"></div>
-              <small class="form-text text-muted">Exemplo: Rua Exemplo, 123, Bairro, Cidade</small>
+          <ul class="nav nav-tabs mb-3" id="tipoRelatoTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="pedestre-tab" data-bs-toggle="tab" data-bs-target="#relato-pedestre" type="button" role="tab" aria-controls="relato-pedestre" aria-selected="true">Pedestre</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="motorista-tab" data-bs-toggle="tab" data-bs-target="#relato-motorista" type="button" role="tab" aria-controls="relato-motorista" aria-selected="false">Motorista</button>
+            </li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="relato-pedestre" role="tabpanel" aria-labelledby="pedestre-tab">
+              <form id="reportForm">
+                <input type="hidden" id="latitude" name="latitude">
+                <input type="hidden" id="longitude" name="longitude">
+                <div class="mb-3">
+                  <label for="address" class="form-label">Endereço do Ocorrido</label>
+                  <input type="text" class="form-control" id="address" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
+                  <div id="address-suggestions" class="dropdown-menu" style="width:100%"></div>
+                  <small class="form-text text-muted">Exemplo: Rua Exemplo, 123, Bairro, Cidade</small>
+                </div>
+                <div class="mb-3">
+                  <label for="ocorrido-primario" class="form-label">Ocorrido Primário</label>
+                  <select class="form-select" id="ocorrido-primario" required>
+                    <option value="">Selecione</option>
+                    <option value="alagamento">💧 Alagamento</option>
+                    <option value="enxurrada">🌊 Enxurrada</option>
+                    <option value="obstrucao">🚧 Obstrução de via</option>
+                    <option value="deslizamento">⛰️ Deslizamento</option>
+                    <option value="fio-duvidoso">⚡ Fio duvidoso</option>
+                    <option value="outro">❓ Outro</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="ocorrido-secundario" class="form-label">Ocorrido Secundário <span class="text-muted" style="font-weight:400;">(opcional)</span></label>
+                  <select class="form-select" id="ocorrido-secundario">
+                    <option value="">Nenhum</option>
+                    <option value="alagamento">💧 Alagamento</option>
+                    <option value="enxurrada">🌊 Enxurrada</option>
+                    <option value="obstrucao">🚧 Obstrução de via</option>
+                    <option value="deslizamento">⛰️ Deslizamento</option>
+                    <option value="fio-duvidoso">⚡ Fio duvidoso</option>
+                    <option value="outro">❓ Outro</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="water-level" class="form-label">Nível da Água</label>
+                  <select class="form-select" id="water-level" required>
+                    <option value="">Selecione</option>
+                    <option value="0">Sem água no momento</option>
+                    <option value="0.2">Até o tornozelo (baixo)</option>
+                    <option value="0.5">Até o joelho (moderado)</option>
+                    <option value="1.0">Até a cintura (alto)</option>
+                    <option value="1.5">Acima da cintura (grave)</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="descricao" class="form-label">Descrição detalhada <span class="text-muted" style="font-weight:400;">(opcional)</span></label>
+                  <textarea class="form-control" id="descricao" rows="3" placeholder="Descreva o que aconteceu, pontos de referência, impactos, etc."></textarea>
+                  <small class="form-text text-muted">Inclua detalhes como horário, danos, pessoas afetadas, etc.</small>
+                </div>
+                <div class="mb-3">
+                  <label for="data-hora" class="form-label">Data e Hora do Evento</label>
+                  <input type="hidden" class="form-control" id="data-hora" name="data-hora">
+                </div>
+                <div class="mb-3">
+                  <label for="flood-photo" class="form-label">Fotos (opcional, até 3)</label>
+                  <input type="file" class="form-control" id="flood-photo" accept="image/*" multiple>
+                  <small class="form-text text-muted">Você pode anexar até 3 fotos do local.</small>
+                </div>
+                <button type="submit" class="btn btn-modern">Enviar Relato</button>
+              </form>
             </div>
-            <div class="mb-3">
-              <label for="tipo-ocorrencia" class="form-label">Tipo de Ocorrência</label>
-              <select class="form-select" id="tipo-ocorrencia" required>
-                <option value="">Selecione</option>
-                <option value="alagamento">💧 Alagamento</option>
-                <option value="enxurrada">🌊 Enxurrada</option>
-                <option value="obstrucao">🚧 Obstrução de via</option>
-                <option value="deslizamento">⛰️ Deslizamento</option>
-                <option value="fio-duvidoso">⚡ Fio duvidoso</option>
-                <option value="outro">❓ Outro</option>
-              </select>
+            <div class="tab-pane fade" id="relato-motorista" role="tabpanel" aria-labelledby="motorista-tab">
+              <form id="reportFormMotorista">
+                <input type="hidden" id="latitude-motorista" name="latitude">
+                <input type="hidden" id="longitude-motorista" name="longitude">
+                <div class="mb-3">
+                  <label for="address-motorista" class="form-label">Endereço do Ocorrido</label>
+                  <input type="text" class="form-control" id="address-motorista" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
+                  <div id="address-suggestions-motorista" class="dropdown-menu" style="width:100%"></div>
+                  <small class="form-text text-muted">Exemplo: Rua Exemplo, 123, Bairro, Cidade</small>
+                </div>
+                <div class="mb-3">
+                  <label for="veiculo" class="form-label">Veículo</label>
+                  <input type="text" class="form-control" id="veiculo" placeholder="Marca e modelo do veículo" required>
+                </div>
+                <div class="mb-3">
+                  <label for="nivel-submersao" class="form-label">Nível de Submersão</label>
+                  <select class="form-select" id="nivel-submersao" required>
+                    <option value="">Selecione</option>
+                    <option value="0">Sem água no momento</option>
+                    <option value="0.2">Até a metade da roda</option>
+                    <option value="0.5">Até a porta</option>
+                    <option value="1.0">Acima da porta</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="descricao-motorista" class="form-label">Descrição detalhada <span class="text-muted" style="font-weight:400;">(opcional)</span></label>
+                  <textarea class="form-control" id="descricao-motorista" rows="3" placeholder="Descreva o que aconteceu, pontos de referência, impactos, etc."></textarea>
+                  <small class="form-text text-muted">Inclua detalhes como horário, danos, pessoas afetadas, etc.</small>
+                </div>
+                <div class="mb-3">
+                  <label for="data-hora-motorista" class="form-label">Data e Hora do Evento</label>
+                  <input type="hidden" class="form-control" id="data-hora-motorista" name="data-hora">
+                </div>
+                <div class="mb-3">
+                  <label for="flood-photo-motorista" class="form-label">Fotos (opcional, até 3)</label>
+                  <input type="file" class="form-control" id="flood-photo-motorista" accept="image/*" multiple>
+                  <small class="form-text text-muted">Você pode anexar até 3 fotos do local.</small>
+                </div>
+                <button type="submit" class="btn btn-modern">Enviar Relato</button>
+              </form>
             </div>
-            <div class="mb-3">
-              <label for="water-level" class="form-label">Nível da Água</label>
-              <select class="form-select" id="water-level" required>
-                <option value="">Selecione</option>
-                <option value="0">Sem água no momento</option>
-                <option value="0.2">Até o tornozelo (baixo)</option>
-                <option value="0.5">Até o joelho (moderado)</option>
-                <option value="1.0">Até a cintura (alto)</option>
-                <option value="1.5">Acima da cintura (grave)</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="descricao" class="form-label">Descrição detalhada</label>
-              <textarea class="form-control" id="descricao" rows="3" placeholder="Descreva o que aconteceu, pontos de referência, impactos, etc." required></textarea>
-              <small class="form-text text-muted">Inclua detalhes como horário, danos, pessoas afetadas, etc.</small>
-            </div>
-            <div class="mb-3">
-              <label for="data-hora" class="form-label">Data e Hora do Evento</label>
-              <input type="hidden" class="form-control" id="data-hora" name="data-hora">
-            </div>
-            <div class="mb-3">
-              <label for="flood-photo" class="form-label">Fotos (opcional, até 3)</label>
-              <input type="file" class="form-control" id="flood-photo" accept="image/*" multiple>
-              <small class="form-text text-muted">Você pode anexar até 3 fotos do local.</small>
-            </div>
-            <button type="submit" class="btn btn-modern">Enviar Relato</button>
-          </form>
+          </div>
         </div>
         <div id="relato-login-msg" class="text-center my-3 d-none">
           <div class="alert alert-warning d-inline-block px-4 py-2" style="font-size:1.1rem;">
@@ -919,7 +983,8 @@
           const latitude = document.getElementById('latitude').value;
           const longitude = document.getElementById('longitude').value;
           const address = document.getElementById('address').value;
-          const tipo = document.getElementById('tipo-ocorrencia').value;
+          const ocorridoPrimario = document.getElementById('ocorrido-primario').value;
+          const ocorridoSecundario = document.getElementById('ocorrido-secundario').value;
           const nivel = document.getElementById('water-level').value;
           const descricao = document.getElementById('descricao').value;
           const dataHora = new Date().toISOString();
@@ -936,7 +1001,8 @@
             latitude,
             longitude,
             address,
-            tipo,
+            ocorridoPrimario,
+            ocorridoSecundario,
             nivel,
             descricao,
             dataHora,
@@ -1018,9 +1084,12 @@
         }
       });
       relatosFiltrados.forEach(function(r) {
-        const emoji = r.nivel === '0' ? '✅' : (tipoEmoji[r.tipo] || '❓');
+        const primario = r.ocorridoPrimario ? (tipoEmoji[r.ocorridoPrimario] || '❓') + ' ' + r.ocorridoPrimario : '';
+        const secundario = r.ocorridoSecundario && r.ocorridoSecundario !== '' ? (tipoEmoji[r.ocorridoSecundario] || '❓') + ' ' + r.ocorridoSecundario : '';
+        const emoji = r.nivel === '0' ? '✅' : (tipoEmoji[r.ocorridoPrimario] || '❓');
         html += `<div class="card mb-3"><div class="card-body">
-          <h5 class="card-title">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (r.tipo ? r.tipo : 'Relato')}</h5>
+          <h5 class="card-title">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (primario || 'Relato')}</h5>
+          ${secundario ? `<div class='mb-1'><strong>Ocorrido Secundário:</strong> ${secundario}</div>` : ''}
           <p class="card-text"><strong>Endereço:</strong> ${r.address || 'Não informado'}</p>
           <p class="card-text"><strong>Nível da água:</strong> ${r.nivel === '0' ? 'Sem água no momento' : (r.nivel || '--')}</p>
           <p class="card-text"><strong>Descrição:</strong> ${r.descricao || ''}</p>
@@ -1097,7 +1166,9 @@
           });
           const marker = L.marker([parseFloat(r.latitude), parseFloat(r.longitude)], {icon: customIcon, riseOnHover:true}).addTo(window.meuMapa);
           // Popup detalhado com efeito de entrada
-          const tipoTag = `<span style="display:inline-block;background:linear-gradient(90deg,#38bdf8 60%,#2563eb 100%);color:#fff;font-weight:600;font-size:0.98rem;padding:2px 10px;border-radius:1rem;margin-right:6px;box-shadow:0 2px 8px #2563eb22;letter-spacing:0.5px;">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (r.tipo ? r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1) : 'Relato')}</span>`;
+          const primario = r.ocorridoPrimario ? (tipoEmoji[r.ocorridoPrimario] || '❓') + ' ' + r.ocorridoPrimario : '';
+          const secundario = r.ocorridoSecundario && r.ocorridoSecundario !== '' ? (tipoEmoji[r.ocorridoSecundario] || '❓') + ' ' + r.ocorridoSecundario : '';
+          const tipoTag = `<span style="display:inline-block;background:linear-gradient(90deg,#38bdf8 60%,#2563eb 100%);color:#fff;font-weight:600;font-size:0.98rem;padding:2px 10px;border-radius:1rem;margin-right:6px;box-shadow:0 2px 8px #2563eb22;letter-spacing:0.5px;">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (primario || 'Relato')}</span>`;
           const nivelTag = `<span style="display:inline-block;background:${nivelCor};color:#222;font-weight:600;font-size:0.97rem;padding:2px 10px;border-radius:1rem;margin-left:0;box-shadow:0 2px 8px #2563eb22;">${r.nivel === '0' ? 'Sem água no momento' : (r.nivel ? r.nivel.replace('0.2','Baixo').replace('0.5','Moderado').replace('1.0','Alto').replace('1.5','Grave') : '--')}</span>`;
           const popupHtml = `
             <div class="popup-anim" style="min-width:220px;max-width:320px;padding:13px 10px 10px 10px;border-radius:1.2rem;background:linear-gradient(120deg,#f0f9ff 60%,#bae6fd 100%);box-shadow:0 4px 24px #2563eb33,0 1.5px 12px #38bdf822;border:2.5px solid #38bdf8;position:relative;overflow:hidden;transition:box-shadow 0.3s;">
@@ -1109,6 +1180,7 @@
                   ${nivelTag}
                 </div>
               </div>
+              ${secundario ? `<div style='font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;'><b>Ocorrido Secundário:</b> <span style='color:#222;'>${secundario}</span></div>` : ''}
               <div style="font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;"><i class='fas fa-map-marker-alt' style='color:#38bdf8;'></i> <b>Endereço:</b> <span style='color:#222;'>${r.address || 'Não informado'}</span></div>
               <div style="font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;"><b>Descrição:</b> <span style='color:#222;'>${r.descricao || ''}</span></div>
               <div style="font-size:0.97rem;color:#2563eb;margin-top:7px;text-align:right;z-index:1;position:relative;"><i class='far fa-clock' style='color:#38bdf8;'></i> ${new Date(r.dataHora).toLocaleString('pt-BR')}</div>
