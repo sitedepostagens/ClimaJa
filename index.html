@@ -1,3 +1,20 @@
+
+</body>
+<script>
+// Função global para fechar a interface de seleção de localização (modal ou div customizada)
+function fecharSelecaoLocalizacao() {
+  // Exemplo para modal Bootstrap
+  const modal = document.getElementById('modal-selecao-local');
+  if (modal) {
+    const modalInstance = bootstrap.Modal.getInstance(modal);
+    if (modalInstance) modalInstance.hide();
+    else modal.classList.remove('show');
+  }
+  // Exemplo para div customizada
+  const areaSelecao = document.getElementById('area-selecao-local');
+  if (areaSelecao) areaSelecao.classList.add('d-none');
+}
+</script>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -974,115 +991,83 @@
         }).addTo(window.meuMapa);
       }
       // Relatos locais (em memória) - agora global
-      window.relatosLocais = window.relatosLocais || [];
-      const reportForm = document.getElementById('reportForm');
-      if (reportForm) {
-        reportForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          // Coleta dados do formulário
-          const latitude = document.getElementById('latitude').value;
-          const longitude = document.getElementById('longitude').value;
-          const address = document.getElementById('address').value;
-          const ocorridoPrimario = document.getElementById('ocorrido-primario').value;
-          const ocorridoSecundario = document.getElementById('ocorrido-secundario').value;
-          const nivel = document.getElementById('water-level').value;
-          const descricao = document.getElementById('descricao').value;
-          const dataHora = new Date().toISOString();
-          let fotos = [];
-          const photoInput = document.getElementById('flood-photo');
-          if (photoInput && photoInput.files.length > 0) {
-            for (let i = 0; i < Math.min(photoInput.files.length, 3); i++) {
-              const file = photoInput.files[i];
-              fotos.push(file.name);
-            }
-          }
-          // Adiciona relato localmente (global)
-          window.relatosLocais.unshift({
-            latitude,
-            longitude,
-            address,
-            ocorridoPrimario,
-            ocorridoSecundario,
-            nivel,
-            descricao,
-            dataHora,
-            fotos,
-            status: 'publico'
-          });
-          // Troca para a aba do mapa para mostrar o marcador
-          const mapaTab = document.querySelector('a[href="#mapa"]');
-          if (mapaTab) {
-            var tab = new bootstrap.Tab(mapaTab);
-            tab.show();
-            // Aguarda a aba do mapa ser exibida antes de atualizar os marcadores
-            setTimeout(function() {
-              if (typeof inicializarMapaLeaflet === 'function') {
-                inicializarMapaLeaflet();
-              }
-              if (window.meuMapa) {
-                window.meuMapa.invalidateSize();
-              }
-              carregarRelatosPublicos();
-            }, 350);
-          } else {
-            if (typeof inicializarMapaLeaflet === 'function') {
-              inicializarMapaLeaflet();
-            }
-            if (window.meuMapa) {
-              window.meuMapa.invalidateSize();
-            }
-            carregarRelatosPublicos();
-          }
-          alert('Relato enviado com sucesso!');
-          reportForm.reset();
-        });
+      // ...existing code...
+
+const reportForm = document.getElementById('reportForm');
+if (reportForm) {
+  reportForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    // Coleta os dados do formulário
+    const latitude = document.getElementById('latitude').value;
+    const longitude = document.getElementById('longitude').value;
+    const address = document.getElementById('address').value;
+    const ocorridoPrimario = document.getElementById('ocorrido-primario').value;
+    const ocorridoSecundario = document.getElementById('ocorrido-secundario').value;
+    const nivel = document.getElementById('water-level').value;
+    const descricao = document.getElementById('descricao').value;
+    let fotos = [];
+    const photoInput = document.getElementById('flood-photo');
+    if (photoInput && photoInput.files.length > 0) {
+      for (let i = 0; i < Math.min(photoInput.files.length, 3); i++) {
+        fotos.push(photoInput.files[i].name); // ou faça upload e salve o link
       }
+    }
+
+    const relato = {
+      latitude,
+      longitude,
+      address,
+      ocorridoPrimario,
+      ocorridoSecundario,
+      nivel,
+      descricao,
+      fotos,
+      status: 'publico',
+      uid: auth.currentUser ? auth.currentUser.uid : null
+    };
+
+    const ok = await salvarRelatoFirestore(relato);
+    if (ok) {
+      alert('Relato enviado com sucesso!');
+      reportForm.reset();
+      fecharSelecaoLocalizacao();
+      // Se quiser, chame aqui a função para atualizar a lista de relatos
+      // carregarRelatosPublicos();
+    } else {
+      alert('Erro ao salvar relato no banco de dados!');
+    }
+  });
+}
       // Exibe relatos locais ao carregar
       carregarRelatosPublicos();
     });
 
     // Função para carregar relatos públicos
-    function carregarRelatosPublicos() {
-      const relatosDiv = document.getElementById('relatos-publicos');
-      if (!relatosDiv) return;
-      if (!window.relatosLocais || window.relatosLocais.length === 0) {
-        relatosDiv.innerHTML = '<div class="text-center text-muted">Nenhum relato enviado nesta sessão.</div>';
-        // Limpa marcadores de relatos do mapa
-        if (window.relatosMarkers && window.meuMapa) {
-          window.relatosMarkers.forEach(m => window.meuMapa.removeLayer(m));
-          window.relatosMarkers = [];
-        }
-        return;
-      }
-      let html = '';
-      // Limpa marcadores antigos
-      if (window.relatosMarkers && window.meuMapa) {
-        window.relatosMarkers.forEach(m => window.meuMapa.removeLayer(m));
-      }
-      window.relatosMarkers = [];
-      // Mapeia tipo para emoji
-      const tipoEmoji = {
-        'alagamento': '💧',
-        'enxurrada': '🌊',
-        'obstrucao': '🚧',
-        'deslizamento': '⛰️',
-        'fio-duvidoso': '⚡',
-        'outro': '❓'
-      };
-      // Se houver relato "Sem água no momento" para o mesmo endereço, anula relatos anteriores de alagamento
-      let relatosFiltrados = [];
-      window.relatosLocais.forEach(function(r) {
-        if (r.nivel === '0') {
-          // Remove relatos anteriores de alagamento para o mesmo endereço
-          relatosFiltrados = relatosFiltrados.filter(rel => rel.address !== r.address);
-          relatosFiltrados.push(r);
-        } else {
-          // Só adiciona se não houver relato "Sem água" para o mesmo endereço
-          if (!relatosFiltrados.some(rel => rel.address === r.address && rel.nivel === '0')) {
-            relatosFiltrados.push(r);
-          }
-        }
-      });
+// ...existing code...
+// Substitua a função carregarRelatosPublicos por esta versão:
+import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js";
+const db = getFirestore();
+
+async function carregarRelatosPublicos() {
+  const relatosDiv = document.getElementById('relatos-publicos');
+  if (!relatosDiv) return;
+  const q = query(collection(db, "relatos"), orderBy("dataHora", "desc"), limit(50));
+  const querySnapshot = await getDocs(q);
+  let html = '';
+  querySnapshot.forEach((doc) => {
+    const r = doc.data();
+    // Monte o HTML do relato igual já faz, usando os dados de r
+    html += `<div class="card mb-3"><div class="card-body">
+      <h5 class="card-title">${r.ocorridoPrimario || 'Relato'}</h5>
+      <p class="card-text"><strong>Endereço:</strong> ${r.address || 'Não informado'}</p>
+      <p class="card-text"><strong>Nível da água:</strong> ${r.nivel || '--'}</p>
+      <p class="card-text"><strong>Descrição:</strong> ${r.descricao || ''}</p>
+      <p class="card-text"><small class="text-muted">${r.dataHora && r.dataHora.toDate ? r.dataHora.toDate().toLocaleString('pt-BR') : ''}</small></p>
+    </div></div>`;
+  });
+  relatosDiv.innerHTML = html;
+}
+
       relatosFiltrados.forEach(function(r) {
         const primario = r.ocorridoPrimario ? (tipoEmoji[r.ocorridoPrimario] || '❓') + ' ' + r.ocorridoPrimario : '';
         const secundario = r.ocorridoSecundario && r.ocorridoSecundario !== '' ? (tipoEmoji[r.ocorridoSecundario] || '❓') + ' ' + r.ocorridoSecundario : '';
@@ -1219,11 +1204,7 @@
         // updateAuthUI(user); // Removido, controle feito pelo script.js
       });
     } else {
-      var user = null;
-      try {
-        user = JSON.parse(localStorage.getItem('user')) || null;
-      } catch {}
-      // updateAuthUI(user); // Removido, controle feito pelo script.js
+      // Controle de autenticação feito pelo script.js
     }
   });
 </script>

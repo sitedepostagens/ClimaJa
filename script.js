@@ -258,8 +258,16 @@ function toggleReportType(type, btn) {
   document.getElementById(`${type}-form`).classList.remove('d-none');
 }
 
+
+// Flag para evitar reabertura do menu de sugestões após seleção
+let addressSelectedBySuggestion = false;
 // Localização por texto
 document.getElementById('address').addEventListener('input', () => {
+  if (addressSelectedBySuggestion) {
+    addressSelectedBySuggestion = false;
+    document.getElementById('address-suggestions').classList.remove('show');
+    return;
+  }
   clearTimeout(geocodeTimeout);
   if (document.getElementById('address').value.length < 3) {
     document.getElementById('address-suggestions').classList.remove('show');
@@ -269,16 +277,26 @@ document.getElementById('address').addEventListener('input', () => {
 });
 
 async function searchLocation(sug = null) {
-  const addr = document.getElementById('address');
-  const menu = document.getElementById('address-suggestions');
-  if (sug) {
-    addr.value = sug.display_name;
-    if (reportMarker) map.removeLayer(reportMarker);
-    updateReportMarker(sug.lat, sug.lon);
-    map.flyTo([sug.lat, sug.lon], 15);
-    menu.classList.remove('show');
-    return;
-  }
+  const addr = document.getElementById('address');
+  const menu = document.getElementById('address-suggestions');
+  if (sug) {
+    addressSelectedBySuggestion = true;
+    addr.value = sug.display_name;
+    // Preenche latitude e longitude nos campos hidden
+    const latInput = document.getElementById('latitude');
+    const lonInput = document.getElementById('longitude');
+    if (latInput) latInput.value = sug.lat;
+    if (lonInput) lonInput.value = sug.lon;
+    if (reportMarker) map.removeLayer(reportMarker);
+    updateReportMarker(sug.lat, sug.lon);
+    map.flyTo([sug.lat, sug.lon], 15);
+    // Força esconder o menu de sugestões
+    menu.classList.remove('show');
+    menu.innerHTML = '';
+    // Remove foco do campo para fechar o dropdown em mobile
+    addr.blur();
+    return;
+  }
   if (!addr.value.trim()) return;
   try {
     const resp = await fetch(

@@ -1,8 +1,23 @@
+import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+const db = getFirestore();
 import { auth } from "../firebase/firebase-config.js";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
+
+async function salvarRelatoFirestore(relato) {
+  try {
+    await addDoc(collection(db, "relatos"), {
+      ...relato,
+      dataHora: serverTimestamp()
+    });
+    return true;
+  } catch (e) {
+    console.error("Erro ao salvar relato no Firestore:", e);
+    return false;
+  }
+}
 
 const registerForm = document.getElementById("register-form");
 if (registerForm) {
