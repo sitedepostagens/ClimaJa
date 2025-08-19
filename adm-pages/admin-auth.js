@@ -56,8 +56,8 @@ class AdminAuthSystem {
             localStorage.setItem('adminAuthenticated', 'true');
             
             // Redireciona para o painel após 1 segundo
-            setTimeout(() => {
-                window.location.href = 'security-pannel.html';
+                setTimeout(() => {
+                    window.location.href = 'option.html';
             }, 1000);
             
         } else {

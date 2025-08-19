@@ -8,18 +8,17 @@
     <title>ADM - LOGS</title>
 </head>
 <body>
-    <body>
-<script>
-  // Redireciona para login se não estiver autenticado
-  if (localStorage.getItem('adminAuthenticated') !== 'true') {
-    window.location.href = 'login-admin.html';
-  }
-</script>
+    <script>
+        if (localStorage.getItem('adminAuthenticated') !== 'true') {
+            window.location.href = '/adm-pages/login-admin.html';
+        }
+    </script>
     <div id="security-monitor" class="security-monitor">
     <h2>Painel de Segurança</h2>
     <div class="monitor-controls">
         <button id="refresh-logs">Atualizar Logs</button>
         <button id="export-logs">Exportar Logs</button>
+        <button id="logout-btn" class="logout-btn">Sair</button>
     </div>
     <div class="access-logs">
         <table>
@@ -47,7 +46,12 @@
         </ul>
     </div>
 </div>
-
+<script>
+    document.getElementById('logout-btn').addEventListener('click', function() {
+            localStorage.removeItem('adminAuthenticated');
+            window.location.href = 'option.html';
+        });
+</script>
 <script src="./pannel-script.js"></script>
 </body>
 </html>

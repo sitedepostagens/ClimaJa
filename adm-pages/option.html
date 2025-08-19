@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Opções do Administrador</title>
+	<style>
+		body {
+			background: #181c24;
+			color: #fff;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+			margin: 0;
+		}
+		.option-container {
+			background: #232a36;
+			padding: 40px 30px;
+			border-radius: 10px;
+			box-shadow: 0 0 20px #0008;
+			text-align: center;
+		}
+		.option-container h2 {
+			margin-bottom: 30px;
+			font-size: 2rem;
+		}
+		.option-btn {
+			display: block;
+			width: 220px;
+			margin: 18px auto;
+			padding: 16px 0;
+			font-size: 1.1rem;
+			border: none;
+			border-radius: 6px;
+			background: #3a5c8a;
+			color: #fff;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background 0.2s;
+		}
+		.option-btn:hover {
+			background: #4a6c9a;
+		}
+	</style>
+</head>
+<body>
+	<script>
+		if (localStorage.getItem('adminAuthenticated') !== 'true') {
+			window.location.href = '/adm-pages/login-admin.html';
+		}
+	</script>
+	<div class="option-container">
+		<h2>Escolha uma opção</h2>
+		<button class="option-btn" onclick="window.location.href='security-pannel.html'">Painel de Segurança</button>
+		<button class="option-btn" onclick="window.location.href='dashboard.html'">Dashboard Avançado</button>
+	</div>
+</body>
+</html>
