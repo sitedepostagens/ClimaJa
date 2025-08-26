@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClimaJá</title>
+  <!-- Ícones (Lucide ou FontAwesome, escolha) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #a8d8ff, #dff6ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    header {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #0366d6;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 20px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-ios {
+      background-color: #000000;
+    }
+
+    .btn-android {
+      background-color: #34a853;
+    }
+
+    footer {
+      position: absolute;
+      bottom: 15px;
+      font-size: 0.9rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <i class="fa-solid fa-cloud-sun"></i>
+    ClimaJá
+  </header>
+
+  <div class="buttons">
+    <a href="app/ClimaJa.ipa" class="btn btn-ios" download>
+      <i class="fa-brands fa-apple"></i> iOS
+    </a>
+    <a href="app/ClimaJa.apk" class="btn btn-android" download>
+      <i class="fa-brands fa-android"></i> Android
+    </a>
+
+    
+     <a href="app/ClimaJa.apk" class="btn btn-android" download>
+      <i class="fa-solid fa-house"></i> Voltar
+    </a>
+  </div>
+
+  <footer>
+    © 2025 ClimaJá - Todos os direitos reservados
+  </footer>
+</body>
+</html>
