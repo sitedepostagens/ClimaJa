@@ -1,6 +1,49 @@
 
 </body>
 <script>
+    // Função para calcular intensidade dos relatos próximos
+    function calcularIntensidadeRelatos(relatos, lat, lon) {
+      let intensidade = 0;
+      relatos.forEach(r => {
+        if (r.latitude && r.longitude) {
+          const dist = Math.sqrt(Math.pow(r.latitude - lat, 2) + Math.pow(r.longitude - lon, 2));
+          if (dist < 0.08) { // ~8km
+            if (r.nivel === '1.5') intensidade += 3;
+            else if (r.nivel === '1.0') intensidade += 2;
+            else if (r.nivel === '0.5') intensidade += 1.5;
+            else if (r.nivel === '0.2') intensidade += 1;
+            else if (r.nivel === '0') intensidade += 0.2;
+          }
+        }
+      });
+      return intensidade;
+    }
+
+    // Atualiza o mapa Windy conforme relatos e localização
+    async function atualizarMapaWindy() {
+      if (!userLocation) return;
+      // Buscar relatos públicos do Firestore
+      let relatos = [];
+      try {
+        const db = getFirestore();
+        const q = query(collection(db, "relatos"), orderBy("dataHora", "desc"), limit(50));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(doc => relatos.push(doc.data()));
+      } catch (e) { /* fallback: sem relatos */ }
+      // Calcular intensidade
+      const intensidade = calcularIntensidadeRelatos(relatos, userLocation.lat, userLocation.lon);
+      // Definir overlay e zoom
+      let overlay = 'rain';
+      let zoom = 13;
+      if (intensidade >= 6) { overlay = 'thunder'; zoom = 15; }
+      else if (intensidade >= 3) { overlay = 'rain'; zoom = 14; }
+      else if (intensidade >= 1.5) { overlay = 'wind'; zoom = 13; }
+      else { overlay = 'temp'; zoom = 12; }
+      var windyFrame = document.getElementById('windy-embed');
+      if (windyFrame) {
+        windyFrame.src = `https://embed.windy.com/embed2.html?lat=${userLocation.lat}&lon=${userLocation.lon}&detailLat=${userLocation.lat}&detailLon=${userLocation.lon}&width=650&height=450&zoom=${zoom}&level=surface&overlay=${overlay}&product=ecmwf`;
+      }
+    }
 // Função global para fechar a interface de seleção de localização (modal ou div customizada)
 function fecharSelecaoLocalizacao() {
   // Exemplo para modal Bootstrap
@@ -634,10 +677,12 @@ function fecharSelecaoLocalizacao() {
       <!-- === Aba Mapa === -->
       <div class="tab-pane fade" id="mapa">
         <div class="main-card animada">
-          <div id="map"></div>
+          <div class="ratio ratio-16x9" style="border-radius:1rem;overflow:hidden;">
+            <iframe id="windy-embed" src="https://embed.windy.com/embed2.html?lat=-8.05&lon=-34.9&detailLat=-8.05&detailLon=-34.9&width=650&height=450&zoom=10&level=surface&overlay=rain&product=ecmwf" frameborder="0" style="width:100%;height:100%;min-height:350px;border-radius:1rem;"></iframe>
+          </div>
           <div class="mt-3 text-center">
-            <button class="btn btn-modern" onclick="locateUser(true)">
-              <i class="fas fa-location-crosshairs me-2"></i>Minha Localização
+            <button class="btn btn-modern" onclick="pedirLocalizacaoWindy()">
+              <i class="fas fa-location-crosshairs me-2"></i>Usar Minha Localização
             </button>
           </div>
         </div>
@@ -843,7 +888,7 @@ function fecharSelecaoLocalizacao() {
     // Localização global do usuário
     let userLocation = null;
 
-    // Solicita localização ao carregar o site
+    // Solicita localização ao abrir o site e atualiza Windy
     function pedirLocalizacaoInicial() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(pos) {
@@ -851,13 +896,40 @@ function fecharSelecaoLocalizacao() {
             lat: pos.coords.latitude,
             lon: pos.coords.longitude
           };
-          // Usar localização para clima e mapa
           atualizarClimaComLocalizacao();
-          centralizarMapaNaLocalizacao();
-        }, function() {
-          // Usuário negou ou erro
+          atualizarMapaWindy();
+        }, function(err) {
           userLocation = null;
-        });
+          alert('Não foi possível obter sua localização exata. Algumas funções podem ficar limitadas.');
+        }, {enableHighAccuracy:true, timeout:10000});
+      } else {
+        alert('Seu navegador não suporta geolocalização.');
+      }
+    }
+
+    // Atualiza o iframe do Windy para a localização do usuário
+    function atualizarMapaWindy() {
+      if (!userLocation) return;
+      var windyFrame = document.getElementById('windy-embed');
+      if (windyFrame) {
+        windyFrame.src = `https://embed.windy.com/embed2.html?lat=${userLocation.lat}&lon=${userLocation.lon}&detailLat=${userLocation.lat}&detailLon=${userLocation.lon}&width=650&height=450&zoom=13&level=surface&overlay=rain&product=ecmwf`;
+      }
+    }
+
+    // Botão manual para atualizar Windy
+    function pedirLocalizacaoWindy() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          userLocation = {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude
+          };
+          atualizarMapaWindy();
+        }, function() {
+          alert('Não foi possível obter sua localização.');
+        }, {enableHighAccuracy:true, timeout:10000});
+      } else {
+        alert('Seu navegador não suporta geolocalização.');
       }
     }
 
