@@ -690,6 +690,10 @@ function fecharSelecaoLocalizacao() {
       <!-- === Aba Clima === -->
       <div class="tab-pane fade" id="clima">
         <div class="main-card animada">
+          <div id="clima-alerta-localizacao" style="display:none;" class="alert alert-warning text-center mt-2 mb-3">
+            Para visualizar as informações do clima, permita o acesso à sua localização nas configurações do navegador.<br>
+            Se já permitiu e não aparece, recarregue a página ou tente novamente mais tarde.
+          </div>
           <div class="weather-header">
             <i class="wi wi-day-sunny weather-icon"></i>
             <div>
@@ -935,7 +939,18 @@ function fecharSelecaoLocalizacao() {
 
     // Atualiza aba Clima com localização
     function atualizarClimaComLocalizacao() {
-      if (!userLocation) return;
+      const alerta = document.getElementById('clima-alerta-localizacao');
+      if (!userLocation) {
+        if (alerta) alerta.style.display = '';
+        // Limpa dados
+        document.getElementById('current-temp').textContent = '--°C';
+        document.getElementById('city-name').textContent = '--';
+        document.getElementById('humidity').textContent = '--%';
+        document.getElementById('wind-speed').textContent = '--km/h';
+        document.getElementById('pressure').textContent = '--';
+        document.getElementById('rain').textContent = '--mm';
+        return;
+      }
       // Buscar bairro via Nominatim
       fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lon}&addressdetails=1`)
         .then(res => res.json())
@@ -955,9 +970,14 @@ function fecharSelecaoLocalizacao() {
                 document.getElementById('wind-speed').textContent = `${data.current_weather.windspeed} km/h`;
                 document.getElementById('pressure').textContent = data.current_weather.pressure ? `${data.current_weather.pressure} hPa` : '--';
                 document.getElementById('rain').textContent = data.current_weather.precipitation ? `${data.current_weather.precipitation} mm` : '--mm';
+                if (alerta) alerta.style.display = 'none';
+              } else {
+                if (alerta) alerta.style.display = '';
               }
-            });
-        });
+            })
+            .catch(() => { if (alerta) alerta.style.display = ''; });
+        })
+        .catch(() => { if (alerta) alerta.style.display = ''; });
     }
 
     // Centraliza o mapa na localização do usuário
