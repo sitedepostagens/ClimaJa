@@ -106,6 +106,19 @@ function fecharSelecaoLocalizacao() {
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="animacao-global.css">
   <style>
+    /* Forçar bordas arredondadas nas principais áreas para visual consistente */
+    .main-card, .main-card.animada, .tab-pane, .tab-pane .main-card, #map, .relato-card, .weather-header, .weather-grid {
+      border-radius: 1.2rem !important;
+    }
+    /* Ajuste mais suave para inputs e botões */
+    .form-control, .btn, .dropdown-menu {
+      border-radius: 0.8rem !important;
+    }
+    /* Certifique-se que popups do leaflet estejam arredondados */
+    .leaflet-popup-content-wrapper {
+      border-radius: 1rem !important;
+    }
+
     /* Área de login/cadastro: visual moderno, espaçamento, gradiente, bordas arredondadas */
     .login-cadastro-area {
       display: flex;
