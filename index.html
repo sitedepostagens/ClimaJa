@@ -677,11 +677,9 @@ function fecharSelecaoLocalizacao() {
       <!-- === Aba Mapa === -->
       <div class="tab-pane fade" id="mapa">
         <div class="main-card animada">
-          <div class="ratio ratio-16x9" style="border-radius:1rem;overflow:hidden;">
-            <iframe id="windy-embed" src="https://embed.windy.com/embed2.html?lat=-8.05&lon=-34.9&detailLat=-8.05&detailLon=-34.9&width=650&height=450&zoom=10&level=surface&overlay=rain&product=ecmwf" frameborder="0" style="width:100%;height:100%;min-height:350px;border-radius:1rem;"></iframe>
-          </div>
+          <div id="map" style="width:100%;height:450px;border-radius:1rem;"></div>
           <div class="mt-3 text-center">
-            <button class="btn btn-modern" onclick="pedirLocalizacaoWindy()">
+            <button class="btn btn-modern" id="btn-localizacao">
               <i class="fas fa-location-crosshairs me-2"></i>Usar Minha Localização
             </button>
           </div>
@@ -884,6 +882,89 @@ function fecharSelecaoLocalizacao() {
   <!-- Nosso JS -->
   <script type="module" src="script.js"></script>
   <!-- Firebase SDK -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script>
+    // Inicialização única do mapa Leaflet
+    function inicializarMapaLeaflet() {
+      if (window.meuMapa) return;
+      const mapDiv = document.getElementById('map');
+      if (!mapDiv) return;
+      window.meuMapa = L.map('map').setView([-8.05, -34.9], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(window.meuMapa);
+    }
+
+    // Botão de localização para o mapa Leaflet
+    function pedirLocalizacaoMapa() {
+      if (navigator.geolocation && window.meuMapa) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          var lat = pos.coords.latitude;
+          var lon = pos.coords.longitude;
+          window.meuMapa.setView([lat, lon], 15);
+          L.marker([lat, lon]).addTo(window.meuMapa).bindPopup('Você está aqui!').openPopup();
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Inicializa mapa ao abrir aba
+      document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
+        tab.addEventListener('shown.bs.tab', function (e) {
+          if (e.target.getAttribute('href') === '#mapa') {
+            inicializarMapaLeaflet();
+            pedirLocalizacaoMapa();
+          }
+        });
+      });
+      // Botão de localização
+      var btnLoc = document.getElementById('btn-localizacao');
+      if (btnLoc) btnLoc.onclick = pedirLocalizacaoMapa;
+
+      // Photon autocomplete para campo de endereço
+      function setupPhotonAutocomplete(inputId, latId, lonId, suggestionsId) {
+        var input = document.getElementById(inputId);
+        var suggestions = document.getElementById(suggestionsId);
+        input.addEventListener('input', function() {
+          var query = input.value;
+          if (query.length < 3) {
+            suggestions.style.display = 'none';
+            return;
+          }
+          fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&limit=5')
+            .then(res => res.json())
+            .then(data => {
+              suggestions.innerHTML = '';
+              data.features.forEach(function(feature) {
+                var item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'dropdown-item';
+                item.textContent = feature.properties.name + (feature.properties.city ? ', ' + feature.properties.city : '');
+                item.onclick = function() {
+                  input.value = item.textContent;
+                  document.getElementById(latId).value = feature.geometry.coordinates[1];
+                  document.getElementById(lonId).value = feature.geometry.coordinates[0];
+                  if (window.meuMapa) {
+                    window.meuMapa.setView([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], 16);
+                    L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]).addTo(window.meuMapa).bindPopup(item.textContent).openPopup();
+                  }
+                  suggestions.style.display = 'none';
+                };
+                suggestions.appendChild(item);
+              });
+              suggestions.style.display = data.features.length ? 'block' : 'none';
+            });
+        });
+        input.addEventListener('blur', function() {
+          setTimeout(() => suggestions.style.display = 'none', 200);
+        });
+      }
+
+      // Ativa autocomplete Photon nos campos de endereço
+      setupPhotonAutocomplete('address', 'latitude', 'longitude', 'address-suggestions');
+      setupPhotonAutocomplete('address-motorista', 'latitude-motorista', 'longitude-motorista', 'address-suggestions-motorista');
+    });
+  </script>
 <!-- Firebase removido temporariamente -->
   <script>
     // Firebase removido temporariamente
