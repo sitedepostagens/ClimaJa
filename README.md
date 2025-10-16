@@ -81,7 +81,8 @@ O ClimaJá! foi desenvolvido pela Escola Técnica Estadual Ginásio Pernambucano
 ## Contato
 
 
+Para dúvidas, sugestões ou suporte, entre em contato com a equipe do ClimaJá! através do email: `oclimaja@hotmail.com`.
+
 ## APP hospedado e gerenciado no WebintoAPP
 
 app apk gerenciado e ospedado no servidor da webintoapp no link `https://www.webintoapp.com/author/dashboard`
-Para dúvidas, sugestões ou suporte, entre em contato com a equipe do ClimaJá! através do email: `oclimaja@hotmail.com`.
