@@ -726,9 +726,34 @@ function fecharSelecaoLocalizacao() {
             Para visualizar as informações do clima, permita o acesso à sua localização nas configurações do navegador.<br>
             Se já permitiu e não aparece, recarregue a página ou tente novamente mais tarde.
           </div>
+          <!-- Fallback: buscar por cidade e tentar novamente -->
+          <div id="clima-fallback" style="display:none;" class="text-center mt-2 mb-3">
+            <div class="mb-2">Ou busque pelo nome da cidade:</div>
+            <div class="d-flex justify-content-center gap-2">
+              <input type="text" id="clima-cidade-input" class="form-control" placeholder="Ex: Recife, PE" style="max-width:320px;">
+              <button id="clima-buscar-cidade" class="btn btn-modern">Buscar</button>
+            </div>
+            <div class="mt-2">
+              <button id="clima-tentar-novamente" class="btn btn-link">Tentar novamente (localização)</button>
+            </div>
+          </div>
           <div class="weather-header">
             <i class="wi wi-day-sunny weather-icon"></i>
-            <div>
+              <style>
+                  .weather-header .weather-icon {
+                 margin-left: 12px;
+                 margin-top: 6px;
+                 margin-right: 22px;
+                 margin-bottom: 10px;
+                 font-size: var(--weather-icon-size, 3.5rem);
+                 transition: font-size 0.3s;
+                  }
+                  .weather-header .weather-icon.sunny { --weather-icon-size: 3.7rem; }
+                  .weather-header .weather-icon.rain { --weather-icon-size: 4.2rem; }
+                  .weather-header .weather-icon.cloud { --weather-icon-size: 3.2rem; }
+                  .weather-header .weather-icon.storm { --weather-icon-size: 4.5rem; }
+              </style>
+              <div>
               <h2 class="mb-0" id="city-name">Carregando...</h2>
               <div class="sensor-value" id="current-temp">--°C</div>
             </div>
@@ -828,8 +853,7 @@ function fecharSelecaoLocalizacao() {
                   <small class="form-text text-muted">Inclua detalhes como horário, danos, pessoas afetadas, etc.</small>
                 </div>
                 <div class="mb-3">
-                  <label for="data-hora" class="form-label">Data e Hora do Evento</label>
-                  <input type="hidden" class="form-control" id="data-hora" name="data-hora">
+              <!-- Data e hora removidos, são automáticos -->
                 </div>
                 <div class="mb-3">
                   <label for="flood-photo" class="form-label">Fotos (opcional, até 3)</label>
@@ -869,8 +893,7 @@ function fecharSelecaoLocalizacao() {
                   <small class="form-text text-muted">Inclua detalhes como horário, danos, pessoas afetadas, etc.</small>
                 </div>
                 <div class="mb-3">
-                  <label for="data-hora-motorista" class="form-label">Data e Hora do Evento</label>
-                  <input type="hidden" class="form-control" id="data-hora-motorista" name="data-hora">
+              <!-- Data e hora removidos, são automáticos -->
                 </div>
                 <div class="mb-3">
                   <label for="flood-photo-motorista" class="form-label">Fotos (opcional, até 3)</label>
@@ -1183,6 +1206,28 @@ function fecharSelecaoLocalizacao() {
           }
           if (e.target.getAttribute('href') === '#clima') {
             atualizarClimaComLocalizacao();
+              // Atualiza ícone do clima ao acessar aba
+              setTimeout(function() {
+                if (window.userLocation) {
+                  fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${window.userLocation.lat}&lon=${window.userLocation.lon}&appid=API_KEY&units=metric&lang=pt_br`)
+                    .then(res => res.json())
+                    .then(data => {
+                      if (data && data.weather && data.weather[0]) {
+                        var iconEl = document.querySelector('.weather-icon');
+                        if (iconEl) {
+                    iconEl.className = `wi wi-owm-${data.weather[0].id} weather-icon`;
+                    // Varia tamanho conforme clima
+                    let clima = data.weather[0].main.toLowerCase();
+                    iconEl.classList.remove('sunny','rain','cloud','storm');
+                    if (clima.includes('rain')) iconEl.classList.add('rain');
+                    else if (clima.includes('cloud')) iconEl.classList.add('cloud');
+                    else if (clima.includes('storm') || clima.includes('thunder')) iconEl.classList.add('storm');
+                    else iconEl.classList.add('sunny');
+                        }
+                      }
+                    });
+                }
+              }, 400);
           }
           if (e.target.getAttribute('href') === '#mapa') {
             inicializarMapaLeaflet();
@@ -1277,7 +1322,7 @@ async function carregarRelatosPublicos() {
     </div></div>`;
   });
   relatosDiv.innerHTML = html;
-}
+  // ...existing code...
 
       relatosFiltrados.forEach(function(r) {
         const primario = r.ocorridoPrimario ? (tipoEmoji[r.ocorridoPrimario] || '❓') + ' ' + r.ocorridoPrimario : '';
@@ -1381,19 +1426,7 @@ async function carregarRelatosPublicos() {
               <div style="font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;"><b>Descrição:</b> <span style='color:#222;'>${r.descricao || ''}</span></div>
               <div style="font-size:0.97rem;color:#2563eb;margin-top:7px;text-align:right;z-index:1;position:relative;"><i class='far fa-clock' style='color:#38bdf8;'></i> ${new Date(r.dataHora).toLocaleString('pt-BR')}</div>
               <style>
-                .leaflet-popup-content-wrapper { box-shadow: 0 8px 32px #2563eb33 !important; border-radius: 1.2rem !important; border: 2.5px solid #38bdf8 !important; }
-                .leaflet-popup-content { margin: 0.5rem 0.2rem !important; }
-                .popup-anim { animation: popupFadeIn 0.7s cubic-bezier(.23,1.02,.32,1); }
-                @keyframes popupFadeIn {
-                  0% { opacity: 0; transform: scale(0.92) translateY(30px); }
-                  60% { opacity: 1; transform: scale(1.04) translateY(-8px); }
-                  100% { opacity: 1; transform: scale(1) translateY(0); }
-                }
-                @media (max-width: 500px) {
-                  .leaflet-popup-content { font-size: 0.97rem !important; }
-                }
-              </style>
-            </div>
+        </div>
           `;
           marker.bindPopup(popupHtml);
           window.relatosMarkers.push(marker);

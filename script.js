@@ -222,6 +222,9 @@ async function getWeatherData(lat, lon) {
       `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pt_br`
     );
     const data = await resp.json();
+    if (!data || !data.main || typeof data.main.temp === 'undefined') {
+      throw new Error('Dados de clima inválidos');
+    }
     document.getElementById('current-temp').textContent = `${Math.round(data.main.temp)}°C`;
     document.getElementById('humidity').textContent = `${data.main.humidity}%`;
     document.getElementById('wind-speed').textContent = `${(data.wind.speed*3.6).toFixed(1)}km/h`;
@@ -231,8 +234,14 @@ async function getWeatherData(lat, lon) {
       : '0.0mm';
     document.querySelector('.weather-icon').className = `wi wi-owm-${data.weather[0].id} weather-icon`;
     getCityName(lat, lon);
-  } catch {
+    // Limpa alerta se sucesso
+    const alerta = document.getElementById('clima-alerta-localizacao');
+    if (alerta) alerta.style.display = 'none';
+  } catch (err) {
+    console.error('[Clima] Erro ao carregar dados do clima:', err);
     showNotification('Erro ao carregar dados do clima', 'danger');
+    const alerta = document.getElementById('clima-alerta-localizacao');
+    if (alerta) alerta.style.display = 'block';
   }
 }
 
@@ -451,9 +460,24 @@ function createPopupContent(report) {
 
 async function loadSavedReports() {
   const arr = await loadReportsFromDB(); // Usa a função de carregar do "DB"
+  const relatosDiv = document.getElementById('relatos-publicos');
+  if (relatosDiv) relatosDiv.innerHTML = '';
   arr.forEach(r => {
     try {
       addReportToMap(r);
+      if (relatosDiv) {
+        const card = document.createElement('div');
+        card.className = 'relato-card';
+        card.innerHTML = `
+          <div class="relato-titulo">${r.type === 'pedestre' ? '🚶' : '🚗'} ${r.type === 'pedestre' ? 'Relato de Pedestre' : 'Relato de Motorista'}</div>
+          <div class="relato-nivel">${r.details.levelText || '--'}</div>
+          ${r.details.vehicle ? `<div class='relato-endereco'><b>Veículo:</b> ${r.details.vehicle.brand} ${r.details.vehicle.model}</div>` : ''}
+          <div class="relato-endereco"><b>Endereço:</b> ${r.address || (r.location ? `${r.location.lat.toFixed(4)}, ${r.location.lng.toFixed(4)}` : '--')}</div>
+          <div class="relato-descricao"><b>Descrição:</b> ${r.details.descricao || ''}</div>
+          <div class="relato-data">${r.timestamp ? new Date(r.timestamp).toLocaleString('pt-BR') : ''}</div>
+        `;
+        relatosDiv.appendChild(card);
+      }
     } catch (e) {
       console.warn('Erro ao adicionar relato salvo:', e);
     }
@@ -546,42 +570,41 @@ async function searchVehicles(query) {
   }
 }
 
-document.getElementById('vehicle-model').addEventListener('input', e => {
-  clearTimeout(vehicleTimeout);
-  const q = e.target.value.trim();
-  const sug = document.getElementById('vehicle-suggestions');
-  
-  if (q.length < 3) {
-    sug.style.display = 'none';
-    return;
-  }
-  
-  // Mostra indicador de carregamento
-  sug.innerHTML = '<div class="vehicle-item">Buscando veículos...</div>';
-  sug.style.display = 'block';
-  
-  vehicleTimeout = setTimeout(async () => {
-    try {
-      const res = await searchVehicles(q);
-      sug.innerHTML = '';
-      
-      if (!res.length) {
-        sug.innerHTML = '<div class="vehicle-item">Nenhum veículo encontrado</div>';
-        return;
-      }
-      
-      res.forEach(v => {
-        const d = document.createElement('div');
-        d.className = 'vehicle-item';
-        d.textContent = `${v.marca} ${v.nome}`;
-        d.onclick = () => selectVehicle(v);
-        sug.appendChild(d);
-      });
-    } catch (error) {
-      sug.innerHTML = '<div class="vehicle-item">Erro na busca</div>';
+const vehicleModelInput = document.getElementById('vehicle-model');
+if (vehicleModelInput) {
+  vehicleModelInput.addEventListener('input', e => {
+    clearTimeout(vehicleTimeout);
+    const q = e.target.value.trim();
+    const sug = document.getElementById('vehicle-suggestions');
+    if (!sug) return;
+    if (q.length < 3) {
+      sug.style.display = 'none';
+      return;
     }
-  }, 300);
-});
+    // Mostra indicador de carregamento
+    sug.innerHTML = '<div class="vehicle-item">Buscando veículos...</div>';
+    sug.style.display = 'block';
+    vehicleTimeout = setTimeout(async () => {
+      try {
+        const res = await searchVehicles(q);
+        sug.innerHTML = '';
+        if (!res.length) {
+          sug.innerHTML = '<div class="vehicle-item">Nenhum veículo encontrado</div>';
+          return;
+        }
+        res.forEach(v => {
+          const d = document.createElement('div');
+          d.className = 'vehicle-item';
+          d.textContent = `${v.marca} ${v.nome}`;
+          d.onclick = () => selectVehicle(v);
+          sug.appendChild(d);
+        });
+      } catch (error) {
+        sug.innerHTML = '<div class="vehicle-item">Erro na busca</div>';
+      }
+    }, 300);
+  });
+}
 
 function selectVehicle(v) {
   selectedVehicle = v;
@@ -801,3 +824,143 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 initMap();
+
+// Função para buscar clima pela localização
+function buscarClimaPorLocalizacao() {
+  const alerta = document.getElementById('clima-alerta-localizacao');
+  if (!navigator.geolocation) {
+    if (alerta) {
+      alerta.style.display = 'block';
+      alerta.textContent = 'Seu navegador não suporta geolocalização.';
+    }
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    if (alerta) alerta.style.display = 'none';
+    console.log('[Clima] Localização obtida:', lat, lon);
+    getWeatherData(lat, lon);
+  }, function(err) {
+    if (alerta) alerta.style.display = 'block';
+    console.warn('[Clima] Erro ao obter localização:', err);
+  }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+// Solicita localização ao abrir a aba Clima
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
+    tab.addEventListener('shown.bs.tab', function (e) {
+      const href = e.target.getAttribute('href');
+      if (href === '#clima') {
+        buscarClimaPorLocalizacao();
+      }
+    });
+  });
+
+  // Se a aba Clima já estiver ativa ao carregar a página, busca imediatamente
+  const climaPane = document.querySelector('.tab-pane#clima');
+  if (climaPane && climaPane.classList.contains('show')) {
+    buscarClimaPorLocalizacao();
+  }
+});
+
+// Solicita localização ao abrir a aba Clima
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
+    tab.addEventListener('shown.bs.tab', function (e) {
+      const href = e.target.getAttribute('href');
+      if (href === '#clima') {
+        const alerta = document.getElementById('clima-alerta-localizacao');
+        if (!navigator.geolocation) {
+          if (alerta) {
+            alerta.style.display = 'block';
+            alerta.textContent = 'Seu navegador não suporta geolocalização.';
+          }
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          if (alerta) alerta.style.display = 'none';
+          getWeatherData(lat, lon);
+        }, function() {
+          if (alerta) alerta.style.display = 'block';
+        }, { enableHighAccuracy: true, timeout: 10000 });
+      }
+    });
+  });
+});
+
+// Ouvir quando a aba 'Clima' for aberta e pedir localização
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
+    tab.addEventListener('shown.bs.tab', function (e) {
+      const href = e.target.getAttribute('href');
+      if (href === '#clima') {
+        const alerta = document.getElementById('clima-alerta-localizacao');
+        const fallback = document.getElementById('clima-fallback');
+        if (!navigator.geolocation) {
+          if (alerta) { alerta.style.display = 'block'; alerta.textContent = 'Seu navegador não suporta geolocalização.'; }
+          if (fallback) fallback.style.display = 'block';
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          if (alerta) alerta.style.display = 'none';
+          if (fallback) fallback.style.display = 'none';
+          try { getWeatherData(lat, lon); } catch (e) { console.error(e); }
+        }, function(err) {
+          if (alerta) alerta.style.display = 'block';
+          if (fallback) fallback.style.display = 'block';
+          console.warn('Erro ao obter localização:', err);
+        }, { enableHighAccuracy: true, timeout: 10000 });
+      }
+    });
+  });
+
+  // Handlers do fallback
+  const buscarBtn = document.getElementById('clima-buscar-cidade');
+  const cidadeInput = document.getElementById('clima-cidade-input');
+  const tentarBtn = document.getElementById('clima-tentar-novamente');
+  const suggestions = document.getElementById('clima-cidade-suggestions');
+
+  if (buscarBtn && cidadeInput) {
+    buscarBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      const q = cidadeInput.value.trim();
+      if (!q) return showNotification('Digite o nome da cidade', 'warning');
+      try {
+        buscarBtn.disabled = true;
+        buscarBtn.textContent = 'Buscando...';
+        const resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=1');
+        const arr = await resp.json();
+        if (!arr || !arr.length) return showNotification('Cidade não encontrada', 'warning');
+        const loc = arr[0];
+        if (loc && loc.lat && loc.lon) {
+          getWeatherData(parseFloat(loc.lat), parseFloat(loc.lon));
+        }
+      } catch (e) {
+        console.error(e);
+        showNotification('Erro ao buscar cidade', 'danger');
+      } finally {
+        buscarBtn.disabled = false;
+        buscarBtn.textContent = 'Buscar';
+      }
+    });
+  }
+
+  if (tentarBtn) {
+    tentarBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const alerta = document.getElementById('clima-alerta-localizacao'); if (alerta) alerta.style.display = 'none';
+      const fallback = document.getElementById('clima-fallback'); if (fallback) fallback.style.display = 'none';
+      if (!navigator.geolocation) return showNotification('Seu navegador não suporta geolocalização', 'warning');
+      navigator.geolocation.getCurrentPosition(function(pos) { getWeatherData(pos.coords.latitude, pos.coords.longitude); }, function(err) {
+        const alerta = document.getElementById('clima-alerta-localizacao'); if (alerta) alerta.style.display = 'block';
+        const fallback = document.getElementById('clima-fallback'); if (fallback) fallback.style.display = 'block';
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    });
+  }
+});
