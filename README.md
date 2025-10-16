@@ -74,37 +74,6 @@ O ClimaJá! é construído com uma combinação de tecnologias web modernas para
     *   **Nominatim OpenStreetMap API:** Para geocodificação reversa (obtenção de nome de cidade a partir de coordenadas) e busca de localização por texto.
     *   **API FIPE (parallelum.com.br):** Para busca de marcas e modelos de veículos.
 
-## Estrutura do Projeto
-
-O repositório `ClimaJa` contém os seguintes arquivos e diretórios principais:
-
-```
-ClimaJa/
-├── .git/                     # Metadados do repositório Git
-├── index.html                # Página principal da aplicação
-├── styles.css                # Folha de estilos CSS da aplicação
-├── script.js                 # Lógica JavaScript principal da aplicação
-├── paranoid-security.js      # Sistema de segurança avançado (JavaScript)
-├── logo.png                  # Logotipo principal da aplicação
-├── logoo.png                 # Variação do logotipo (possivelmente para uso interno ou alternativo)
-└── user-marker.png           # Ícone de marcador para a localização do usuário no mapa
-```
-
-## Como Usar
-
-Para utilizar o ClimaJá! localmente, siga os passos abaixo:
-
-1.  **Clone o Repositório:**
-    ```bash
-    git clone https://github.com/sitedepostagens/ClimaJa.git
-    ```
-2.  **Navegue até o Diretório:**
-    ```bash
-    cd ClimaJa
-    ```
-3.  **Abra o `index.html`:**
-    Simplesmente abra o arquivo `index.html` em seu navegador web preferido. Não é necessário um servidor web para a maioria das funcionalidades, embora algumas APIs externas possam ter restrições de CORS para acesso direto via `file://`.
-
 ## Contribuição
 
 O ClimaJá! foi desenvolvido pela Escola Técnica Estadual Ginásio Pernambucano. Contribuições são bem-vindas para aprimorar a plataforma e expandir suas funcionalidades. Para contribuir, por favor, entre em contato através do email fornecido no rodapé da aplicação.
