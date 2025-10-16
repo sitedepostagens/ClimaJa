@@ -345,65 +345,80 @@ function updateReportMarker(lat, lng) {
   });
 }
 
-// Envio do formulário
+// Envio do formulário (aceita envio sem selecionar marcador no mapa)
 document.getElementById('reportForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  
-  // Validação da localização
-  if (!reportMarker) {
-    showNotification('Selecione uma localização no mapa', 'warning');
-    return;
-  }
-  
-  let valid = true;
-  const waterLevel = document.getElementById('water-level');
-  const carWaterLevel = document.getElementById('car-water-level');
-  
-  if (currentReportType === 'pedestre') {
-    if (!waterLevel.value) {
-      showNotification('Selecione o nível da água', 'warning');
-      valid = false;
-    }
-  } else {
-    if (!selectedVehicle) {
-      showNotification('Selecione um veículo válido', 'warning');
-      valid = false;
-    }
-    if (!carWaterLevel.value) {
-      showNotification('Selecione o nível de submersão', 'warning');
-      valid = false;
-    }
-  }
-  
-  if (!valid) return;
+  e.preventDefault();
 
-  const photo = await readPhoto();
-  const report = {
-    type: currentReportType,
-    location: reportMarker.getLatLng(),
-    details: currentReportType === 'pedestre' 
-      ? {
-         waterLevel: waterLevel.value,
-         levelText: waterLevel.selectedOptions[0].text
-        }
-      : {
-         vehicle: {
-           fipeCode: selectedVehicle.codigo,
-           brand: selectedVehicle.marca,
-           model: selectedVehicle.nome
-         },
-         submersionLevel: carWaterLevel.value,
-         levelText: carWaterLevel.selectedOptions[0].text
-        },
-    photo,
-    timestamp: new Date()
-  };
+  // Tentar obter coordenadas: marcador > campos hidden > geocodificar pelo endereço > null
+  let lat = null, lon = null;
+  if (typeof reportMarker !== 'undefined' && reportMarker && reportMarker.getLatLng) {
+    const ll = reportMarker.getLatLng();
+    lat = ll.lat; lon = ll.lng;
+  } else {
+    const latInput = document.getElementById('latitude');
+    const lonInput = document.getElementById('longitude');
+    if (latInput && lonInput && latInput.value && lonInput.value) {
+      lat = parseFloat(latInput.value);
+      lon = parseFloat(lonInput.value);
+    } else {
+      const addrInput = document.getElementById('address');
+      if (addrInput && addrInput.value) {
+        try {
+          const coords = await geocodeAddress(addrInput.value);
+          if (coords) { lat = coords.lat; lon = coords.lon; }
+        } catch (err) {
+          console.warn('Geocoding failed', err);
+        }
+      }
+    }
+  }
 
-  addReportToMap(report);
-  await saveReportToDB(report); // Usa a função de salvar no "DB"
-  showNotification('Relato enviado com sucesso!', 'success');
-  document.getElementById('reportForm').reset();
-  selectedVehicle = null;
+  let valid = true;
+  const waterLevel = document.getElementById('water-level');
+  const carWaterLevel = document.getElementById('car-water-level');
+
+  if (currentReportType === 'pedestre') {
+    if (!waterLevel.value) {
+      showNotification('Selecione o nível da água', 'warning');
+      valid = false;
+    }
+  } else {
+    if (!selectedVehicle) {
+      showNotification('Selecione um veículo válido', 'warning');
+      valid = false;
+    }
+    if (!carWaterLevel.value) {
+      showNotification('Selecione o nível de submersão', 'warning');
+      valid = false;
+    }
+  }
+
+  if (!valid) return;
+
+  const photo = await readPhoto();
+  const report = {
+    type: currentReportType,
+    location: (lat !== null && lon !== null) ? { lat, lng: lon } : null,
+    details: currentReportType === 'pedestre' 
+      ? {
+         waterLevel: waterLevel.value,
+         levelText: waterLevel.selectedOptions[0].text
+        }
+      : {
+         vehicle: selectedVehicle ? { fipeCode: selectedVehicle.codigo, brand: selectedVehicle.marca, model: selectedVehicle.nome } : null,
+         submersionLevel: carWaterLevel.value,
+         levelText: carWaterLevel.selectedOptions[0].text
+         },
+    photo,
+    timestamp: new Date(),
+    address: document.getElementById('address') ? document.getElementById('address').value : ''
+  };
+
+  addReportToMap(report);
+  await saveReportToDB(report); // Usa a função de salvar no "DB"
+  showNotification('Relato enviado com sucesso!', 'success');
+  document.getElementById('reportForm').reset();
+  selectedVehicle = null;
 });
 
 function readPhoto() {
@@ -418,13 +433,40 @@ function readPhoto() {
 }
 
 function addReportToMap(report) {
-  const iconHtml = `<div style="background:${getColorByLevel(report)}" class="report-marker">
-                      ${ report.type === 'pedestre' ? '🚶' : '🚗' }
-                    </div>`;
-  const mk = L.marker([report.location.lat, report.location.lng], {
-    icon: L.divIcon({ html: iconHtml })
-  }).bindPopup(createPopupContent(report));
-  markers.addLayer(mk);
+  // Normaliza coordenadas (aceita {lat,lng} ou {lat,lon})
+  let lat = null, lng = null;
+  if (report && report.location) {
+    if (typeof report.location.lat !== 'undefined') lat = report.location.lat;
+    if (typeof report.location.lng !== 'undefined') lng = report.location.lng;
+    if ((lat === null || typeof lat === 'undefined') && typeof report.location.lon !== 'undefined') lat = report.location.lat || report.location.latitude || null;
+    // try lon variants
+    if ((lng === null || typeof lng === 'undefined') && typeof report.location.lon !== 'undefined') lng = report.location.lon;
+    if ((lat === null || typeof lat === 'undefined') && typeof report.location.latitude !== 'undefined') lat = report.location.latitude;
+    if ((lng === null || typeof lng === 'undefined') && typeof report.location.longitude !== 'undefined') lng = report.location.longitude;
+  }
+
+  const color = getColorByLevel(report) || '#2563EB';
+  const iconHtml = `<div style="background:${color};display:flex;align-items:center;justify-content:center;color:white;border-radius:50%;width:40px;height:40px;font-size:16px;" class="report-marker-inline">${ report.type === 'pedestre' ? '🚶' : '🚗' }</div>`;
+
+  // Garante que o layer de markers exista
+  if (typeof markers === 'undefined' || !markers) {
+    try {
+      markers = L.markerClusterGroup();
+      if (map && !map.hasLayer(markers)) map.addLayer(markers);
+    } catch (e) {
+      console.warn('Não foi possível inicializar markers cluster:', e);
+    }
+  }
+
+  if (lat !== null && typeof lat !== 'undefined' && lng !== null && typeof lng !== 'undefined') {
+    const mk = L.marker([lat, lng], {
+      icon: L.divIcon({ html: iconHtml, className: '' })
+    }).bindPopup(createPopupContent(report));
+    if (markers && markers.addLayer) markers.addLayer(mk);
+  } else {
+    // Sem coordenadas: adiciona apenas card de relato (não marcador)
+    console.warn('Relato sem coordenadas, não será adicionado ao mapa.');
+  }
 }
 
 function getColorByLevel(report) {
@@ -624,6 +666,10 @@ function showNotification(msg, type) {
 function showRelatoArea() {
   const area = document.getElementById('relato-area');
   if (!area) return;
+  // Se já existir um formulário estático (inserido no HTML), não sobrescrever
+  if (document.getElementById('reportForm') || document.getElementById('reportFormMotorista')) {
+    return;
+  }
   area.innerHTML = `
     <form id="reportForm">
       <div class="mb-3">
@@ -675,31 +721,50 @@ function showRelatoArea() {
   // Envio do formulário
   const reportForm = document.getElementById('reportForm');
   if (reportForm) {
-    reportForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      // Validação da localização
-      if (!reportMarker) {
-        showNotification('Selecione uma localização no mapa', 'warning');
-        return;
-      }
-      let valid = true;
-      const waterLevel = document.getElementById('water-level');
+    reportForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      // Tentar obter coordenadas: marcador > campos hidden > geocodificar pelo endereço > null
+      let lat = null, lon = null;
+      if (typeof reportMarker !== 'undefined' && reportMarker && reportMarker.getLatLng) {
+        const ll = reportMarker.getLatLng();
+        lat = ll.lat; lon = ll.lng;
+      } else {
+        const latInput = document.getElementById('latitude');
+        const lonInput = document.getElementById('longitude');
+        if (latInput && lonInput && latInput.value && lonInput.value) {
+          lat = parseFloat(latInput.value);
+          lon = parseFloat(lonInput.value);
+        } else {
+          const addrInput = document.getElementById('address');
+          if (addrInput && addrInput.value) {
+            try {
+              const coords = await geocodeAddress(addrInput.value);
+              if (coords) { lat = coords.lat; lon = coords.lon; }
+            } catch (err) {
+              console.warn('Geocoding failed', err);
+            }
+          }
+        }
+      }
+
+      let valid = true;
+      const waterLevel = document.getElementById('water-level');
       if (!waterLevel.value) {
         showNotification('Selecione o nível da água', 'warning');
         valid = false;
       }
       if (!valid) return;
       const photo = await readPhoto();
-      const report = {
-        type: 'pedestre',
-        location: reportMarker.getLatLng(),
-        details: {
-          waterLevel: waterLevel.value,
-          levelText: waterLevel.selectedOptions[0].text
-        },
-        photo,
-        timestamp: new Date()
-      };
+      const report = {
+        type: 'pedestre',
+        location: (lat !== null && lon !== null) ? { lat, lon } : null,
+        details: {
+          waterLevel: waterLevel.value,
+          levelText: waterLevel.selectedOptions[0].text
+        },
+        photo,
+        timestamp: new Date()
+      };
       addReportToMap(report);
       await saveReportToDB(report); // Usa a função de salvar no "DB"
       showNotification('Relato enviado com sucesso!', 'success');
@@ -747,6 +812,72 @@ function setupProfileButtons() {
     };
   }
 }
+
+// Reverse geocoding simples usando Photon
+async function reverseGeocode(lat, lon) {
+  try {
+    const res = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`);
+    const data = await res.json();
+    if (data && data.features && data.features.length > 0) {
+      const p = data.features[0].properties;
+      return `${p.name || ''}${p.street ? ', ' + p.street : ''}${p.city ? ', ' + p.city : ''}`.replace(/^, /, '');
+    }
+  } catch (e) {
+    console.error('reverseGeocode error', e);
+  }
+  return '';
+}
+
+// Geocoding simples por endereço usando Photon
+async function geocodeAddress(address) {
+  try {
+    const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(address) + '&limit=1');
+    const data = await res.json();
+    if (data && data.features && data.features.length > 0) {
+      const c = data.features[0].geometry.coordinates; // [lon, lat]
+      return { lat: c[1], lon: c[0] };
+    }
+  } catch (e) {
+    console.error('geocodeAddress error', e);
+  }
+  return null;
+}
+
+async function fillAddressFromCoords(type) {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const addr = await reverseGeocode(lat, lon);
+    if (type === 'motorista') {
+      const a = document.getElementById('address-motorista');
+      const latI = document.getElementById('latitude-motorista');
+      const lonI = document.getElementById('longitude-motorista');
+      if (a && !a.value) a.value = addr;
+      if (latI) latI.value = lat;
+      if (lonI) lonI.value = lon;
+    } else {
+      const a = document.getElementById('address');
+      const latI = document.getElementById('latitude');
+      const lonI = document.getElementById('longitude');
+      if (a && !a.value) a.value = addr;
+      if (latI) latI.value = lat;
+      if (lonI) lonI.value = lon;
+    }
+  }, err => {
+    showNotification('Não foi possível obter sua localização: ' + (err.message || ''), 'warning');
+  });
+}
+
+// Listeners para botões de usar localização
+document.addEventListener('click', function(e) {
+  if (e.target && (e.target.id === 'use-my-location' || e.target.closest('#use-my-location'))) {
+    fillAddressFromCoords('pedestre');
+  }
+  if (e.target && (e.target.id === 'use-my-location-motorista' || e.target.closest('#use-my-location-motorista'))) {
+    fillAddressFromCoords('motorista');
+  }
+});
 
 function updateAuthUI(user) {
   var cadastrarBtn = document.getElementById('cadastrar-btn');

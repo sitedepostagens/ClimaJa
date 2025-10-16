@@ -48,42 +48,7 @@
 function fecharSelecaoLocalizacao() {
   // Exemplo para modal Bootstrap
   const modal = document.getElementById('modal-selecao-local');
-  if (modal) {
-    const modalInstance = bootstrap.Modal.getInstance(modal);
-    if (modalInstance) modalInstance.hide();
-    else modal.classList.remove('show');
-  }
-  // Exemplo para div customizada
-  const areaSelecao = document.getElementById('area-selecao-local');
-  if (areaSelecao) areaSelecao.classList.add('d-none');
-}
-</script>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ClimaJá!</title>
-  <link rel="icon" type="image/png" href="logoo.png">
-
-<script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>
-<script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>
-<script async src="//www.ezojs.com/ezoic/sa.min.js"></script>
-<script>
-    window.ezstandalone = window.ezstandalone || {};
-    ezstandalone.cmd = ezstandalone.cmd || [];
-</script>
-<meta name="keywords" content="ClimaJá, clima, umidade, temperatura, mapa tempo, clima tempo, climaja, site de clima, onde ver a temperatura, etc, meteorologia, monitoramento">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "ClimaJá",
-  "url": "/",
-  "description": "O ClimaJá! é uma plataforma colaborativa para monitoramento meteorológico e relatos de alagamentos em tempo real. O objetivo é ajudar pessoas a se informarem sobre as condições do clima e compartilharem informações úteis para a sociedade, promovendo segurança e prevenção",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://oclimaja.netlify.app/?q={search_term_string}",
+  <!-- Mapa inicializado pelo script principal (script.js) para evitar duplicidade -->
     "query-input": "required name=search_term_string"
   },
   "contactPoint": {
@@ -582,6 +547,7 @@ function fecharSelecaoLocalizacao() {
   </style>
 </head>
 <body>
+  <div class="dynamic-texture" aria-hidden="true"></div>
   <!-- Botão de modo escuro removido -->
 
   <header class="main-header">
@@ -808,7 +774,10 @@ function fecharSelecaoLocalizacao() {
                 <input type="hidden" id="longitude" name="longitude">
                 <div class="mb-3">
                   <label for="address" class="form-label">Endereço do Ocorrido</label>
-                  <input type="text" class="form-control" id="address" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
+                  <div class="d-flex gap-2">
+                    <input type="text" class="form-control" id="address" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
+                    <button type="button" class="btn btn-outline-primary" id="use-my-location"><i class="fas fa-location-crosshairs"></i></button>
+                  </div>
                   <div id="address-suggestions" class="dropdown-menu" style="width:100%"></div>
                   <small class="form-text text-muted">Exemplo: Rua Exemplo, 123, Bairro, Cidade</small>
                 </div>
@@ -869,10 +838,37 @@ function fecharSelecaoLocalizacao() {
                 <input type="hidden" id="longitude-motorista" name="longitude">
                 <div class="mb-3">
                   <label for="address-motorista" class="form-label">Endereço do Ocorrido</label>
-                  <input type="text" class="form-control" id="address-motorista" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
+                  <div class="d-flex gap-2">
+                    <input type="text" class="form-control" id="address-motorista" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
+                    <button type="button" class="btn btn-outline-primary" id="use-my-location-motorista"><i class="fas fa-location-crosshairs"></i></button>
+                  </div>
                   <div id="address-suggestions-motorista" class="dropdown-menu" style="width:100%"></div>
                   <small class="form-text text-muted">Exemplo: Rua Exemplo, 123, Bairro, Cidade</small>
                 </div>
+                  <div class="mb-3">
+                    <label for="ocorrido-primario-motorista" class="form-label">Ocorrido Principal</label>
+                    <select class="form-select" id="ocorrido-primario-motorista" name="ocorridoPrimarioMotorista" required>
+                      <option value="">Selecione</option>
+                      <option value="alagamento">💧 Alagamento</option>
+                      <option value="enxurrada">🌊 Enxurrada</option>
+                      <option value="obstrucao">🚧 Obstrução de via</option>
+                      <option value="deslizamento">⛰️ Deslizamento</option>
+                      <option value="fio-duvidoso">⚡ Fio duvidoso</option>
+                      <option value="outro">❓ Outro</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="ocorrido-secundario-motorista" class="form-label">Ocorrido Secundário <span class="text-muted" style="font-weight:400;">(opcional)</span></label>
+                    <select class="form-select" id="ocorrido-secundario-motorista" name="ocorridoSecundarioMotorista">
+                      <option value="">Nenhum</option>
+                      <option value="alagamento">💧 Alagamento</option>
+                      <option value="enxurrada">🌊 Enxurrada</option>
+                      <option value="obstrucao">🚧 Obstrução de via</option>
+                      <option value="deslizamento">⛰️ Deslizamento</option>
+                      <option value="fio-duvidoso">⚡ Fio duvidoso</option>
+                      <option value="outro">❓ Outro</option>
+                    </select>
+                  </div>
                 <div class="mb-3">
                   <label for="veiculo" class="form-label">Veículo</label>
                   <input type="text" class="form-control" id="veiculo" placeholder="Marca e modelo do veículo" required>

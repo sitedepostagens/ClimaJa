@@ -106,6 +106,11 @@ body {
   box-shadow: 0 2px 8px #dc262633;
 }
 
+.report-marker-inline {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  border: 3px solid rgba(255,255,255,0.15);
+}
+
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
@@ -256,6 +261,34 @@ footer.bg-light {
 #relatos-publicos .relato-card:hover {
   box-shadow: 0 8px 32px -8px #38bdf822, 0 2px 8px #2563eb22;
   transform: translateY(-2px) scale(1.03);
+}
+
+/* Textura dinâmica no fundo */
+.dynamic-texture {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image: radial-gradient(rgba(94,231,223,0.06) 1px, transparent 1px),
+                    radial-gradient(rgba(165,180,252,0.03) 1px, transparent 1px);
+  background-size: 24px 24px, 48px 48px;
+  opacity: 0.95;
+  mix-blend-mode: overlay;
+  animation: textureShift 18s linear infinite;
+}
+
+@keyframes textureShift {
+  0% { background-position: 0 0, 0 0; }
+  50% { background-position: 120px 80px, -80px -120px; }
+  100% { background-position: 0 0, 0 0; }
+}
+
+/* versão escura suavizada */
+[data-theme="dark"] .dynamic-texture {
+  background-image: radial-gradient(rgba(96,165,250,0.03) 1px, transparent 1px),
+                    radial-gradient(rgba(14,165,233,0.02) 1px, transparent 1px);
+  opacity: 0.7;
+  mix-blend-mode: screen;
 }
 
 #relatos-publicos .relato-titulo {
