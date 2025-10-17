@@ -1,0 +1,24 @@
+---------------------------------------------------
+Here are the ownership and the certification details
+of the ClimaJa 1.0
+---------------------------------------------------
+
+app_name - 						ClimaJa
+app_alias - 					ClimaJa
+app_author_name - 				oclimaja.app
+app_author_organizational - 	oclimaja.app
+app_author_organization - 		oclimaja.app
+app_author_locality - 			oclimaja.app
+app_author_state - 				Pernambuco
+app_author_country - 			Brazil
+app_password - 					HMLGBe4xhSts
+app_versionName - 				versionName "1.0"
+app_versionCode - 				100
+
+---------------------------------------------------
+The certification was created by WebIntoApp.com at
+the Friday 17th of October 2025 02:09:07 PM
+
+https://webintoapp.com
+---------------------------------------------------
+
