@@ -149,6 +149,26 @@ function initMap() {
     preloadVehicleBrands();
     // Chame a função para carregar temas e relatos do "banco de dados" ao iniciar
     loadInitialData();
+    // Torna o mapa acessível ao código legado que usa window.meuMapa
+    try {
+      window.meuMapa = map;
+    } catch (e) {}
+    // Exponha bridges globais para compatibilidade com o código inline em index.html
+    try {
+      window.inicializarMapaLeaflet = initMap;
+      window.pedirLocalizacaoMapa = function() { return locateUser(true); };
+      window.centralizarMapaNaLocalizacao = function() {
+        if (!window.userLocation || !map) return;
+        if (window.userMarker) {
+          window.userMarker.setLatLng([window.userLocation.lat, window.userLocation.lon]);
+        } else {
+          window.userMarker = L.marker([window.userLocation.lat, window.userLocation.lon], {icon: L.icon({iconUrl: 'user-marker.png', iconSize: [32,32]})}).addTo(map);
+        }
+        map.setView([window.userLocation.lat, window.userLocation.lon], 15);
+      };
+    } catch (e) {
+      console.warn('Não foi possível expor bridges do mapa:', e);
+    }
   } catch (e) {
     mapContainer.innerHTML = '<div style="color:#dc2626;padding:2rem;text-align:center;font-weight:600;">Erro ao carregar o mapa. Tente recarregar a página.</div>';
     console.error('Erro ao inicializar o mapa:', e);

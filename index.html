@@ -49,7 +49,7 @@ function fecharSelecaoLocalizacao() {
   // Exemplo para modal Bootstrap
   const modal = document.getElementById('modal-selecao-local');
   <!-- Mapa inicializado pelo script principal (script.js) para evitar duplicidade -->
-    "query-input": "required name=search_term_string"
+    "query-input", "required name=search_term_string"
   },
   "contactPoint": {
     "@type": "ContactPoint",
@@ -938,31 +938,20 @@ function fecharSelecaoLocalizacao() {
   <!-- Firebase SDK -->
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <script>
-    // Inicialização única do mapa Leaflet
+    // Delegadores leves: chamam as funções expostas pelo script.js (evita duplicidade)
     function inicializarMapaLeaflet() {
-      if (window.meuMapa) return;
-      const mapDiv = document.getElementById('map');
-      if (!mapDiv) return;
-      window.meuMapa = L.map('map').setView([-8.05, -34.9], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(window.meuMapa);
+      if (window.inicializarMapaLeaflet) return window.inicializarMapaLeaflet();
+      // fallback: tenta chamar initMap diretamente
+      if (window.initMap) return window.initMap();
     }
 
-    // Botão de localização para o mapa Leaflet
     function pedirLocalizacaoMapa() {
-      if (navigator.geolocation && window.meuMapa) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          var lat = pos.coords.latitude;
-          var lon = pos.coords.longitude;
-          window.meuMapa.setView([lat, lon], 15);
-          L.marker([lat, lon]).addTo(window.meuMapa).bindPopup('Você está aqui!').openPopup();
-        });
-      }
+      if (window.pedirLocalizacaoMapa) return window.pedirLocalizacaoMapa();
+      if (window.locateUser) return window.locateUser(true);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      // Inicializa mapa ao abrir aba
+      // Inicializa mapa ao abrir aba, delegando para o script.js
       document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
         tab.addEventListener('shown.bs.tab', function (e) {
           if (e.target.getAttribute('href') === '#mapa') {
@@ -1227,21 +1216,18 @@ function fecharSelecaoLocalizacao() {
               }, 400);
           }
           if (e.target.getAttribute('href') === '#mapa') {
-            inicializarMapaLeaflet();
-            centralizarMapaNaLocalizacao();
+            // Delega para script.js (evita múltiplas inicializações)
+            if (window.inicializarMapaLeaflet) window.inicializarMapaLeaflet();
+            if (window.centralizarMapaNaLocalizacao) window.centralizarMapaNaLocalizacao();
+            else if (window.centralizarMapaNaLocalizacao) window.centralizarMapaNaLocalizacao();
           }
         });
       });
 
-      // Inicializa o mapa Leaflet se não existir
+      // Delegador para inicializar o mapa (implementação real em script.js)
       function inicializarMapaLeaflet() {
-        if (window.meuMapa) return;
-        const mapDiv = document.getElementById('map');
-        if (!mapDiv) return;
-        window.meuMapa = L.map('map').setView([-8.05, -34.9], 12); // Recife como padrão
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(window.meuMapa);
+        if (window.inicializarMapaLeaflet) return window.inicializarMapaLeaflet();
+        if (window.initMap) return window.initMap();
       }
       // Relatos locais (em memória) - agora global
       // ...existing code...
