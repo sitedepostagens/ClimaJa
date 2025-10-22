@@ -1,1466 +1,452 @@
-
-</body>
-<script>
-    // Função para calcular intensidade dos relatos próximos
-    function calcularIntensidadeRelatos(relatos, lat, lon) {
-      let intensidade = 0;
-      relatos.forEach(r => {
-        if (r.latitude && r.longitude) {
-          const dist = Math.sqrt(Math.pow(r.latitude - lat, 2) + Math.pow(r.longitude - lon, 2));
-          if (dist < 0.08) { // ~8km
-            if (r.nivel === '1.5') intensidade += 3;
-            else if (r.nivel === '1.0') intensidade += 2;
-            else if (r.nivel === '0.5') intensidade += 1.5;
-            else if (r.nivel === '0.2') intensidade += 1;
-            else if (r.nivel === '0') intensidade += 0.2;
-          }
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClimaJá - Previsão do Tempo</title>
+    <style>
+        /* Reset e estilos base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-      });
-      return intensidade;
-    }
 
-    // Atualiza o mapa Windy conforme relatos e localização
-    async function atualizarMapaWindy() {
-      if (!userLocation) return;
-      // Buscar relatos públicos do Firestore
-      let relatos = [];
-      try {
-        const db = getFirestore();
-        const q = query(collection(db, "relatos"), orderBy("dataHora", "desc"), limit(50));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach(doc => relatos.push(doc.data()));
-      } catch (e) { /* fallback: sem relatos */ }
-      // Calcular intensidade
-      const intensidade = calcularIntensidadeRelatos(relatos, userLocation.lat, userLocation.lon);
-      // Definir overlay e zoom
-      let overlay = 'rain';
-      let zoom = 13;
-      if (intensidade >= 6) { overlay = 'thunder'; zoom = 15; }
-      else if (intensidade >= 3) { overlay = 'rain'; zoom = 14; }
-      else if (intensidade >= 1.5) { overlay = 'wind'; zoom = 13; }
-      else { overlay = 'temp'; zoom = 12; }
-      var windyFrame = document.getElementById('windy-embed');
-      if (windyFrame) {
-        windyFrame.src = `https://embed.windy.com/embed2.html?lat=${userLocation.lat}&lon=${userLocation.lon}&detailLat=${userLocation.lat}&detailLon=${userLocation.lon}&width=650&height=450&zoom=${zoom}&level=surface&overlay=${overlay}&product=ecmwf`;
-      }
-    }
-// Função global para fechar a interface de seleção de localização (modal ou div customizada)
-function fecharSelecaoLocalizacao() {
-  // Exemplo para modal Bootstrap
-  const modal = document.getElementById('modal-selecao-local');
-  <!-- Mapa inicializado pelo script principal (script.js) para evitar duplicidade -->
-    "query-input", "required name=search_term_string"
-  },
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "customer support",
-    "email": "oclimaja@hotmail.com",
-    "url": "mailto:oclimaja@hotmail.com",
-    "availableLanguage": "Portuguese"
-  }
-}
-</script>
+        body {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
 
-<script>
-        window.ezstandalone = window.ezstandalone || {};
-            ezstandalone.cmd = ezstandalone.cmd || [];
-            </script>
-            <meta name="keywords" content="nexuscloud, necus cloud, NexusCloud, nexus Cloud, nuvem, guardar arquivos, guardar fotos, nuvem de fotos gratis, nuvem gratuita, drive, drive gratuito">
-            <script type="application/ld+json">
-            {
-              "@context": "https://schema.org",
-                "@type": "WebSite",
-                  "name": "ClimaJá",
-                    "url": "/",
-                      "description": "O ClimaJá! é uma plataforma colaborativa para monitoramento meteorológico e relatos de alagamentos em tempo real. O objetivo é ajudar pessoas a se informarem sobre as condições do clima e compartilharem informações úteis para a sociedade, promovendo segurança e prevenção."
-                         "potentialAction": {
-                            "@type": "SearchAction",
-                                "target": "https://oclimaja.netlify.app/?q={search_term_string}",
-                                    "query-input": "required name=search_term_string"
-                                      },
-                                        "contactPoint": {
-                                            "@type": "ContactPoint",
-                                                "contactType": "customer support",
-                                                    "email": "oclimaja@hotmail.com",
-                                                        "url": "mailto:",
-                                                            "availableLanguage": "Portuguese"
-                                                              }
-                                                              }
-            </script>
-<link rel="manifest" href="/manifest.json">
-<link rel="icon" type="image/png" href="/logo.png">
-  <!-- CSS externos -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css">
-  <!-- Nosso CSS -->
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="animacao-global.css">
-  <style>
-    /* Forçar bordas arredondadas nas principais áreas para visual consistente */
-    .main-card, .main-card.animada, .tab-pane, .tab-pane .main-card, #map, .relato-card, .weather-header, .weather-grid {
-      border-radius: 1.2rem !important;
-    }
-    /* Ajuste mais suave para inputs e botões */
-    .form-control, .btn, .dropdown-menu {
-      border-radius: 0.8rem !important;
-    }
-    /* Certifique-se que popups do leaflet estejam arredondados */
-    .leaflet-popup-content-wrapper {
-      border-radius: 1rem !important;
-    }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
 
-    /* Centralizar conteúdo das seções principais */
-    .container.my-4 {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .tab-content {
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-    .main-card {
-      margin-left: auto !important;
-      margin-right: auto !important;
-    }
-    #relatos-publicos {
-      max-width: 1000px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+        }
 
-    /* Área de login/cadastro: visual moderno, espaçamento, gradiente, bordas arredondadas */
-    .login-cadastro-area {
-      display: flex;
-      gap: 0.7rem;
-      align-items: center;
-      padding: 0.5rem 1.2rem;
-      background: linear-gradient(90deg, #e0f2fe 60%, #f9f871 100%);
-      border-radius: 1.2rem;
-      box-shadow: 0 2px 12px #2563eb22;
-      border: 2px solid #38bdf8;
-      margin-right: 1.2rem;
-      margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-    .login-cadastro-area .btn {
-      border-radius: 0.7rem;
-      font-weight: 700;
-      box-shadow: 0 2px 8px #2563eb11;
-      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
-    }
-    .login-cadastro-area .btn-outline-primary {
-      background: #fff;
-      color: #2563eb;
-      border: 2px solid #38bdf8;
-    }
-    .login-cadastro-area .btn-outline-primary:hover {
-      background: #bae6fd;
-      color: #232946;
-      box-shadow: 0 2px 12px #38bdf822;
-    }
-    .login-cadastro-area .btn-outline-light {
-      background: #f9f871;
-      color: #232946;
-      border: 2px solid #fbbf24;
-    }
-    .login-cadastro-area .btn-outline-light:hover {
-      background: #fbbf24;
-      color: #fff;
-      box-shadow: 0 2px 12px #fbbf2433;
-    }
-    @media (max-width: 600px) {
-      .login-cadastro-area {
-        flex-direction: column;
-        gap: 0.4rem;
-        padding: 0.3rem 0.5rem;
-        margin-right: 0.2rem;
-      }
-    }
-    /* Garante que a área de dados do perfil nunca muda de cor, nem em hover, focus ou active */
-    #perfil-dados.dropdown-item,
-    #perfil-dados.dropdown-item:hover,
-    #perfil-dados.dropdown-item:focus,
-    #perfil-dados.dropdown-item:active {
-      background: inherit !important;
-      color: inherit !important;
-      cursor: default;
-      box-shadow: none !important;
-    }
-    /* Não aplicar hover na área de dados do perfil */
-    #perfil-dados.dropdown-item:hover {
-      background: inherit !important;
-      color: inherit !important;
-      cursor: default;
-    }
-    /* Perfil Dropdown: Gradiente, bordas arredondadas, paleta azul/aqua/amarelo */
-    .dropdown-menu[aria-labelledby="perfilDropdown"] {
-      background: #fff;
-      border-radius: 1.5rem;
-      box-shadow: 0 8px 32px -8px #2563eb44, 0 0 40px 0 #5ee7df33 inset;
-      border: 2px solid #38bdf8;
-      padding: 1.2rem 1rem 1rem 1rem;
-      animation: sobreFadeIn 0.8s cubic-bezier(.23,1.02,.32,1) both;
-    }
-    .dropdown-menu[aria-labelledby="perfilDropdown"] .dropdown-item {
-      border-radius: 1rem;
-      margin-bottom: 0.5rem;
-      background: rgba(255,255,255,0.85);
-      color: #232946;
-      font-weight: 600;
-      transition: background 0.3s, color 0.3s;
-    }
-    .dropdown-menu[aria-labelledby="perfilDropdown"] .dropdown-item:hover {
-      background: rgba(56, 189, 248, 0.09); /* azul claro, ainda mais transparente */
-      color: #2563eb;
-    }
-    #perfil-dados {
-      background: linear-gradient(120deg, #e0f2fe 60%, #f9f871 100%);
-      border-radius: 1.2rem;
-      box-shadow: 0 2px 12px #2563eb22;
-      padding: 1rem 0.5rem 0.7rem 0.5rem;
-      margin-bottom: 0.7rem;
-    }
-    #perfil-dados img {
-      border: 3px solid #38bdf8;
-      box-shadow: 0 2px 12px #5ee7df44;
-    }
-    #perfil-nome {
-      color: #2563eb;
-      font-weight: 800;
-      font-size: 1.3rem;
-      text-shadow: 0 2px 8px #bae6fd99;
-    }
-    #perfil-email {
-      color: #3a506b;
-      font-size: 1rem;
-      font-weight: 500;
-    }
-    .badge.bg-primary {
-      background: linear-gradient(90deg, #38bdf8 60%, #f9f871 100%);
-      color: #232946;
-      font-weight: 700;
-      border-radius: 0.7rem;
-      box-shadow: 0 2px 8px #2563eb22;
-    }
-    #logout-btn {
-      border-radius: 0.7rem;
-      font-weight: 700;
-      background: linear-gradient(90deg, #f87171 60%, #fbbf24 100%);
-      color: #232946;
-      border: none;
-      box-shadow: 0 2px 8px #f8717133;
-      transition: background 0.3s, color 0.3s;
-    }
-    #logout-btn:hover {
-      background: linear-gradient(90deg, #fbbf24 60%, #f87171 100%);
-      color: #fff;
-    }
-    @media (max-width: 600px) {
-      .dropdown-menu[aria-labelledby="perfilDropdown"] {
-        min-width: 90vw;
-        padding: 1.1rem 0.3rem 1rem 0.3rem;
-      }
-      #perfil-dados {
-        padding: 0.7rem 0.2rem 0.5rem 0.2rem;
-      }
-    }
-    [data-theme="dark"] .dropdown-menu[aria-labelledby="perfilDropdown"] {
-      background: linear-gradient(120deg, #1e293b 60%, #0f172a 100%) !important;
-      color: #f8fafc !important;
-      border-color: #60a5fa;
-    }
-    [data-theme="dark"] #perfil-dados {
-      background: linear-gradient(120deg, #334155 60%, #1e293b 100%) !important;
-      color: #f8fafc !important;
-      border-color: #60a5fa;
-    }
-    [data-theme="dark"] #perfil-nome {
-      color: #60a5fa !important;
-      text-shadow: 0 2px 8px #0f172a99;
-    }
-    [data-theme="dark"] #perfil-email {
-      color: #f8fafc !important;
-    }
-    [data-theme="dark"] .badge.bg-primary {
-      background: linear-gradient(90deg, #60a5fa 60%, #f9f871 100%) !important;
-      color: #232946 !important;
-    }
-    [data-theme="dark"] #logout-btn {
-      background: linear-gradient(90deg, #f87171 60%, #fbbf24 100%) !important;
-      color: #232946 !important;
-    }
-    [data-theme="dark"] #logout-btn:hover {
-      background: linear-gradient(90deg, #fbbf24 60%, #f87171 100%) !important;
-      color: #fff !important;
-    }
-  </style>
-  <style>
-    /* HEADER: degradê surpreendente, harmônico e temático (clima/meteorologia) */
-    .main-header {
-      /* Fundo: gradiente multicolorido com "aurora boreal" + "céu" + "chuva" + "sol" */
-      background: linear-gradient(120deg,
-        #232946 0%,      /* noite/aurora escura */
-        #3a506b 10%,     /* azul petróleo/frio */
-        #5ee7df 22%,     /* verde água/aurora */
-        #b3e0ff 35%,     /* azul claro/inverno */
-        #f9f871 55%,     /* amarelo sol */
-        #fbbf24 65%,     /* dourado quente */
-        #fca5a5 75%,     /* rosa/aurora */
-        #a5b4fc 85%,     /* lilás/chuva */
-        #232946 100%     /* noite/aurora escura */
-      );
-      background-size: 300% 300%;
-      animation: gradienteAnimado 16s ease-in-out infinite alternate;
-    @keyframes gradienteAnimado {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-      background-size: 300% 300%;
-      animation: gradienteAnimado 16s ease-in-out infinite alternate;
-      color: #fff;
-      box-shadow: 0 8px 32px -8px #2563eb44, 0 0 120px 0 #5ee7df33 inset;
-      padding: 2.2rem 1.2rem 1.5rem 1.2rem;
-      margin-bottom: 2.5rem;
-      display: flex;
-      align-items: center;
-      gap: 2rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      border-radius: 0 0 2.5rem 2.5rem;
-      border: 2px solid #38bdf8;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.7s;
-      /* Efeito "neblina"/"aurora" animada */
-      isolation: isolate;
-    }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 2.2rem;
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+        }
 
-    @keyframes gradienteAnimado {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-    .main-header::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      background: radial-gradient(ellipse 80% 40% at 60% 0%, #f9f87155 0%, #fbbf2433 40%, transparent 100%),
-                  radial-gradient(ellipse 60% 30% at 20% 20%, #5ee7df44 0%, #a5b4fc33 60%, transparent 100%),
-                  radial-gradient(ellipse 40% 20% at 80% 80%, #fca5a522 0%, transparent 100%);
-      opacity: 0.85;
-      animation: auroraMove 12s ease-in-out infinite alternate;
-    }
-    @keyframes auroraMove {
-      0% { background-position: 60% 0%, 20% 20%, 80% 80%; }
-      100% { background-position: 50% 10%, 30% 30%, 70% 70%; }
-    }
-    .main-header::after {
-      /* Efeito "chuva" sutil */
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
-      background-image: repeating-linear-gradient(120deg, #fff2 0 2px, transparent 2px 20px);
-      opacity: 0.13;
-      animation: chuvaMove 7s linear infinite;
-    }
-    @keyframes chuvaMove {
-      0% { background-position: 0 0; }
-      100% { background-position: 60px 60px; }
-    }
-    .main-header > * {
-      position: relative;
-      z-index: 2;
-    }
-    /* Remove degradês individuais, agora é um só harmônico */
-    .main-header .logo-box {
-      background: none; /* Remove o fundo branco */
-      border-radius: 1.5rem;
-      box-shadow: 0 2px 12px #2563eb22;
-      padding: 0.4rem 1.1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 170px; /* Aumenta ainda mais a altura */
-      width: 200px;  /* Aumenta bastante a largura */
-      transition: transform 0.3s;
-    }
-    .main-header img {
-      height: 140px; /* Aumenta ainda mais a logo */
-      width: 180px;  /* Deixa a logo mais larga */
-      object-fit: contain;
-      border-radius: 1rem;
-      background: none;
-      box-shadow: none;
-      padding: 0;
-      transition: transform 0.3s;
-    }
-    .main-header .project-title {
-      font-size: 3.7rem; /* Título ainda maior */
-      font-weight: 900;
-      letter-spacing: 2.5px;
-      margin-bottom: 0.4rem;
-      color: #fff;
-      text-shadow: 0 2px 12px #2563eb44;
-    }
-    .main-header .project-desc {
-      font-size: 2rem; /* Subtítulo maior */
-      font-weight: 600;
-      opacity: 0.98;
-      color: #e0e7ff;
-    }
-    /* Ajuste para o container do mapa */
-    #map {
-      min-height: 350px;
-      height: 60vh;
-      border-radius: 1rem;
-      border: 1.5px solid var(--primary);
-      background: var(--card-bg);
-      box-shadow: 0 2px 12px #2563eb22;
-      margin-bottom: 1rem;
-    }
-    /* Animações para login/cadastro */
-    .fade-in {
-      animation: fadeInLogin 0.5s;
-    }
-    .fade-out {
-      animation: fadeOutLogin 0.4s forwards;
-    }
-    @keyframes fadeInLogin {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: none; }
-    }
-    @keyframes fadeOutLogin {
-      from { opacity: 1; }
-      to { opacity: 0; transform: translateY(-20px); }
-    }
-    .form-control:invalid {
-      border-color: #dc2626;
-      box-shadow: 0 0 0 2px #dc262622;
-    }
-    .form-control:valid {
-      border-color: #22c55e;
-      box-shadow: 0 0 0 2px #22c55e22;
-    }
-    .form-feedback {
-      font-size: 0.95rem;
-      color: #dc2626;
-      margin-top: -0.7rem;
-      margin-bottom: 0.7rem;
-      display: none;
-    }
-    .form-feedback.active {
-      display: block;
-    }
-    /* Animação para o quadro Sobre o Projeto e Clima */
-    .main-card.sobre-anim, .main-card.clima-anim {
-      animation: sobreFadeIn 1.1s cubic-bezier(.23,1.02,.32,1) both;
-      box-shadow: 0 8px 32px -8px #2563eb33, 0 1.5px 12px #38bdf822;
-      border: 2px solid #38bdf8;
-      background: linear-gradient(120deg, #f0f9ff 60%, #e0f2fe 100%);
-      transition: box-shadow 0.4s, border 0.4s, background 0.4s, transform 0.35s cubic-bezier(.23,1.02,.32,1);
-    }
-    .tab-pane#clima .main-card.clima-anim {
-      cursor: pointer;
-      transition: box-shadow 0.4s, border 0.4s, background 0.4s, transform 0.35s cubic-bezier(.23,1.02,.32,1);
-    }
-    .tab-pane#clima .main-card.clima-anim:hover {
-      transform: scale(1.045) translateY(-8px);
-      box-shadow: 0 20px 56px -8px #2563eb55, 0 8px 32px #38bdf855;
-      border-color: #2563eb;
-      background: linear-gradient(120deg, #e0f2fe 60%, #bae6fd 100%);
-    }
-    @keyframes sobreFadeIn {
-      0% {
-        opacity: 0;
-        transform: scale(0.97) translateY(40px) skewY(2deg);
-        filter: blur(6px);
-      }
-      60% {
-        opacity: 1;
-        filter: blur(0.5px);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1) translateY(0) skewY(0);
-        filter: blur(0);
-      }
-    }
-    @media (max-width: 600px) {
-      .main-header {
-        flex-direction: column;
-        gap: 0.7rem;
-        padding: 1.1rem 0.3rem 1.1rem 0.3rem;
-      }
-      .main-header .logo-box {
-        height: 80px;
-        width: 110px;
-        padding: 0.2rem 0.7rem;
-        border-radius: 1.1rem;
-      }
-      .main-header img {
-        height: 60px;
-        width: 90px;
-        border-radius: 0.7rem;
-      }
-      .main-header .project-title {
-        font-size: 1.7rem;
-      }
-      .main-header .project-desc {
-        font-size: 1.15rem;
-      }
-      .container.my-4 {
-        padding-left: 0.2rem;
-        padding-right: 0.2rem;
-      }
-    }
-    [data-theme="dark"] .main-card.sobre-anim, [data-theme="dark"] .main-card.clima-anim {
-      background: linear-gradient(120deg, #1e293b 60%, #0f172a 100%) !important;
-      color: #f8fafc !important;
-      border-color: #60a5fa;
-    }
-    [data-theme="dark"] .main-card.sobre-anim h2,
-    [data-theme="dark"] .main-card.sobre-anim p,
-    [data-theme="dark"] .main-card.clima-anim h2,
-    [data-theme="dark"] .main-card.clima-anim p,
-    [data-theme="dark"] .main-card.clima-anim .weather-header,
-    [data-theme="dark"] .main-card.clima-anim .weather-item,
-    [data-theme="dark"] .main-card.clima-anim .sensor-value {
-      color: #f8fafc !important;
-      text-shadow: 0 2px 8px #0f172a99;
-    }
-    [data-theme="dark"] .main-card.clima-anim .weather-item {
-      background: #1e293bcc !important;
-      border-color: #334155 !important;
-    }
-    [data-theme="dark"] .main-card.clima-anim .weather-icon {
-      color: #60a5fa !important;
-      filter: drop-shadow(0 2px 8px #60a5fa33);
-    }
-    .footer-logo-img {
-      height: 48px;
-      width: auto;
-      max-width: 120px;
-      object-fit: contain;
-      background: transparent;
-      border-radius: 0.7rem;
-      transition: background 0.3s;
-      box-shadow: 0 2px 8px #2563eb11;
-      padding: 2px 8px;
-    }
-    [data-theme="dark"] .footer-logo-img {
-      background: #fff;
-    }
-  </style>
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, #6e8efb, #a777e3);
+            border-radius: 2px;
+        }
+
+        .search-box {
+            display: flex;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .search-box input {
+            flex: 1;
+            height: 50px;
+            background: #f5f7fa;
+            border: none;
+            outline: none;
+            border-radius: 25px 0 0 25px;
+            padding: 0 25px;
+            font-size: 16px;
+            color: #333;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(110, 142, 251, 0.3);
+        }
+
+        .search-box button {
+            width: 120px;
+            height: 50px;
+            background: linear-gradient(to right, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            border-radius: 0 25px 25px 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(110, 142, 251, 0.4);
+        }
+
+        .search-box button:hover {
+            background: linear-gradient(to right, #5a7dfa, #9666e0);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(110, 142, 251, 0.5);
+        }
+
+        .search-box button:active {
+            transform: translateY(0);
+        }
+
+        .weather-card {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .city-name {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .date {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .weather-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem;
+        }
+
+        .temperature {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .description {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-transform: capitalize;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .detail-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .error-message {
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #6e8efb;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        /* Responsividade */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .search-box input {
+                border-radius: 25px;
+                margin-bottom: 10px;
+            }
+            
+            .search-box button {
+                width: 100%;
+                border-radius: 25px;
+            }
+            
+            .weather-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .temperature {
+                font-size: 2.8rem;
+            }
+        }
+
+        /* Efeito de partículas no fundo (opcional) */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="dynamic-texture" aria-hidden="true"></div>
-  <!-- Botão de modo escuro removido -->
-
-  <header class="main-header">
-    <div class="logo-box">
-      <img src="logo.png" alt="Logo ClimaJá!">
-    </div>
-    <div>
-      <div class="project-title">ClimaJá!</div>
-      <div class="project-desc">Monitoramento Meteorológico e Relatos de Alagamentos em Tempo Real</div>
-    </div>
-   <!-- ...código anterior... -->
-<div class="d-flex justify-content-end align-items-center pe-3" style="position:absolute;top:1.5rem;right:0;z-index:10;">
-  <!-- Botão de perfil substitui login/cadastro quando logado -->
-  <div id="perfil-area" class="d-none">
-    <div class="dropdown">
-      <button class="btn btn-gradient btn-sm fw-bold dropdown-toggle d-flex align-items-center" type="button" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        <img src="logo.png" alt="Avatar" style="width:32px;height:32px;border-radius:50%;margin-right:8px;box-shadow:0 2px 8px #2563eb22;">
-        <span id="perfil-nome-area" style="font-weight:600;">Perfil</span>
-      </button>
-      <ul class="dropdown-menu" aria-labelledby="perfilDropdown" style="min-width:260px;border-radius:0;">
-        <li>
-          <div class="dropdown-item text-center" id="perfil-dados" style="min-width:220px;padding-bottom:10px;">
-            <img src="logo.png" alt="Avatar" style="width:72px;height:72px;border-radius:50%;box-shadow:0 2px 8px #2563eb22;margin-bottom:10px;">
-            <div style="font-size:1.25rem;font-weight:800;color:#2563eb;margin-bottom:2px;" id="perfil-nome">-</div>
-            <div style="font-size:1rem;color:#555;margin-bottom:8px;" id="perfil-email">-</div>
-            <span class="badge bg-primary mb-2" style="font-size:0.9rem;">Usuário ClimaJá!</span>
-            <hr style="margin:10px 0 6px 0;">
-            <button class="btn btn-danger btn-sm fw-bold w-100" id="logout-btn" type="button">
-              <i class="fas fa-sign-out-alt me-1"></i>Sair
-            </button>
-          </div>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" href="#" id="perfil-relatos"><i class="fas fa-list me-1 text-primary"></i>Meus Relatos</a></li>
-        <li><a class="dropdown-item" href="#" id="perfil-editar"><i class="fas fa-user-edit me-1 text-success"></i>Editar Perfil</a></li>
-        <li><a class="dropdown-item" href="#" id="perfil-ajuda"><i class="fas fa-question-circle me-1 text-info"></i>Ajuda</a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><hr class="dropdown-divider"></li>
-      </ul>
-    </div>
-  </div>
-  </a>
-  <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="baixar-app-btn" href="app.html">
-    <i class="fas fa-download me-1"></i>Baixar APP
-  </a>
-  <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="cadastrar-btn" href="register.html">
-    <i class="fas fa-user-plus me-1"></i>Cadastrar
-  </a>
-  <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="entrar-btn" href="login.html">
-    <i class="fas fa-sign-in-alt me-1"></i>Entrar
-  </a>
-</div>
-<!-- Controle de autenticação e exibição do perfil/relato é feito apenas pelo script.js -->
-<!-- ...código seguinte... -->
-  </header>
-
-  <div class="container my-4">
-    <ul class="nav nav-pills justify-content-center mb-4">
-      <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="pill" href="#projeto">
-          <i class="fas fa-info-circle me-2"></i>Sobre o Projeto
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="pill" href="#mapa">
-          <i class="fas fa-map me-2"></i>Mapa
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="pill" href="#clima">
-          <i class="fas fa-sun me-2"></i>Clima
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="pill" href="#relatar" id="aba-relatar">
-          <i class="fas fa-edit me-2"></i>Relatar
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="pill" href="#sobre">
-          <i class="fas fa-user me-2"></i>Sobre Nós
-        </a>
-      </li>
-      <li class="nav-item" id="nav-login-item">
-        <!-- Área de perfil: só aparece para logados -->
-        <div id="perfil-area" class="d-none">
-          <div class="dropdown">
-            <button class="btn btn-gradient btn-sm fw-bold dropdown-toggle" type="button" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fas fa-user-circle me-1"></i>
-              <span id="perfil-nome-area">Perfil</span>
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="perfilDropdown">
-              <li>
-            <div class="dropdown-item" id="perfil-dados">
-              <div><strong>Email:</strong> <span id="perfil-email">-</span></div>
-              <div><strong>Nome:</strong> <span id="perfil-nome">-</span></div>
-                </div>
-              </li>
-              <li><a class="dropdown-item" href="#" id="perfil-relatos">Meus Relatos</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="#" id="logout-btn"><i class="fas fa-sign-out-alt me-1"></i>Sair</a></li>
-            </ul>
-          </div>
-        </div>
-      </li>
-    </ul>
-
-    <div class="tab-content">
-      <!-- === Aba Projeto (principal) === -->
-      <div class="tab-pane fade show active" id="projeto">
-        <div class="main-card text-center animada">
-          <h2 class="mb-3"><i class="fas fa-info-circle me-2"></i>Sobre o Projeto</h2>
-          <p class="mb-3">O <strong>ClimaJá!</strong> é uma plataforma colaborativa para monitoramento meteorológico e relatos de alagamentos em tempo real. O objetivo é ajudar pessoas a se informarem sobre as condições do clima e compartilharem informações úteis para a sociedade, promovendo segurança e prevenção.</p>
-          <p class="mb-3">Aqui você pode visualizar o mapa de alagamentos, consultar dados climáticos atualizados e relatar ocorrências de forma simples e rápida, contribuindo para uma cidade mais resiliente.</p>
-        </div>
-      </div>
-      <!-- === Aba Sobre Nós === -->
-      <div class="tab-pane fade" id="sobre">
-        <div class="main-card text-center animada">
-          <h2 class="mb-3"><i class="fas fa-user me-2"></i>Sobre Nós</h2>
-          <img src="logo.png" alt="Avatar" style="width:80px;height:80px;border-radius:50%;box-shadow:0 2px 8px #2563eb22;margin-bottom:1rem;">
-          <p class="mb-1">Olá! Nós somos da <strong>Escola Técnica Estadual Ginásio Pernambucano</strong>, uma equipe apaixonada por tecnologia, meteorologia e soluções inovadoras para a sociedade. O ClimaJá! foi criado para ajudar pessoas a monitorar o clima e compartilhar informações importantes sobre alagamentos em tempo real.</p>
-          <!-- Ícones de email e LinkedIn removidos -->
-          <p class="text-muted small">Entre em contato: <a href="mailto:oclimaja@hotmail.com">oclimaja@hotmail.com</a></p>
-        </div>
-      </div>
-      <!-- === Aba Mapa === -->
-      <div class="tab-pane fade" id="mapa">
-        <div class="main-card animada">
-          <div id="map" style="width:100%;height:450px;border-radius:1rem;"></div>
-          <div class="mt-3 text-center">
-            <button class="btn btn-modern" id="btn-localizacao">
-              <i class="fas fa-location-crosshairs me-2"></i>Usar Minha Localização
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- === Aba Clima === -->
-      <div class="tab-pane fade" id="clima">
-        <div class="main-card animada">
-          <div id="clima-alerta-localizacao" style="display:none;" class="alert alert-warning text-center mt-2 mb-3">
-            Para visualizar as informações do clima, permita o acesso à sua localização nas configurações do navegador.<br>
-            Se já permitiu e não aparece, recarregue a página ou tente novamente mais tarde.
-          </div>
-          <!-- Fallback: buscar por cidade e tentar novamente -->
-          <div id="clima-fallback" style="display:none;" class="text-center mt-2 mb-3">
-            <div class="mb-2">Ou busque pelo nome da cidade:</div>
-            <div class="d-flex justify-content-center gap-2">
-              <input type="text" id="clima-cidade-input" class="form-control" placeholder="Ex: Recife, PE" style="max-width:320px;">
-              <button id="clima-buscar-cidade" class="btn btn-modern">Buscar</button>
-            </div>
-            <div class="mt-2">
-              <button id="clima-tentar-novamente" class="btn btn-link">Tentar novamente (localização)</button>
-            </div>
-          </div>
-          <div class="weather-header">
-            <i class="wi wi-day-sunny weather-icon"></i>
-              <style>
-                  .weather-header .weather-icon {
-                 margin-left: 12px;
-                 margin-top: 6px;
-                 margin-right: 22px;
-                 margin-bottom: 10px;
-                 font-size: var(--weather-icon-size, 3.5rem);
-                 transition: font-size 0.3s;
-                  }
-                  .weather-header .weather-icon.sunny { --weather-icon-size: 3.7rem; }
-                  .weather-header .weather-icon.rain { --weather-icon-size: 4.2rem; }
-                  .weather-header .weather-icon.cloud { --weather-icon-size: 3.2rem; }
-                  .weather-header .weather-icon.storm { --weather-icon-size: 4.5rem; }
-              </style>
-              <div>
-              <h2 class="mb-0" id="city-name">Carregando...</h2>
-              <div class="sensor-value" id="current-temp">--°C</div>
-            </div>
-          </div>
-          <div class="weather-grid">
-            <div class="weather-item">
-              <i class="wi wi-humidity"></i>
-              <div class="mt-2">
-                <div class="text-muted small">Umidade</div>
-                <div class="fw-bold" id="humidity">--%</div>
-              </div>
-            </div>
-            <div class="weather-item">
-              <i class="wi wi-rain"></i>
-              <div class="mt-2">
-                <div class="text-muted small">Chuva</div>
-                <div class="fw-bold" id="rain">--mm</div>
-              </div>
-            </div>
-            <div class="weather-item">
-              <i class="wi wi-strong-wind"></i>
-              <div class="mt-2">
-                <div class="text-muted small">Vento</div>
-                <div class="fw-bold" id="wind-speed">--km/h</div>
-              </div>
-            </div>
-            <div class="weather-item">
-              <i class="wi wi-barometer"></i>
-              <div class="mt-2">
-                <div class="text-muted small">Pressão</div>
-                <div class="fw-bold" id="pressure">--hPa</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- === Aba Relatar === -->
-      <div class="tab-pane fade" id="relatar">
-        <div class="main-card animada" id="relato-area">
-          <ul class="nav nav-tabs mb-3" id="tipoRelatoTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="pedestre-tab" data-bs-toggle="tab" data-bs-target="#relato-pedestre" type="button" role="tab" aria-controls="relato-pedestre" aria-selected="true">Pedestre</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="motorista-tab" data-bs-toggle="tab" data-bs-target="#relato-motorista" type="button" role="tab" aria-controls="relato-motorista" aria-selected="false">Motorista</button>
-            </li>
-          </ul>
-          <div class="tab-content">
-            <div class="tab-pane fade show active" id="relato-pedestre" role="tabpanel" aria-labelledby="pedestre-tab">
-              <form id="reportForm">
-                <input type="hidden" id="latitude" name="latitude">
-                <input type="hidden" id="longitude" name="longitude">
-                <div class="mb-3">
-                  <label for="address" class="form-label">Endereço do Ocorrido</label>
-                  <div class="d-flex gap-2">
-                    <input type="text" class="form-control" id="address" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
-                    <button type="button" class="btn btn-outline-primary" id="use-my-location"><i class="fas fa-location-crosshairs"></i></button>
-                  </div>
-                  <div id="address-suggestions" class="dropdown-menu" style="width:100%"></div>
-                  <small class="form-text text-muted">Exemplo: Rua Exemplo, 123, Bairro, Cidade</small>
-                </div>
-                <div class="mb-3">
-                  <label for="ocorrido-primario" class="form-label">Ocorrido Primário</label>
-                  <select class="form-select" id="ocorrido-primario" required>
-                    <option value="">Selecione</option>
-                    <option value="alagamento">💧 Alagamento</option>
-                    <option value="enxurrada">🌊 Enxurrada</option>
-                    <option value="obstrucao">🚧 Obstrução de via</option>
-                    <option value="deslizamento">⛰️ Deslizamento</option>
-                    <option value="fio-duvidoso">⚡ Fio duvidoso</option>
-                    <option value="outro">❓ Outro</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="ocorrido-secundario" class="form-label">Ocorrido Secundário <span class="text-muted" style="font-weight:400;">(opcional)</span></label>
-                  <select class="form-select" id="ocorrido-secundario">
-                    <option value="">Nenhum</option>
-                    <option value="alagamento">💧 Alagamento</option>
-                    <option value="enxurrada">🌊 Enxurrada</option>
-                    <option value="obstrucao">🚧 Obstrução de via</option>
-                    <option value="deslizamento">⛰️ Deslizamento</option>
-                    <option value="fio-duvidoso">⚡ Fio duvidoso</option>
-                    <option value="outro">❓ Outro</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="water-level" class="form-label">Nível da Água</label>
-                  <select class="form-select" id="water-level" required>
-                    <option value="">Selecione</option>
-                    <option value="0">Sem água no momento</option>
-                    <option value="0.2">Até o tornozelo (baixo)</option>
-                    <option value="0.5">Até o joelho (moderado)</option>
-                    <option value="1.0">Até a cintura (alto)</option>
-                    <option value="1.5">Acima da cintura (grave)</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="descricao" class="form-label">Descrição detalhada <span class="text-muted" style="font-weight:400;">(opcional)</span></label>
-                  <textarea class="form-control" id="descricao" rows="3" placeholder="Descreva o que aconteceu, pontos de referência, impactos, etc."></textarea>
-                  <small class="form-text text-muted">Inclua detalhes como horário, danos, pessoas afetadas, etc.</small>
-                </div>
-                <div class="mb-3">
-              <!-- Data e hora removidos, são automáticos -->
-                </div>
-                <div class="mb-3">
-                  <label for="flood-photo" class="form-label">Fotos (opcional, até 3)</label>
-                  <input type="file" class="form-control" id="flood-photo" accept="image/*" multiple>
-                  <small class="form-text text-muted">Você pode anexar até 3 fotos do local.</small>
-                </div>
-                <button type="submit" class="btn btn-modern">Enviar Relato</button>
-              </form>
-            </div>
-            <div class="tab-pane fade" id="relato-motorista" role="tabpanel" aria-labelledby="motorista-tab">
-              <form id="reportFormMotorista">
-                <input type="hidden" id="latitude-motorista" name="latitude">
-                <input type="hidden" id="longitude-motorista" name="longitude">
-                <div class="mb-3">
-                  <label for="address-motorista" class="form-label">Endereço do Ocorrido</label>
-                  <div class="d-flex gap-2">
-                    <input type="text" class="form-control" id="address-motorista" placeholder="Digite o endereço completo ou selecione no mapa" required autocomplete="off">
-                    <button type="button" class="btn btn-outline-primary" id="use-my-location-motorista"><i class="fas fa-location-crosshairs"></i></button>
-                  </div>
-                  <div id="address-suggestions-motorista" class="dropdown-menu" style="width:100%"></div>
-                  <small class="form-text text-muted">Exemplo: Rua Exemplo, 123, Bairro, Cidade</small>
-                </div>
-                  <div class="mb-3">
-                    <label for="ocorrido-primario-motorista" class="form-label">Ocorrido Principal</label>
-                    <select class="form-select" id="ocorrido-primario-motorista" name="ocorridoPrimarioMotorista" required>
-                      <option value="">Selecione</option>
-                      <option value="alagamento">💧 Alagamento</option>
-                      <option value="enxurrada">🌊 Enxurrada</option>
-                      <option value="obstrucao">🚧 Obstrução de via</option>
-                      <option value="deslizamento">⛰️ Deslizamento</option>
-                      <option value="fio-duvidoso">⚡ Fio duvidoso</option>
-                      <option value="outro">❓ Outro</option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label for="ocorrido-secundario-motorista" class="form-label">Ocorrido Secundário <span class="text-muted" style="font-weight:400;">(opcional)</span></label>
-                    <select class="form-select" id="ocorrido-secundario-motorista" name="ocorridoSecundarioMotorista">
-                      <option value="">Nenhum</option>
-                      <option value="alagamento">💧 Alagamento</option>
-                      <option value="enxurrada">🌊 Enxurrada</option>
-                      <option value="obstrucao">🚧 Obstrução de via</option>
-                      <option value="deslizamento">⛰️ Deslizamento</option>
-                      <option value="fio-duvidoso">⚡ Fio duvidoso</option>
-                      <option value="outro">❓ Outro</option>
-                    </select>
-                  </div>
-                <div class="mb-3">
-                  <label for="veiculo" class="form-label">Veículo</label>
-                  <input type="text" class="form-control" id="veiculo" placeholder="Marca e modelo do veículo" required>
-                </div>
-                <div class="mb-3">
-                  <label for="nivel-submersao" class="form-label">Nível de Submersão</label>
-                  <select class="form-select" id="nivel-submersao" required>
-                    <option value="">Selecione</option>
-                    <option value="0">Sem água no momento</option>
-                    <option value="0.2">Até a metade da roda</option>
-                    <option value="0.5">Até a porta</option>
-                    <option value="1.0">Acima da porta</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="descricao-motorista" class="form-label">Descrição detalhada <span class="text-muted" style="font-weight:400;">(opcional)</span></label>
-                  <textarea class="form-control" id="descricao-motorista" rows="3" placeholder="Descreva o que aconteceu, pontos de referência, impactos, etc."></textarea>
-                  <small class="form-text text-muted">Inclua detalhes como horário, danos, pessoas afetadas, etc.</small>
-                </div>
-                <div class="mb-3">
-              <!-- Data e hora removidos, são automáticos -->
-                </div>
-                <div class="mb-3">
-                  <label for="flood-photo-motorista" class="form-label">Fotos (opcional, até 3)</label>
-                  <input type="file" class="form-control" id="flood-photo-motorista" accept="image/*" multiple>
-                  <small class="form-text text-muted">Você pode anexar até 3 fotos do local.</small>
-                </div>
-                <button type="submit" class="btn btn-modern">Enviar Relato</button>
-              </form>
-            </div>
-          </div>
-        </div>
-        <div id="relato-login-msg" class="text-center my-3 d-none">
-          <div class="alert alert-warning d-inline-block px-4 py-2" style="font-size:1.1rem;">
-            <i class="fas fa-lock me-2"></i>Você precisa estar logado para enviar um relato.<br>
-          </div>
-        </div>
-        <div id="relatos-publicos" class="mt-4">
-          <!-- Relatos públicos serão exibidos aqui via JS -->
-        </div>
-      </div>
+    <!-- Efeito de partículas no fundo -->
+    <div class="particles" id="particles"></div>
     
-
-  <footer class="bg-light py-4 mt-5 border-top" style="transition:background 0.3s;">
-    <div class="container text-center">
-      <h5 class="mb-2"><i class="fas fa-cloud-sun me-2"></i>ClimaJá! &copy; 2025</h5>
-      <p class="mb-1">Projeto de monitoramento meteorológico e relatos de alagamentos. Desenvolvido por Escola Técnica Estadual Ginásio Pernambucano.</p>
-      <div class="mb-2">
-        <!-- Removido: links github, linkedin, twitter -->
-      </div>
-      <div class="d-flex justify-content-center align-items-center gap-4 my-3">
-        <img src="cria.png" alt="Logo CRIA" class="footer-logo-img" loading="lazy">
-        <img src="clube.png" alt="Logo Clube" class="footer-logo-img" loading="lazy">
-      </div>
-      <p class="text-muted small">Entre em contato: <a href="mailto:oclimaja@hotmail.com">oclimaja@hotmail.com</a></p>
-    </div>
-  </footer>
-
-  <!-- JS externos -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="./paranoid-security.js"></script>
-  <!-- Nosso JS -->
-  <script type="module" src="script.js"></script>
-  <!-- Firebase SDK -->
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-  <script>
-    // Delegadores leves: chamam as funções expostas pelo script.js (evita duplicidade)
-    function inicializarMapaLeaflet() {
-      if (window.inicializarMapaLeaflet) return window.inicializarMapaLeaflet();
-      // fallback: tenta chamar initMap diretamente
-      if (window.initMap) return window.initMap();
-    }
-
-    function pedirLocalizacaoMapa() {
-      if (window.pedirLocalizacaoMapa) return window.pedirLocalizacaoMapa();
-      if (window.locateUser) return window.locateUser(true);
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      // Inicializa mapa ao abrir aba, delegando para o script.js
-      document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
-        tab.addEventListener('shown.bs.tab', function (e) {
-          if (e.target.getAttribute('href') === '#mapa') {
-            inicializarMapaLeaflet();
-            pedirLocalizacaoMapa();
-          }
-        });
-      });
-      // Botão de localização
-      var btnLoc = document.getElementById('btn-localizacao');
-      if (btnLoc) btnLoc.onclick = pedirLocalizacaoMapa;
-
-      // Photon autocomplete para campo de endereço
-      function setupPhotonAutocomplete(inputId, latId, lonId, suggestionsId) {
-        var input = document.getElementById(inputId);
-        var suggestions = document.getElementById(suggestionsId);
-        input.addEventListener('input', function() {
-          var query = input.value;
-          if (query.length < 3) {
-            suggestions.style.display = 'none';
-            return;
-          }
-          fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&limit=5')
-            .then(res => res.json())
-            .then(data => {
-              suggestions.innerHTML = '';
-              data.features.forEach(function(feature) {
-                var item = document.createElement('button');
-                item.type = 'button';
-                item.className = 'dropdown-item';
-                item.textContent = feature.properties.name + (feature.properties.city ? ', ' + feature.properties.city : '');
-                item.onclick = function() {
-                  input.value = item.textContent;
-                  document.getElementById(latId).value = feature.geometry.coordinates[1];
-                  document.getElementById(lonId).value = feature.geometry.coordinates[0];
-                  if (window.meuMapa) {
-                    window.meuMapa.setView([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], 16);
-                    L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]).addTo(window.meuMapa).bindPopup(item.textContent).openPopup();
-                  }
-                  suggestions.style.display = 'none';
-                };
-                suggestions.appendChild(item);
-              });
-              suggestions.style.display = data.features.length ? 'block' : 'none';
-            });
-        });
-        input.addEventListener('blur', function() {
-          setTimeout(() => suggestions.style.display = 'none', 200);
-        });
-      }
-
-      // Ativa autocomplete Photon nos campos de endereço
-      setupPhotonAutocomplete('address', 'latitude', 'longitude', 'address-suggestions');
-      setupPhotonAutocomplete('address-motorista', 'latitude-motorista', 'longitude-motorista', 'address-suggestions-motorista');
-    });
-  </script>
-<!-- Firebase removido temporariamente -->
-  <script>
-    // Firebase removido temporariamente
-    // ...código anterior...
-    // Funções de clima e mapa permanecem iguais
-    // Localização global do usuário
-    let userLocation = null;
-
-    // Solicita localização ao abrir o site e atualiza Windy
-    function pedirLocalizacaoInicial() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          userLocation = {
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude
-          };
-          atualizarClimaComLocalizacao();
-          atualizarMapaWindy();
-        }, function(err) {
-          userLocation = null;
-          alert('Não foi possível obter sua localização exata. Algumas funções podem ficar limitadas.');
-        }, {enableHighAccuracy:true, timeout:10000});
-      } else {
-        alert('Seu navegador não suporta geolocalização.');
-      }
-    }
-
-    // Atualiza o iframe do Windy para a localização do usuário
-    function atualizarMapaWindy() {
-      if (!userLocation) return;
-      var windyFrame = document.getElementById('windy-embed');
-      if (windyFrame) {
-        windyFrame.src = `https://embed.windy.com/embed2.html?lat=${userLocation.lat}&lon=${userLocation.lon}&detailLat=${userLocation.lat}&detailLon=${userLocation.lon}&width=650&height=450&zoom=13&level=surface&overlay=rain&product=ecmwf`;
-      }
-    }
-
-    // Botão manual para atualizar Windy
-    function pedirLocalizacaoWindy() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          userLocation = {
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude
-          };
-          atualizarMapaWindy();
-        }, function() {
-          alert('Não foi possível obter sua localização.');
-        }, {enableHighAccuracy:true, timeout:10000});
-      } else {
-        alert('Seu navegador não suporta geolocalização.');
-      }
-    }
-
-    // Atualiza aba Clima com localização
-    function atualizarClimaComLocalizacao() {
-      const alerta = document.getElementById('clima-alerta-localizacao');
-      if (!userLocation) {
-        if (alerta) alerta.style.display = '';
-        // Limpa dados
-        document.getElementById('current-temp').textContent = '--°C';
-        document.getElementById('city-name').textContent = '--';
-        document.getElementById('humidity').textContent = '--%';
-        document.getElementById('wind-speed').textContent = '--km/h';
-        document.getElementById('pressure').textContent = '--';
-        document.getElementById('rain').textContent = '--mm';
-        return;
-      }
-      // Buscar bairro via Nominatim
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lon}&addressdetails=1`)
-        .then(res => res.json())
-        .then(addrData => {
-          let bairro = 'Localização';
-          if (addrData && addrData.address) {
-            bairro = addrData.address.suburb || addrData.address.neighbourhood || addrData.address.village || addrData.address.town || addrData.address.city || 'Localização';
-          }
-          // Buscar clima
-          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current_weather=true`)
-            .then(res => res.json())
-            .then(data => {
-              if (data && data.current_weather) {
-                document.getElementById('current-temp').textContent = `${data.current_weather.temperature}°C`;
-                document.getElementById('city-name').textContent = bairro;
-                document.getElementById('humidity').textContent = data.current_weather.relative_humidity ? `${data.current_weather.relative_humidity}%` : '--%';
-                document.getElementById('wind-speed').textContent = `${data.current_weather.windspeed} km/h`;
-                document.getElementById('pressure').textContent = data.current_weather.pressure ? `${data.current_weather.pressure} hPa` : '--';
-                document.getElementById('rain').textContent = data.current_weather.precipitation ? `${data.current_weather.precipitation} mm` : '--mm';
-                if (alerta) alerta.style.display = 'none';
-              } else {
-                if (alerta) alerta.style.display = '';
-              }
-            })
-            .catch(() => { if (alerta) alerta.style.display = ''; });
-        })
-        .catch(() => { if (alerta) alerta.style.display = ''; });
-    }
-
-    // Centraliza o mapa na localização do usuário
-    function centralizarMapaNaLocalizacao() {
-      if (!userLocation || !window.meuMapa) return;
-      window.meuMapa.setView([userLocation.lat, userLocation.lon], 15);
-      if (!window.userMarker) {
-        window.userMarker = L.marker([userLocation.lat, userLocation.lon], {icon: L.icon({iconUrl: 'user-marker.png', iconSize: [32,32]})}).addTo(window.meuMapa);
-      } else {
-        window.userMarker.setLatLng([userLocation.lat, userLocation.lon]);
-      }
-    }
-
-    // Função para localizar usuário via botão no mapa
-    function locateUser(btn) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          userLocation = {
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude
-          };
-          centralizarMapaNaLocalizacao();
-        });
-      }
-    }
-
-    // Função para preencher o campo de endereço com a localização atual ao abrir a aba Relatar
-    function preencherEnderecoAtual() {
-      const addressInput = document.getElementById('address');
-      const latInput = document.getElementById('latitude');
-      const lonInput = document.getElementById('longitude');
-      if (!addressInput) return;
-      if (userLocation) {
-        latInput.value = userLocation.lat;
-        lonInput.value = userLocation.lon;
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lon}&addressdetails=1`)
-          .then(res => res.json())
-          .then(data => {
-            if (data && data.display_name) {
-              addressInput.value = data.display_name;
-            }
-          });
-      } else if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          latInput.value = pos.coords.latitude;
-          lonInput.value = pos.coords.longitude;
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`)
-            .then(res => res.json())
-            .then(data => {
-              if (data && data.display_name) {
-                addressInput.value = data.display_name;
-              }
-            });
-        });
-      }
-    }
-
-    // Função para preencher o campo de endereço com a localização atual ao abrir a aba Relatar
-    function preencherEnderecoAtual() {
-      const addressInput = document.getElementById('address');
-      const latInput = document.getElementById('latitude');
-      const lonInput = document.getElementById('longitude');
-      if (!addressInput || !navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        if (latInput) latInput.value = lat;
-        if (lonInput) lonInput.value = lon;
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`)
-          .then(res => res.json())
-          .then(data => {
-            if (data && data.display_name) {
-              addressInput.value = data.display_name;
-            }
-          });
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      // Solicita localização ao abrir o site
-      pedirLocalizacaoInicial();
-
-      // Preencher automaticamente ao abrir aba Relatar
-      document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
-        tab.addEventListener('shown.bs.tab', function (e) {
-          if (e.target.getAttribute('href') === '#relatar') {
-            preencherEnderecoAtual();
-          }
-          if (e.target.getAttribute('href') === '#clima') {
-            atualizarClimaComLocalizacao();
-              // Atualiza ícone do clima ao acessar aba
-              setTimeout(function() {
-                if (window.userLocation) {
-                  fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${window.userLocation.lat}&lon=${window.userLocation.lon}&appid=API_KEY&units=metric&lang=pt_br`)
-                    .then(res => res.json())
-                    .then(data => {
-                      if (data && data.weather && data.weather[0]) {
-                        var iconEl = document.querySelector('.weather-icon');
-                        if (iconEl) {
-                    iconEl.className = `wi wi-owm-${data.weather[0].id} weather-icon`;
-                    // Varia tamanho conforme clima
-                    let clima = data.weather[0].main.toLowerCase();
-                    iconEl.classList.remove('sunny','rain','cloud','storm');
-                    if (clima.includes('rain')) iconEl.classList.add('rain');
-                    else if (clima.includes('cloud')) iconEl.classList.add('cloud');
-                    else if (clima.includes('storm') || clima.includes('thunder')) iconEl.classList.add('storm');
-                    else iconEl.classList.add('sunny');
-                        }
-                      }
-                    });
-                }
-              }, 400);
-          }
-          if (e.target.getAttribute('href') === '#mapa') {
-            // Delega para script.js (evita múltiplas inicializações)
-            if (window.inicializarMapaLeaflet) window.inicializarMapaLeaflet();
-            if (window.centralizarMapaNaLocalizacao) window.centralizarMapaNaLocalizacao();
-            else if (window.centralizarMapaNaLocalizacao) window.centralizarMapaNaLocalizacao();
-          }
-        });
-      });
-
-      // Delegador para inicializar o mapa (implementação real em script.js)
-      function inicializarMapaLeaflet() {
-        if (window.inicializarMapaLeaflet) return window.inicializarMapaLeaflet();
-        if (window.initMap) return window.initMap();
-      }
-      // Relatos locais (em memória) - agora global
-      // ...existing code...
-
-const reportForm = document.getElementById('reportForm');
-if (reportForm) {
-  reportForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    // Coleta os dados do formulário
-    const latitude = document.getElementById('latitude').value;
-    const longitude = document.getElementById('longitude').value;
-    const address = document.getElementById('address').value;
-    const ocorridoPrimario = document.getElementById('ocorrido-primario').value;
-    const ocorridoSecundario = document.getElementById('ocorrido-secundario').value;
-    const nivel = document.getElementById('water-level').value;
-    const descricao = document.getElementById('descricao').value;
-    let fotos = [];
-    const photoInput = document.getElementById('flood-photo');
-    if (photoInput && photoInput.files.length > 0) {
-      for (let i = 0; i < Math.min(photoInput.files.length, 3); i++) {
-        fotos.push(photoInput.files[i].name); // ou faça upload e salve o link
-      }
-    }
-
-    const relato = {
-      latitude,
-      longitude,
-      address,
-      ocorridoPrimario,
-      ocorridoSecundario,
-      nivel,
-      descricao,
-      fotos,
-      status: 'publico',
-      uid: auth.currentUser ? auth.currentUser.uid : null
-    };
-
-    const ok = await salvarRelatoFirestore(relato);
-    if (ok) {
-      alert('Relato enviado com sucesso!');
-      reportForm.reset();
-      fecharSelecaoLocalizacao();
-      // Se quiser, chame aqui a função para atualizar a lista de relatos
-      // carregarRelatosPublicos();
-    } else {
-      alert('Erro ao salvar relato no banco de dados!');
-    }
-  });
-}
-      // Exibe relatos locais ao carregar
-      carregarRelatosPublicos();
-    });
-
-    // Função para carregar relatos públicos
-// ...existing code...
-// Substitua a função carregarRelatosPublicos por esta versão:
-import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js";
-const db = getFirestore();
-
-async function carregarRelatosPublicos() {
-  const relatosDiv = document.getElementById('relatos-publicos');
-  if (!relatosDiv) return;
-  const q = query(collection(db, "relatos"), orderBy("dataHora", "desc"), limit(50));
-  const querySnapshot = await getDocs(q);
-  let html = '';
-  querySnapshot.forEach((doc) => {
-    const r = doc.data();
-    // Monte o HTML do relato igual já faz, usando os dados de r
-    html += `<div class="card mb-3"><div class="card-body">
-      <h5 class="card-title">${r.ocorridoPrimario || 'Relato'}</h5>
-      <p class="card-text"><strong>Endereço:</strong> ${r.address || 'Não informado'}</p>
-      <p class="card-text"><strong>Nível da água:</strong> ${r.nivel || '--'}</p>
-      <p class="card-text"><strong>Descrição:</strong> ${r.descricao || ''}</p>
-      <p class="card-text"><small class="text-muted">${r.dataHora && r.dataHora.toDate ? r.dataHora.toDate().toLocaleString('pt-BR') : ''}</small></p>
-    </div></div>`;
-  });
-  relatosDiv.innerHTML = html;
-  // ...existing code...
-
-      relatosFiltrados.forEach(function(r) {
-        const primario = r.ocorridoPrimario ? (tipoEmoji[r.ocorridoPrimario] || '❓') + ' ' + r.ocorridoPrimario : '';
-        const secundario = r.ocorridoSecundario && r.ocorridoSecundario !== '' ? (tipoEmoji[r.ocorridoSecundario] || '❓') + ' ' + r.ocorridoSecundario : '';
-        const emoji = r.nivel === '0' ? '✅' : (tipoEmoji[r.ocorridoPrimario] || '❓');
-        html += `<div class="card mb-3"><div class="card-body">
-          <h5 class="card-title">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (primario || 'Relato')}</h5>
-          ${secundario ? `<div class='mb-1'><strong>Ocorrido Secundário:</strong> ${secundario}</div>` : ''}
-          <p class="card-text"><strong>Endereço:</strong> ${r.address || 'Não informado'}</p>
-          <p class="card-text"><strong>Nível da água:</strong> ${r.nivel === '0' ? 'Sem água no momento' : (r.nivel || '--')}</p>
-          <p class="card-text"><strong>Descrição:</strong> ${r.descricao || ''}</p>
-          <p class="card-text"><small class="text-muted">${new Date(r.dataHora).toLocaleString('pt-BR')}</small></p>
-        </div></div>`;
-        // Adiciona marcador no mapa com ícone personalizado e efeito 3D/pulso
-        if (window.meuMapa && r.latitude && r.longitude && !isNaN(parseFloat(r.latitude)) && !isNaN(parseFloat(r.longitude))) {
-          // Cor da borda do marcador conforme nível
-          let nivelCor = '#38bdf8';
-          if (r.nivel === '0') nivelCor = '#22c55e';
-          else if (r.nivel === '0.2') nivelCor = '#38bdf8';
-          else if (r.nivel === '0.5') nivelCor = '#fbbf24';
-          else if (r.nivel === '1.0') nivelCor = '#f87171';
-          else if (r.nivel === '1.5') nivelCor = '#dc2626';
-          // Ícone com efeito 3D, sombra e animação de pulso
-          const iconHtml = `
-            <div class="relato-marker-3d" style="--cor:${nivelCor};">
-              <span class="relato-marker-emoji">${emoji}</span>
-              <span class="relato-marker-pulse"></span>
-            </div>
-            <style>
-              .relato-marker-3d {
-                position: relative;
-                width: 44px; height: 44px;
-                display: flex; align-items: center; justify-content: center;
-                background: linear-gradient(145deg,#fff 60%,#e0f2fe 100%);
-                border-radius: 50%;
-                border: 3.5px solid var(--cor,#38bdf8);
-                box-shadow: 0 6px 24px #2563eb33, 0 2px 12px #38bdf822, 0 0 0 6px #fff8;
-                z-index: 2;
-                animation: markerPop 0.7s cubic-bezier(.23,1.02,.32,1);
-                transition: border 0.3s, box-shadow 0.3s;
-              }
-              .relato-marker-3d:hover {
-                box-shadow: 0 12px 36px #2563eb55, 0 4px 16px #38bdf855, 0 0 0 10px #bae6fd55;
-                transform: scale(1.08) translateY(-3px);
-              }
-              .relato-marker-emoji {
-                font-size: 2.1rem;
-                line-height: 1.1;
-                z-index: 3;
-                filter: drop-shadow(0 2px 8px #2563eb22);
-                user-select: none;
-              }
-              .relato-marker-pulse {
-                position: absolute;
-                left: 50%; top: 50%;
-                width: 44px; height: 44px;
-                transform: translate(-50%,-50%);
-                border-radius: 50%;
-                background: radial-gradient(circle, var(--cor,#38bdf8) 0%, transparent 70%);
-                opacity: 0.25;
-                z-index: 1;
-                animation: markerPulse 1.5s infinite cubic-bezier(.23,1.02,.32,1);
-              }
-              @keyframes markerPulse {
-                0% { opacity: 0.25; transform: translate(-50%,-50%) scale(1); }
-                60% { opacity: 0.12; transform: translate(-50%,-50%) scale(1.5); }
-                100% { opacity: 0; transform: translate(-50%,-50%) scale(2.1); }
-              }
-              @keyframes markerPop {
-                0% { transform: scale(0.7) translateY(20px); opacity: 0; }
-                60% { transform: scale(1.1) translateY(-6px); opacity: 1; }
-                100% { transform: scale(1) translateY(0); opacity: 1; }
-              }
-            </style>
-          `;
-          const customIcon = L.divIcon({
-            className: '',
-            html: iconHtml,
-            iconSize: [48, 48],
-            iconAnchor: [24, 44],
-            popupAnchor: [0, -44]
-          });
-          const marker = L.marker([parseFloat(r.latitude), parseFloat(r.longitude)], {icon: customIcon, riseOnHover:true}).addTo(window.meuMapa);
-          // Popup detalhado com efeito de entrada
-          const primario = r.ocorridoPrimario ? (tipoEmoji[r.ocorridoPrimario] || '❓') + ' ' + r.ocorridoPrimario : '';
-          const secundario = r.ocorridoSecundario && r.ocorridoSecundario !== '' ? (tipoEmoji[r.ocorridoSecundario] || '❓') + ' ' + r.ocorridoSecundario : '';
-          const tipoTag = `<span style="display:inline-block;background:linear-gradient(90deg,#38bdf8 60%,#2563eb 100%);color:#fff;font-weight:600;font-size:0.98rem;padding:2px 10px;border-radius:1rem;margin-right:6px;box-shadow:0 2px 8px #2563eb22;letter-spacing:0.5px;">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (primario || 'Relato')}</span>`;
-          const nivelTag = `<span style="display:inline-block;background:${nivelCor};color:#222;font-weight:600;font-size:0.97rem;padding:2px 10px;border-radius:1rem;margin-left:0;box-shadow:0 2px 8px #2563eb22;">${r.nivel === '0' ? 'Sem água no momento' : (r.nivel ? r.nivel.replace('0.2','Baixo').replace('0.5','Moderado').replace('1.0','Alto').replace('1.5','Grave') : '--')}</span>`;
-          const popupHtml = `
-            <div class="popup-anim" style="min-width:220px;max-width:320px;padding:13px 10px 10px 10px;border-radius:1.2rem;background:linear-gradient(120deg,#f0f9ff 60%,#bae6fd 100%);box-shadow:0 4px 24px #2563eb33,0 1.5px 12px #38bdf822;border:2.5px solid #38bdf8;position:relative;overflow:hidden;transition:box-shadow 0.3s;">
-              <div style="position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 40% at 60% 0%,#f9f87133 0%,#fbbf2433 40%,transparent 100%),radial-gradient(ellipse 60% 30% at 20% 20%,#5ee7df33 0%,#a5b4fc22 60%,transparent 100%),radial-gradient(ellipse 40% 20% at 80% 80%,#fca5a522 0%,transparent 100%);opacity:0.7;"></div>
-              <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.7rem;z-index:1;position:relative;">
-                <span style="font-size:2.3rem;line-height:1.1;display:inline-block;background:#fff;border-radius:50%;border:2.5px solid #38bdf8;box-shadow:0 2px 8px #2563eb33;padding:2px 13px 2px 13px;">${emoji}</span>
-                <div style="display:flex;flex-direction:column;gap:2px;">
-                  ${tipoTag}
-                  ${nivelTag}
-                </div>
-              </div>
-              ${secundario ? `<div style='font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;'><b>Ocorrido Secundário:</b> <span style='color:#222;'>${secundario}</span></div>` : ''}
-              <div style="font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;"><i class='fas fa-map-marker-alt' style='color:#38bdf8;'></i> <b>Endereço:</b> <span style='color:#222;'>${r.address || 'Não informado'}</span></div>
-              <div style="font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;"><b>Descrição:</b> <span style='color:#222;'>${r.descricao || ''}</span></div>
-              <div style="font-size:0.97rem;color:#2563eb;margin-top:7px;text-align:right;z-index:1;position:relative;"><i class='far fa-clock' style='color:#38bdf8;'></i> ${new Date(r.dataHora).toLocaleString('pt-BR')}</div>
-              <style>
+    <div class="container">
+        <h1>ClimaJá</h1>
+        
+        <div class="search-box">
+            <input type="text" placeholder="Digite o nome da cidade...">
+            <button>Buscar</button>
         </div>
-          `;
-          marker.bindPopup(popupHtml);
-          window.relatosMarkers.push(marker);
-        }
-      });
-      relatosDiv.innerHTML = html;
-    }
-    // ...existing code...
-  </script>
-  <script>
-  // Força updateAuthUI após login
-  document.addEventListener('DOMContentLoaded', function() {
-    if (window.auth && window.firebase && window.firebase.auth) {
-      window.firebase.auth().onAuthStateChanged(function(user) {
-        // updateAuthUI(user); // Removido, controle feito pelo script.js
-      });
-    } else if (window.auth && window.onAuthStateChanged) {
-      window.onAuthStateChanged(window.auth, function(user) {
-        // updateAuthUI(user); // Removido, controle feito pelo script.js
-      });
-    } else {
-      // Controle de autenticação feito pelo script.js
-    }
-  });
-</script>
+        
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Buscando informações...</p>
+        </div>
+        
+        <div class="weather-card">
+            <div class="city-name">Cidade</div>
+            <div class="date">Data</div>
+            <div class="weather-icon">☀️</div>
+            <div class="temperature">--°C</div>
+            <div class="description">Descrição</div>
+            
+            <div class="weather-details">
+                <div class="detail-item">
+                    <span class="detail-label">Sensação</span>
+                    <span class="detail-value">--°C</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Umidade</span>
+                    <span class="detail-value">--%</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Vento</span>
+                    <span class="detail-value">-- km/h</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Pressão</span>
+                    <span class="detail-value">-- hPa</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="error-message">
+            Cidade não encontrada. Verifique o nome e tente novamente.
+        </div>
+        
+        <div class="footer">
+            ClimaJá &copy; 2023 - Previsão do Tempo em Tempo Real
+        </div>
+    </div>
+
+    <script>
+        // Script para criar partículas no fundo
+        document.addEventListener('DOMContentLoaded', function() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Tamanho aleatório entre 5 e 15px
+                const size = Math.random() * 10 + 5;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Posição inicial aleatória
+                particle.style.left = `${Math.random() * 100}%`;
+                
+                // Duração da animação aleatória
+                const duration = Math.random() * 10 + 10;
+                particle.style.animationDuration = `${duration}s`;
+                
+                // Atraso aleatório
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+            
+            // Simulação de busca de clima (para demonstração)
+            const searchButton = document.querySelector('.search-box button');
+            const searchInput = document.querySelector('.search-box input');
+            const loadingElement = document.querySelector('.loading');
+            const weatherCard = document.querySelector('.weather-card');
+            const errorMessage = document.querySelector('.error-message');
+            
+            searchButton.addEventListener('click', function() {
+                const city = searchInput.value.trim();
+                
+                if (city === '') {
+                    showError('Por favor, digite o nome de uma cidade.');
+                    return;
+                }
+                
+                // Simular busca
+                loadingElement.style.display = 'block';
+                weatherCard.style.display = 'none';
+                errorMessage.style.display = 'none';
+                
+                setTimeout(() => {
+                    loadingElement.style.display = 'none';
+                    
+                    // Simular resultado aleatório para demonstração
+                    if (Math.random() > 0.2) { // 80% de chance de sucesso
+                        updateWeatherData(city);
+                        weatherCard.style.display = 'block';
+                    } else {
+                        showError('Cidade não encontrada. Verifique o nome e tente novamente.');
+                    }
+                }, 1500);
+            });
+            
+            function updateWeatherData(city) {
+                // Dados simulados
+                const weatherData = {
+                    city: city,
+                    temperature: Math.floor(Math.random() * 35) + 5,
+                    feelsLike: Math.floor(Math.random() * 35) + 5,
+                    humidity: Math.floor(Math.random() * 100),
+                    windSpeed: Math.floor(Math.random() * 30) + 5,
+                    pressure: Math.floor(Math.random() * 100) + 1000,
+                    description: ['Ensolarado', 'Parcialmente nublado', 'Nublado', 'Chuvoso'][Math.floor(Math.random() * 4)],
+                    icon: ['☀️', '⛅', '☁️', '🌧️'][Math.floor(Math.random() * 4)]
+                };
+                
+                // Atualizar a interface
+                document.querySelector('.city-name').textContent = weatherData.city;
+                document.querySelector('.date').textContent = new Date().toLocaleDateString('pt-BR');
+                document.querySelector('.weather-icon').textContent = weatherData.icon;
+                document.querySelector('.temperature').textContent = `${weatherData.temperature}°C`;
+                document.querySelector('.description').textContent = weatherData.description;
+                document.querySelectorAll('.detail-value')[0].textContent = `${weatherData.feelsLike}°C`;
+                document.querySelectorAll('.detail-value')[1].textContent = `${weatherData.humidity}%`;
+                document.querySelectorAll('.detail-value')[2].textContent = `${weatherData.windSpeed} km/h`;
+                document.querySelectorAll('.detail-value')[3].textContent = `${weatherData.pressure} hPa`;
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+            
+            // Inicializar com dados de exemplo
+            updateWeatherData('São Paulo');
+        });
+    </script>
 </body>
 </html>
