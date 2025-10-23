@@ -264,11 +264,19 @@ async function getWeatherData(lat, lon) {
     if (!data || !data.main || typeof data.main.temp === 'undefined') {
       throw new Error('Dados de clima inválidos');
     }
-    document.getElementById('current-temp').textContent = `${Math.round(data.main.temp)}°C`;
-    document.getElementById('humidity').textContent = `${data.main.humidity}%`;
-    document.getElementById('wind-speed').textContent = `${(data.wind.speed*3.6).toFixed(1)}km/h`;
-    document.getElementById('pressure').textContent = `${data.main.pressure}hPa`;
-    document.getElementById('rain').textContent = data.rain
+    document.getElementById('current-temp').textContent = (data.main && typeof data.main.temp !== 'undefined')
+      ? `${Math.round(data.main.temp)}°C`
+      : '--°C';
+    document.getElementById('humidity').textContent = (data.main && typeof data.main.humidity !== 'undefined')
+      ? `${data.main.humidity}%`
+      : '--%';
+    document.getElementById('wind-speed').textContent = (data.wind && typeof data.wind.speed !== 'undefined')
+      ? `${(data.wind.speed*3.6).toFixed(1)}km/h`
+      : '--km/h';
+    document.getElementById('pressure').textContent = (data.main && typeof data.main.pressure !== 'undefined')
+      ? `${data.main.pressure}hPa`
+      : '--hPa';
+    document.getElementById('rain').textContent = (data.rain && typeof data.rain['1h'] !== 'undefined')
       ? `${(data.rain['1h']||0).toFixed(1)}mm`
       : '0.0mm';
     document.querySelector('.weather-icon').className = `wi wi-owm-${data.weather[0].id} weather-icon`;
