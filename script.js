@@ -266,19 +266,19 @@ async function getWeatherData(lat, lon) {
     }
     document.getElementById('current-temp').textContent = (data.main && typeof data.main.temp !== 'undefined')
       ? `${Math.round(data.main.temp)}°C`
-      : '--°C';
+      : 'Não disponível';
     document.getElementById('humidity').textContent = (data.main && typeof data.main.humidity !== 'undefined')
       ? `${data.main.humidity}%`
-      : '--%';
+      : 'Não disponível';
     document.getElementById('wind-speed').textContent = (data.wind && typeof data.wind.speed !== 'undefined')
       ? `${(data.wind.speed*3.6).toFixed(1)}km/h`
-      : '--km/h';
+      : 'Não disponível';
     document.getElementById('pressure').textContent = (data.main && typeof data.main.pressure !== 'undefined')
       ? `${data.main.pressure}hPa`
-      : '--hPa';
+      : 'Não disponível';
     document.getElementById('rain').textContent = (data.rain && typeof data.rain['1h'] !== 'undefined')
       ? `${(data.rain['1h']||0).toFixed(1)}mm`
-      : '0.0mm';
+      : 'Não disponível';
     document.querySelector('.weather-icon').className = `wi wi-owm-${data.weather[0].id} weather-icon`;
     getCityName(lat, lon);
     // Limpa alerta se sucesso
