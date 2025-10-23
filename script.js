@@ -102,8 +102,12 @@ async function saveReportToDB(report) {
     console.log('Relato salvo no Realtime Database:', report);
     return { success: true, message: 'Relato salvo com sucesso!' };
   } catch (e) {
-    console.error('Erro ao salvar relato:', e.message);
-    return { success: false, message: e.message };
+    console.error('Erro ao salvar relato:', e);
+    // Trata erro de permissão especificamente
+    const msg = (e && e.code && e.code === 'PERMISSION_DENIED') || (e && e.message && e.message.toLowerCase().includes('permission_denied'))
+      ? 'Permissão negada: verifique as regras do Realtime Database.'
+      : (e && e.message) || String(e);
+    return { success: false, message: msg };
   }
 }
 
@@ -182,6 +186,21 @@ async function loadInitialData() {
 
     // Carrega os relatos salvos
     await loadSavedReports();
+}
+
+// Carrega tema da Realtime Database em /config/theme (se existir). Retorna 'light' por padrão.
+async function loadThemeFromDB() {
+  try {
+    if (!db) return 'light';
+    const snapshot = await get(child(ref(db), 'config/theme'));
+    if (snapshot && snapshot.exists && snapshot.exists()) {
+      const val = snapshot.val();
+      if (typeof val === 'string' && (val === 'light' || val === 'dark')) return val;
+    }
+  } catch (e) {
+    console.warn('Não foi possível carregar tema do DB, usando padrão:', e && e.message ? e.message : e);
+  }
+  return 'light';
 }
 
 
@@ -435,8 +454,13 @@ document.getElementById('reportForm').addEventListener('submit', async e => {
   };
 
   addReportToMap(report);
-  await saveReportToDB(report); // Usa a função de salvar no "DB"
-  showNotification('Relato enviado com sucesso!', 'success');
+  const result = await saveReportToDB(report);
+  if (result && result.success) {
+    showNotification('Relato enviado com sucesso!', 'success');
+  } else {
+    console.error('Erro ao salvar relato:', result && result.message);
+    showNotification('Erro ao salvar relato: ' + (result && result.message ? result.message : 'Erro desconhecido'), 'danger');
+  }
   document.getElementById('reportForm').reset();
   selectedVehicle = null;
 });
@@ -544,6 +568,15 @@ async function loadSavedReports() {
       console.warn('Erro ao adicionar relato salvo:', e);
     }
   });
+}
+
+// Exponha operações importantes para o código inline em index.html
+try {
+  window.saveReportToDB = saveReportToDB;
+  window.carregarRelatosPublicos = loadSavedReports;
+  window.loadThemeFromDB = loadThemeFromDB;
+} catch (e) {
+  console.warn('Não foi possível expor funções ao window:', e);
 }
 
 // Pré-carrega as marcas de veículos
@@ -786,8 +819,13 @@ function showRelatoArea() {
         timestamp: new Date()
       };
       addReportToMap(report);
-      await saveReportToDB(report); // Usa a função de salvar no "DB"
-      showNotification('Relato enviado com sucesso!', 'success');
+      const result = await saveReportToDB(report);
+      if (result && result.success) {
+        showNotification('Relato enviado com sucesso!', 'success');
+      } else {
+        console.error('Erro ao salvar relato:', result && result.message);
+        showNotification('Erro ao salvar relato: ' + (result && result.message ? result.message : 'Erro desconhecido'), 'danger');
+      }
       reportForm.reset();
     });
   }
@@ -999,20 +1037,23 @@ function buscarClimaPorLocalizacao() {
 }
 
 // Solicita localização ao abrir a aba Clima
+// Listener único para abrir a aba Clima e buscar clima
 document.addEventListener('DOMContentLoaded', function() {
+  let climaCarregado = false;
   document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
     tab.addEventListener('shown.bs.tab', function (e) {
       const href = e.target.getAttribute('href');
-      if (href === '#clima') {
+      if (href === '#clima' && !climaCarregado) {
         buscarClimaPorLocalizacao();
+        climaCarregado = true;
       }
     });
   });
-
   // Se a aba Clima já estiver ativa ao carregar a página, busca imediatamente
   const climaPane = document.querySelector('.tab-pane#clima');
-  if (climaPane && climaPane.classList.contains('show')) {
+  if (climaPane && climaPane.classList.contains('show') && !climaCarregado) {
     buscarClimaPorLocalizacao();
+    climaCarregado = true;
   }
 });
 
