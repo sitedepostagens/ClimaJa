@@ -48,15 +48,18 @@
 function fecharSelecaoLocalizacao() {
   // Exemplo para modal Bootstrap
   const modal = document.getElementById('modal-selecao-local');
-  <!-- Mapa inicializado pelo script principal (script.js) para evitar duplicidade -->
-    "query-input", "required name=search_term_string"
-  },
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "customer support",
-    "email": "oclimaja@hotmail.com",
-    "url": "mailto:oclimaja@hotmail.com",
-    "availableLanguage": "Portuguese"
+  // Mapa inicializado pelo script principal (script.js) para evitar duplicidade
+  if (!modal) return;
+  // Se for um modal Bootstrap, tente fechar via API do Bootstrap
+  try {
+    if (window.bootstrap && bootstrap.Modal) {
+      const inst = bootstrap.Modal.getInstance(modal);
+      if (inst) inst.hide();
+    }
+  } catch (e) {
+    // fallback: remover classe show
+    modal.classList.remove('show');
+    modal.style.display = 'none';
   }
 }
 </script>
@@ -576,6 +579,106 @@ function fecharSelecaoLocalizacao() {
 </head>
 <body>
   <div class="dynamic-texture" aria-hidden="true"></div>
+  <style>
+    /* Centralização global do body */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      background: linear-gradient(120deg, #e0f2fe 60%, #f9f871 100%);
+      margin: 0;
+      padding: 0;
+    }
+    /* Container principal mais centralizado e espaçado */
+    .container.my-4 {
+      margin-top: 2.5rem !important;
+      margin-bottom: 2.5rem !important;
+      padding: 2.5rem 2rem !important;
+      background: rgba(255,255,255,0.95);
+      border-radius: 2rem;
+      box-shadow: 0 8px 32px -8px #2563eb33, 0 1.5px 12px #38bdf822;
+      max-width: 1200px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* Animação global mais moderna */
+    .animada {
+      animation: fadeUp 0.8s cubic-bezier(.23,1.02,.32,1) both;
+    }
+    @keyframes fadeUp {
+      0% {
+        opacity: 0;
+        transform: translateY(40px) scale(0.97);
+        filter: blur(6px);
+      }
+      60% {
+        opacity: 1;
+        filter: blur(0.5px);
+      }
+      100% {
+        opacity: 1;
+        transform: none;
+        filter: blur(0);
+      }
+    }
+    /* Botões: animação de clique e hover */
+    .btn, .btn-modern {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:active, .btn-modern:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 12px #2563eb33;
+    }
+    .btn:hover, .btn-modern:hover {
+      transform: scale(1.04);
+      box-shadow: 0 8px 32px -8px #2563eb44;
+    }
+    /* Centralizar nav-pills */
+    .nav.nav-pills {
+      justify-content: center !important;
+      margin-bottom: 2rem !important;
+    }
+    /* Tab-content ocupa toda a largura disponível */
+    .tab-content {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: block;
+    }
+    /* Main-card ocupa toda a largura da aba */
+    .main-card {
+      margin: 2rem auto !important;
+      padding: 2rem 2.5rem !important;
+      max-width: 1000px;
+      width: 100%;
+      box-shadow: 0 8px 32px -8px #2563eb33, 0 1.5px 12px #38bdf822;
+      border-radius: 1.5rem;
+      background: rgba(255,255,255,0.98);
+    }
+    /* Responsividade para celular */
+    @media (max-width: 600px) {
+      .container.my-4 {
+        padding: 0.5rem 0.1rem !important;
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+        max-width: 100vw;
+      }
+      .tab-content {
+        max-width: 100vw;
+        padding: 0 !important;
+      }
+      .main-card {
+        padding: 0.7rem 0.2rem !important;
+        margin: 0.7rem auto !important;
+        max-width: 99vw;
+        width: 100vw;
+      }
+    }
+  </style>
   <!-- Botão de modo escuro removido -->
 
   <header class="main-header">
@@ -1310,141 +1413,12 @@ if (reportForm) {
 
     // Função para carregar relatos públicos
 // ...existing code...
-// Substitua a função carregarRelatosPublicos por esta versão:
-import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js";
-const db = getFirestore();
-
-async function carregarRelatosPublicos() {
-  const relatosDiv = document.getElementById('relatos-publicos');
-  if (!relatosDiv) return;
-  const q = query(collection(db, "relatos"), orderBy("dataHora", "desc"), limit(50));
-  const querySnapshot = await getDocs(q);
-  let html = '';
-  querySnapshot.forEach((doc) => {
-    const r = doc.data();
-    // Monte o HTML do relato igual já faz, usando os dados de r
-    html += `<div class="card mb-3"><div class="card-body">
-      <h5 class="card-title">${r.ocorridoPrimario || 'Relato'}</h5>
-      <p class="card-text"><strong>Endereço:</strong> ${r.address || 'Não informado'}</p>
-      <p class="card-text"><strong>Nível da água:</strong> ${r.nivel || '--'}</p>
-      <p class="card-text"><strong>Descrição:</strong> ${r.descricao || ''}</p>
-      <p class="card-text"><small class="text-muted">${r.dataHora && r.dataHora.toDate ? r.dataHora.toDate().toLocaleString('pt-BR') : ''}</small></p>
-    </div></div>`;
-  });
-  relatosDiv.innerHTML = html;
-  // ...existing code...
-
-      relatosFiltrados.forEach(function(r) {
-        const primario = r.ocorridoPrimario ? (tipoEmoji[r.ocorridoPrimario] || '❓') + ' ' + r.ocorridoPrimario : '';
-        const secundario = r.ocorridoSecundario && r.ocorridoSecundario !== '' ? (tipoEmoji[r.ocorridoSecundario] || '❓') + ' ' + r.ocorridoSecundario : '';
-        const emoji = r.nivel === '0' ? '✅' : (tipoEmoji[r.ocorridoPrimario] || '❓');
-        html += `<div class="card mb-3"><div class="card-body">
-          <h5 class="card-title">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (primario || 'Relato')}</h5>
-          ${secundario ? `<div class='mb-1'><strong>Ocorrido Secundário:</strong> ${secundario}</div>` : ''}
-          <p class="card-text"><strong>Endereço:</strong> ${r.address || 'Não informado'}</p>
-          <p class="card-text"><strong>Nível da água:</strong> ${r.nivel === '0' ? 'Sem água no momento' : (r.nivel || '--')}</p>
-          <p class="card-text"><strong>Descrição:</strong> ${r.descricao || ''}</p>
-          <p class="card-text"><small class="text-muted">${new Date(r.dataHora).toLocaleString('pt-BR')}</small></p>
-        </div></div>`;
-        // Adiciona marcador no mapa com ícone personalizado e efeito 3D/pulso
-        if (window.meuMapa && r.latitude && r.longitude && !isNaN(parseFloat(r.latitude)) && !isNaN(parseFloat(r.longitude))) {
-          // Cor da borda do marcador conforme nível
-          let nivelCor = '#38bdf8';
-          if (r.nivel === '0') nivelCor = '#22c55e';
-          else if (r.nivel === '0.2') nivelCor = '#38bdf8';
-          else if (r.nivel === '0.5') nivelCor = '#fbbf24';
-          else if (r.nivel === '1.0') nivelCor = '#f87171';
-          else if (r.nivel === '1.5') nivelCor = '#dc2626';
-          // Ícone com efeito 3D, sombra e animação de pulso
-          const iconHtml = `
-            <div class="relato-marker-3d" style="--cor:${nivelCor};">
-              <span class="relato-marker-emoji">${emoji}</span>
-              <span class="relato-marker-pulse"></span>
-            </div>
-            <style>
-              .relato-marker-3d {
-                position: relative;
-                width: 44px; height: 44px;
-                display: flex; align-items: center; justify-content: center;
-                background: linear-gradient(145deg,#fff 60%,#e0f2fe 100%);
-                border-radius: 50%;
-                border: 3.5px solid var(--cor,#38bdf8);
-                box-shadow: 0 6px 24px #2563eb33, 0 2px 12px #38bdf822, 0 0 0 6px #fff8;
-                z-index: 2;
-                animation: markerPop 0.7s cubic-bezier(.23,1.02,.32,1);
-                transition: border 0.3s, box-shadow 0.3s;
-              }
-              .relato-marker-3d:hover {
-                box-shadow: 0 12px 36px #2563eb55, 0 4px 16px #38bdf855, 0 0 0 10px #bae6fd55;
-                transform: scale(1.08) translateY(-3px);
-              }
-              .relato-marker-emoji {
-                font-size: 2.1rem;
-                line-height: 1.1;
-                z-index: 3;
-                filter: drop-shadow(0 2px 8px #2563eb22);
-                user-select: none;
-              }
-              .relato-marker-pulse {
-                position: absolute;
-                left: 50%; top: 50%;
-                width: 44px; height: 44px;
-                transform: translate(-50%,-50%);
-                border-radius: 50%;
-                background: radial-gradient(circle, var(--cor,#38bdf8) 0%, transparent 70%);
-                opacity: 0.25;
-                z-index: 1;
-                animation: markerPulse 1.5s infinite cubic-bezier(.23,1.02,.32,1);
-              }
-              @keyframes markerPulse {
-                0% { opacity: 0.25; transform: translate(-50%,-50%) scale(1); }
-                60% { opacity: 0.12; transform: translate(-50%,-50%) scale(1.5); }
-                100% { opacity: 0; transform: translate(-50%,-50%) scale(2.1); }
-              }
-              @keyframes markerPop {
-                0% { transform: scale(0.7) translateY(20px); opacity: 0; }
-                60% { transform: scale(1.1) translateY(-6px); opacity: 1; }
-                100% { transform: scale(1) translateY(0); opacity: 1; }
-              }
-            </style>
-          `;
-          const customIcon = L.divIcon({
-            className: '',
-            html: iconHtml,
-            iconSize: [48, 48],
-            iconAnchor: [24, 44],
-            popupAnchor: [0, -44]
-          });
-          const marker = L.marker([parseFloat(r.latitude), parseFloat(r.longitude)], {icon: customIcon, riseOnHover:true}).addTo(window.meuMapa);
-          // Popup detalhado com efeito de entrada
-          const primario = r.ocorridoPrimario ? (tipoEmoji[r.ocorridoPrimario] || '❓') + ' ' + r.ocorridoPrimario : '';
-          const secundario = r.ocorridoSecundario && r.ocorridoSecundario !== '' ? (tipoEmoji[r.ocorridoSecundario] || '❓') + ' ' + r.ocorridoSecundario : '';
-          const tipoTag = `<span style="display:inline-block;background:linear-gradient(90deg,#38bdf8 60%,#2563eb 100%);color:#fff;font-weight:600;font-size:0.98rem;padding:2px 10px;border-radius:1rem;margin-right:6px;box-shadow:0 2px 8px #2563eb22;letter-spacing:0.5px;">${emoji} ${r.nivel === '0' ? 'Sem água no momento' : (primario || 'Relato')}</span>`;
-          const nivelTag = `<span style="display:inline-block;background:${nivelCor};color:#222;font-weight:600;font-size:0.97rem;padding:2px 10px;border-radius:1rem;margin-left:0;box-shadow:0 2px 8px #2563eb22;">${r.nivel === '0' ? 'Sem água no momento' : (r.nivel ? r.nivel.replace('0.2','Baixo').replace('0.5','Moderado').replace('1.0','Alto').replace('1.5','Grave') : '--')}</span>`;
-          const popupHtml = `
-            <div class="popup-anim" style="min-width:220px;max-width:320px;padding:13px 10px 10px 10px;border-radius:1.2rem;background:linear-gradient(120deg,#f0f9ff 60%,#bae6fd 100%);box-shadow:0 4px 24px #2563eb33,0 1.5px 12px #38bdf822;border:2.5px solid #38bdf8;position:relative;overflow:hidden;transition:box-shadow 0.3s;">
-              <div style="position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 40% at 60% 0%,#f9f87133 0%,#fbbf2433 40%,transparent 100%),radial-gradient(ellipse 60% 30% at 20% 20%,#5ee7df33 0%,#a5b4fc22 60%,transparent 100%),radial-gradient(ellipse 40% 20% at 80% 80%,#fca5a522 0%,transparent 100%);opacity:0.7;"></div>
-              <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.7rem;z-index:1;position:relative;">
-                <span style="font-size:2.3rem;line-height:1.1;display:inline-block;background:#fff;border-radius:50%;border:2.5px solid #38bdf8;box-shadow:0 2px 8px #2563eb33;padding:2px 13px 2px 13px;">${emoji}</span>
-                <div style="display:flex;flex-direction:column;gap:2px;">
-                  ${tipoTag}
-                  ${nivelTag}
-                </div>
-              </div>
-              ${secundario ? `<div style='font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;'><b>Ocorrido Secundário:</b> <span style='color:#222;'>${secundario}</span></div>` : ''}
-              <div style="font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;"><i class='fas fa-map-marker-alt' style='color:#38bdf8;'></i> <b>Endereço:</b> <span style='color:#222;'>${r.address || 'Não informado'}</span></div>
-              <div style="font-size:1.07rem;margin-bottom:4px;z-index:1;position:relative;"><b>Descrição:</b> <span style='color:#222;'>${r.descricao || ''}</span></div>
-              <div style="font-size:0.97rem;color:#2563eb;margin-top:7px;text-align:right;z-index:1;position:relative;"><i class='far fa-clock' style='color:#38bdf8;'></i> ${new Date(r.dataHora).toLocaleString('pt-BR')}</div>
-              <style>
-        </div>
-          `;
-          marker.bindPopup(popupHtml);
-          window.relatosMarkers.push(marker);
-        }
-      });
-      relatosDiv.innerHTML = html;
-    }
-    // ...existing code...
+// Delegação para carregar relatos — o script principal (`script.js`) expõe `window.carregarRelatosPublicos`.
+function carregarRelatosPublicos() {
+  if (window.carregarRelatosPublicos) return window.carregarRelatosPublicos();
+  // fallback: nada (não usamos localStorage para relatos)
+  console.warn('carregarRelatosPublicos não implementado no ambiente atual.');
+}
   </script>
   <script>
   // Força updateAuthUI após login
