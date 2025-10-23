@@ -257,37 +257,29 @@ function addUserMarker(lat, lng, accuracy) {
 
 async function getWeatherData(lat, lon) {
   try {
-    const resp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,pressure_msl,precipitation`);
+    const resp = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pt_br`
+    );
     const data = await resp.json();
-    const weather = data.current_weather || {};
-    // Busca dados horários para umidade, pressão e chuva
-    const horaAtual = weather.time || (data.hourly && data.hourly.time && data.hourly.time[0]);
-    let idx = 0;
-    if (data.hourly && data.hourly.time && horaAtual) {
-      idx = data.hourly.time.findIndex(t => t === horaAtual);
+    if (!data || !data.main || typeof data.main.temp === 'undefined') {
+      throw new Error('Dados de clima inválidos');
     }
-    // Temperatura
-    document.getElementById('current-temp').textContent = (typeof weather.temperature !== 'undefined')
-      ? `${weather.temperature}°C`
+    document.getElementById('current-temp').textContent = (data.main && typeof data.main.temp !== 'undefined')
+      ? `${Math.round(data.main.temp)}°C`
       : '--°C';
-    // Umidade
-    document.getElementById('humidity').textContent = (data.hourly && data.hourly.relative_humidity_2m && typeof data.hourly.relative_humidity_2m[idx] !== 'undefined')
-      ? `${data.hourly.relative_humidity_2m[idx]}%`
+    document.getElementById('humidity').textContent = (data.main && typeof data.main.humidity !== 'undefined')
+      ? `${data.main.humidity}%`
       : '--%';
-    // Vento
-    document.getElementById('wind-speed').textContent = (typeof weather.windspeed !== 'undefined')
-      ? `${weather.windspeed} km/h`
+    document.getElementById('wind-speed').textContent = (data.wind && typeof data.wind.speed !== 'undefined')
+      ? `${(data.wind.speed*3.6).toFixed(1)}km/h`
       : '--km/h';
-    // Pressão
-    document.getElementById('pressure').textContent = (data.hourly && data.hourly.pressure_msl && typeof data.hourly.pressure_msl[idx] !== 'undefined')
-      ? `${data.hourly.pressure_msl[idx]} hPa`
-      : '-- hPa';
-    // Chuva
-    document.getElementById('rain').textContent = (data.hourly && data.hourly.precipitation && typeof data.hourly.precipitation[idx] !== 'undefined')
-      ? `${data.hourly.precipitation[idx]} mm`
-      : '-- mm';
-    // Ícone do clima
-    document.querySelector('.weather-icon').className = `wi wi-day-sunny weather-icon`;
+    document.getElementById('pressure').textContent = (data.main && typeof data.main.pressure !== 'undefined')
+      ? `${data.main.pressure}hPa`
+      : '--hPa';
+    document.getElementById('rain').textContent = (data.rain && typeof data.rain['1h'] !== 'undefined')
+      ? `${(data.rain['1h']||0).toFixed(1)}mm`
+      : '0.0mm';
+    document.querySelector('.weather-icon').className = `wi wi-owm-${data.weather[0].id} weather-icon`;
     getCityName(lat, lon);
     // Limpa alerta se sucesso
     const alerta = document.getElementById('clima-alerta-localizacao');
