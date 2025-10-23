@@ -261,6 +261,7 @@ async function getWeatherData(lat, lon) {
       `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pt_br`
     );
     const data = await resp.json();
+    console.log('[Clima] Resposta completa da API:', data);
     if (!data || !data.main || typeof data.main.temp === 'undefined') {
       throw new Error('Dados de clima inválidos');
     }
