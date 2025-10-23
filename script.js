@@ -1046,24 +1046,7 @@ function buscarClimaPorLocalizacao() {
 
 // Solicita localização ao abrir a aba Clima
 // Listener único para abrir a aba Clima e buscar clima
-document.addEventListener('DOMContentLoaded', function() {
-  let climaCarregado = false;
-  document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(function(tab) {
-    tab.addEventListener('shown.bs.tab', function (e) {
-      const href = e.target.getAttribute('href');
-      if (href === '#clima' && !climaCarregado) {
-        buscarClimaPorLocalizacao();
-        climaCarregado = true;
-      }
-    });
-  });
-  // Se a aba Clima já estiver ativa ao carregar a página, busca imediatamente
-  const climaPane = document.querySelector('.tab-pane#clima');
-  if (climaPane && climaPane.classList.contains('show') && !climaCarregado) {
-    buscarClimaPorLocalizacao();
-    climaCarregado = true;
-  }
-});
+// Removido listener duplicado para evitar múltiplas chamadas e sumiço dos dados
 
 // Solicita localização ao abrir a aba Clima
 document.addEventListener('DOMContentLoaded', function() {
