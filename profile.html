@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Perfil — ClimaJá!</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background: linear-gradient(180deg,#f0f9ff 0%, #e6fffa 100%); }
+    .profile-card {
+      max-width: 900px; margin: 3rem auto; padding: 2rem; border-radius:1.2rem; background:linear-gradient(120deg,#fff 60%, #f0fbff 100%); box-shadow:0 10px 40px rgba(37,99,235,0.08);
+    }
+    .avatar-lg { width:110px;height:110px;border-radius:16px;object-fit:cover;border:4px solid #38bdf8;box-shadow:0 8px 24px rgba(37,99,235,0.12); }
+    .profile-stats .stat { border-radius:0.9rem;background:#fff;padding:10px 14px;box-shadow:0 6px 18px rgba(37,99,235,0.06); }
+    .btn-edit { background: linear-gradient(90deg,#38bdf8 0,#f9f871 100%); border:none; color:#123; font-weight:700; }
+    .section { margin-top:1.2rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="profile-card">
+      <div class="d-flex align-items-center gap-4">
+        <img src="logo.png" alt="Avatar" class="avatar-lg" id="profile-avatar">
+        <div>
+          <h2 id="profile-name">- Nome do Usuário -</h2>
+          <div class="text-muted" id="profile-email">usuario@example.com</div>
+          <div class="mt-3">
+            <a href="#" class="btn btn-edit me-2" id="profile-edit"><i class="fas fa-user-edit"></i> Editar Perfil</a>
+            <a href="#" class="btn btn-outline-primary" id="profile-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+          </div>
+        </div>
+        <div class="ms-auto text-end profile-actions">
+          <div class="profile-stats d-flex gap-2">
+            <div class="stat text-center">
+              <div class="small text-muted">Relatos</div>
+              <div class="fw-bold" id="profile-relatos-count">0</div>
+            </div>
+            <div class="stat text-center">
+              <div class="small text-muted">Upvotes</div>
+              <div class="fw-bold" id="profile-upvotes">0</div>
+            </div>
+            <div class="stat text-center">
+              <div class="small text-muted">Membro desde</div>
+              <div class="fw-bold" id="profile-since">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h5>Sobre</h5>
+        <p id="profile-bio" class="text-muted">Nenhuma informação adicional disponível.</p>
+      </div>
+
+      <div class="section d-flex gap-3">
+        <div style="flex:1">
+          <h6>Meus Relatos</h6>
+          <div id="profile-relatos-list">Nenhum relato publicado ainda.</div>
+        </div>
+        <div style="width:320px">
+          <h6>Configurações</h6>
+          <div class="list-group">
+            <a href="#" class="list-group-item list-group-item-action" id="link-notifications">Configurar notificações</a>
+            <a href="#" class="list-group-item list-group-item-action" id="link-privacy">Privacidade e segurança</a>
+            <a href="#" class="list-group-item list-group-item-action" id="link-delete">Excluir conta</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // App: preencher com dados fictícios até integração real
+    document.addEventListener('DOMContentLoaded', function(){
+      // Se houver integração Firebase, aqui preencheremos os dados reais
+      // Exemplo demo:
+      document.getElementById('profile-name').textContent = localStorage.getItem('demo_name') || '- Usuário ClimaJá -';
+      document.getElementById('profile-email').textContent = localStorage.getItem('demo_email') || 'usuario@exemplo.com';
+      document.getElementById('profile-relatos-count').textContent = localStorage.getItem('demo_relatos') || '0';
+      document.getElementById('profile-since').textContent = localStorage.getItem('demo_since') || '2023';
+      // Botões
+      document.getElementById('profile-edit').addEventListener('click', function(e){ e.preventDefault(); alert('Função de edição de perfil (a integrar)'); });
+      document.getElementById('profile-logout').addEventListener('click', function(e){ e.preventDefault(); alert('Logout (a integrar)'); });
+    });
+  </script>
+</body>
+</html>
