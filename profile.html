@@ -15,9 +15,12 @@
     .avatar-lg { width:110px;height:110px;border-radius:16px;object-fit:cover;border:4px solid #38bdf8;box-shadow:0 8px 24px rgba(37,99,235,0.12); }
     .profile-stats .stat { border-radius:0.9rem;background:#fff;padding:10px 14px;box-shadow:0 6px 18px rgba(37,99,235,0.06); }
     .btn-edit { background: linear-gradient(90deg,#38bdf8 0,#f9f871 100%); border:none; color:#123; font-weight:700; }
-    .section { margin-top:1.2rem; }
-  </style>
-</head>
+              <label class="form-label">Avatar (imagem)</label>
+              <div class="d-flex gap-3 align-items-center">
+                <input type="file" id="edit-avatar" accept="image/*" class="form-control" style="max-width:320px;">
+                <img id="edit-avatar-preview" src="logo.png" alt="Preview" style="width:72px;height:72px;border-radius:12px;object-fit:cover;border:2px solid #38bdf8;">
+              </div>
+              <small class="text-muted">A imagem será salva temporariamente como DataURL (demo). Em produção, use Firebase Storage.</small>
 <body>
   <div class="container">
     <div class="profile-card">
@@ -27,8 +30,9 @@
           <h2 id="profile-name">- Nome do Usuário -</h2>
           <div class="text-muted" id="profile-email">usuario@example.com</div>
           <div class="mt-3">
-            <a href="#" class="btn btn-edit me-2" id="profile-edit"><i class="fas fa-user-edit"></i> Editar Perfil</a>
-            <a href="#" class="btn btn-outline-primary" id="profile-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        <a href="#" class="btn btn-edit me-2" id="profile-edit"><i class="fas fa-user-edit"></i> Editar Perfil</a>
+        <a href="index.html" class="btn btn-outline-secondary me-2" id="profile-back-home"><i class="fas fa-arrow-left"></i> Voltar para Início</a>
+        <a href="#" class="btn btn-outline-primary" id="profile-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
           </div>
         </div>
         <div class="ms-auto text-end profile-actions">
@@ -125,77 +129,153 @@
       // Editar perfil: abrir modal
       const editBtn = document.getElementById('profile-edit');
       const logoutBtn = document.getElementById('profile-logout');
+  const backHomeBtn = document.getElementById('profile-back-home');
+  if (backHomeBtn) backHomeBtn.addEventListener('click', function(e){ /* link já faz a navegação; apenas prevenir se necessário */ });
       if (editBtn) editBtn.addEventListener('click', function(e){ e.preventDefault(); document.getElementById('profile-edit-modal').classList.add('show'); document.getElementById('profile-edit-modal').style.display = 'block'; });
       if (logoutBtn) logoutBtn.addEventListener('click', function(e){ e.preventDefault(); if (window.auth && window.signOut) { window.signOut(window.auth).then(()=>{ location.href = '/'; }).catch(()=>alert('Erro ao sair')); } else { alert('Logout não disponível'); } });
 
       // Handler de formulário de edição
-      const form = document.getElementById('profile-edit-form');
-      if (form) {
-        form.addEventListener('submit', async function(ev){
-          ev.preventDefault();
-          const newName = document.getElementById('edit-displayName').value.trim();
-          const fileInput = document.getElementById('edit-avatar');
-          let photoURL = null;
-          if (fileInput && fileInput.files && fileInput.files[0]) {
-            // Lê como DataURL e usa temporariamente como photoURL (pode ser substituído por upload ao Storage)
-            photoURL = await new Promise(res => { const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(fileInput.files[0]); });
-          }
-          try {
-            const authModule2 = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
-            if (window.auth) {
-              const user = window.auth.currentUser;
-              if (user) {
-                const updates = {};
-                if (newName) updates.displayName = newName;
-                if (photoURL) updates.photoURL = photoURL;
-                await authModule2.updateProfile(user, updates);
-                fillUser(Object.assign({}, user, updates));
-                // fecha modal
-                document.getElementById('profile-edit-modal').classList.remove('show');
-                document.getElementById('profile-edit-modal').style.display = 'none';
-                alert('Perfil atualizado com sucesso.');
-              } else alert('Usuário não autenticado');
-            } else {
-              alert('Autenticação não disponível');
-            }
-          } catch (err) {
-            console.error('Erro ao atualizar perfil:', err);
-            alert('Erro ao atualizar perfil: ' + (err && err.message ? err.message : err));
-          }
-        });
-      }
-      // Fechar modal
-      document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', function(){ document.getElementById('profile-edit-modal').classList.remove('show'); document.getElementById('profile-edit-modal').style.display = 'none'; }));
-    });
-  </script>
+        // Integração com Firebase Auth e Firestore: preenche perfil, lista relatos e permite editar displayName/photoURL (preview)
+        document.addEventListener('DOMContentLoaded', async function(){
+          // Elementos
+          const nameEl = document.getElementById('profile-name');
+          const emailEl = document.getElementById('profile-email');
+          const relatosCountEl = document.getElementById('profile-relatos-count');
+          const sinceEl = document.getElementById('profile-since');
+          const bioEl = document.getElementById('profile-bio');
+          const avatarEl = document.getElementById('profile-avatar');
+          const relatosListEl = document.getElementById('profile-relatos-list');
 
-  <!-- Modal simples de edição de perfil -->
-  <div id="profile-edit-modal" class="modal" tabindex="-1" role="dialog" style="display:none; background:rgba(0,0,0,0.35);">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Editar Perfil</h5>
-          <button type="button" class="btn-close modal-close" aria-label="Close"></button>
-        </div>
-        <form id="profile-edit-form">
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Nome público</label>
-              <input type="text" id="edit-displayName" class="form-control" placeholder="Seu nome que será exibido">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Avatar (imagem)</label>
-              <input type="file" id="edit-avatar" accept="image/*" class="form-control">
-              <small class="text-muted">A imagem será salva temporariamente como DataURL (para demo). Em produção, use Firebase Storage.</small>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Salvar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</body>
-</html>
+          // Helper: form elements
+          const editBtn = document.getElementById('profile-edit');
+          const logoutBtn = document.getElementById('profile-logout');
+          const form = document.getElementById('profile-edit-form');
+          const fileInput = document.getElementById('edit-avatar');
+          const nameInput = document.getElementById('edit-displayName');
+          const avatarPreview = document.getElementById('edit-avatar-preview');
+
+          // Preenche campos com dados do usuário
+          function fillUser(user) {
+            if (!user) {
+              nameEl.textContent = '- Usuário ClimaJá -';
+              emailEl.textContent = 'usuario@exemplo.com';
+              relatosCountEl.textContent = '0';
+              sinceEl.textContent = '--';
+              bioEl.textContent = 'Nenhuma informação adicional disponível.';
+              avatarEl.src = 'logo.png';
+              relatosListEl.innerHTML = 'Nenhum relato publicado ainda.';
+              return;
+            }
+            nameEl.textContent = user.displayName || user.email || 'Usuário';
+            emailEl.textContent = user.email || '-';
+            relatosCountEl.textContent = '—';
+            sinceEl.textContent = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : '--';
+            bioEl.textContent = user.bio || 'Nenhuma informação adicional disponível.';
+            avatarEl.src = user.photoURL || 'logo.png';
+            // Pré-preenche formulário de edição
+            if (nameInput) nameInput.value = user.displayName || '';
+            if (avatarPreview) avatarPreview.src = user.photoURL || 'logo.png';
+            // Carregar relatos do Firestore (se disponível)
+            if (user && user.uid) loadRelatos(user.uid);
+          }
+
+          // Carrega relatos do Firestore (opcional)
+          async function loadRelatos(uid) {
+            relatosListEl.innerHTML = 'Carregando relatos...';
+            try {
+              const firestoreModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js');
+              const { getFirestore, collection, query, where, orderBy, limit, getDocs } = firestoreModule;
+              if (!window.firebaseApp && !window.firebase) {
+                relatosListEl.innerHTML = 'Relatos indisponíveis (Firebase não inicializado).';
+                return;
+              }
+              const db = getFirestore();
+              const q = query(collection(db, 'relatos'), where('uid', '==', uid), orderBy('dataHora', 'desc'), limit(50));
+              const snap = await getDocs(q);
+              if (!snap || snap.empty) {
+                relatosListEl.innerHTML = 'Nenhum relato publicado ainda.';
+                relatosCountEl.textContent = '0';
+                return;
+              }
+              const items = [];
+              snap.forEach(doc => {
+                const d = doc.data();
+                const when = d.dataHora ? new Date(d.dataHora).toLocaleString() : '—';
+                items.push(`<div class="card mb-2"><div class="card-body p-2"><div class="d-flex justify-content-between"><div><strong>${d.ocorridoPrimario || 'Relato'}</strong><div class="small text-muted">${d.address || 'Local não informado'}</div></div><div class="text-muted small">${when}</div></div></div></div>`);
+              });
+              relatosListEl.innerHTML = items.join('');
+              relatosCountEl.textContent = String(snap.size || items.length);
+            } catch (e) {
+              console.warn('Não foi possível carregar relatos (Firestore):', e);
+              relatosListEl.innerHTML = 'Relatos indisponíveis.';
+            }
+          }
+
+          // Observa estado do auth (usa window.auth se disponível)
+          try {
+            const authModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
+            const auth = window.auth || null;
+            if (auth) {
+              authModule.onAuthStateChanged(auth, user => {
+                fillUser(user);
+              });
+            } else {
+              const demo = JSON.parse(localStorage.getItem('user') || 'null');
+              fillUser(demo);
+            }
+          } catch (e) {
+            console.warn('Erro ao inicializar auth em profile:', e);
+            const demo = JSON.parse(localStorage.getItem('user') || 'null');
+            fillUser(demo);
+          }
+
+          // Abrir modal de edição
+          if (editBtn) editBtn.addEventListener('click', function(e){ e.preventDefault(); document.getElementById('profile-edit-modal').classList.add('show'); document.getElementById('profile-edit-modal').style.display = 'block'; });
+          if (logoutBtn) logoutBtn.addEventListener('click', function(e){ e.preventDefault(); if (window.auth && window.signOut) { window.signOut(window.auth).then(()=>{ location.href = '/'; }).catch(()=>alert('Erro ao sair')); } else { alert('Logout não disponível'); } });
+
+          // Preview do avatar ao selecionar arquivo
+          if (fileInput && avatarPreview) {
+            fileInput.addEventListener('change', function(){
+              const f = fileInput.files && fileInput.files[0];
+              if (!f) { avatarPreview.src = avatarEl.src || 'logo.png'; return; }
+              const reader = new FileReader();
+              reader.onload = () => { avatarPreview.src = reader.result; };
+              reader.readAsDataURL(f);
+            });
+          }
+
+          // Submissão do formulário de edição
+          if (form) {
+            form.addEventListener('submit', async function(ev){
+              ev.preventDefault();
+              const newName = nameInput ? nameInput.value.trim() : '';
+              let photoDataURL = null;
+              if (fileInput && fileInput.files && fileInput.files[0]) {
+                photoDataURL = await new Promise(res => { const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(fileInput.files[0]); });
+              }
+              try {
+                const authModule2 = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
+                if (window.auth && window.auth.currentUser) {
+                  const user = window.auth.currentUser;
+                  const updates = {};
+                  if (newName) updates.displayName = newName;
+                  if (photoDataURL) updates.photoURL = photoDataURL; // Nota: em produção carregue ao Firebase Storage e use a URL
+                  await authModule2.updateProfile(user, updates);
+                  fillUser(Object.assign({}, user, updates));
+                  // fecha modal
+                  document.getElementById('profile-edit-modal').classList.remove('show');
+                  document.getElementById('profile-edit-modal').style.display = 'none';
+                  alert('Perfil atualizado com sucesso.');
+                } else {
+                  alert('Usuário não autenticado');
+                }
+              } catch (err) {
+                console.error('Erro ao atualizar perfil:', err);
+                alert('Erro ao atualizar perfil: ' + (err && err.message ? err.message : err));
+              }
+            });
+          }
+
+          // Fechar modal
+          document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', function(){ document.getElementById('profile-edit-modal').classList.remove('show'); document.getElementById('profile-edit-modal').style.display = 'none'; }));
+        });
