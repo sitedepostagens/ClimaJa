@@ -72,23 +72,23 @@ function fecharSelecaoLocalizacao() {
             <script type="application/ld+json">
             {
               "@context": "https://schema.org",
-                "@type": "WebSite",
-                  "name": "ClimaJá",
-                    "url": "/",
-                      "description": "O ClimaJá! é uma plataforma colaborativa para monitoramento meteorológico e relatos de alagamentos em tempo real. O objetivo é ajudar pessoas a se informarem sobre as condições do clima e compartilharem informações úteis para a sociedade, promovendo segurança e prevenção."
-                         "potentialAction": {
-                            "@type": "SearchAction",
-                                "target": "https://oclimaja.netlify.app/?q={search_term_string}",
-                                    "query-input": "required name=search_term_string"
-                                      },
-                                        "contactPoint": {
-                                            "@type": "ContactPoint",
-                                                "contactType": "customer support",
-                                                    "email": "oclimaja@hotmail.com",
-                                                        "url": "mailto:",
-                                                            "availableLanguage": "Portuguese"
-                                                              }
-                                                              }
+              "@type": "WebSite",
+              "name": "ClimaJá",
+              "url": "/",
+              "description": "O ClimaJá! é uma plataforma colaborativa para monitoramento meteorológico e relatos de alagamentos em tempo real. O objetivo é ajudar pessoas a se informarem sobre as condições do clima e compartilharem informações úteis para a sociedade, promovendo segurança e prevenção.",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://oclimaja.netlify.app/?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              },
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "customer support",
+                "email": "oclimaja@hotmail.com",
+                "url": "mailto:oclimaja@hotmail.com",
+                "availableLanguage": "Portuguese"
+              }
+            }
             </script>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="logo.png">
@@ -625,6 +625,19 @@ function fecharSelecaoLocalizacao() {
         transform: none;
         filter: blur(0);
       }
+    }
+    /* Animação para o título cidade/bairro */
+    #city-name {
+      display: inline-block;
+      transition: opacity 360ms cubic-bezier(.22,1,.36,1), transform 360ms cubic-bezier(.22,1,.36,1), filter 360ms;
+      will-change: opacity, transform;
+      backface-visibility: hidden;
+    }
+    /* Classe aplicada durante troca: esmaece e sobe levemente */
+    #city-name.city-switching {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.985);
+      filter: blur(0.6px) contrast(0.98);
     }
     /* Botões: animação de clique e hover */
     .btn, .btn-modern {
@@ -1206,33 +1219,132 @@ function fecharSelecaoLocalizacao() {
         document.getElementById('rain').textContent = '--mm';
         return;
       }
-      // Buscar bairro via Nominatim
+
+      // Buscar bairro/cidade via Nominatim (não crítico)
       fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lon}&addressdetails=1`)
         .then(res => res.json())
         .then(addrData => {
-          let bairro = 'Localização';
+          let bairro = '';
+          let cidade = '';
           if (addrData && addrData.address) {
-            bairro = addrData.address.suburb || addrData.address.neighbourhood || addrData.address.village || addrData.address.town || addrData.address.city || 'Localização';
+            const a = addrData.address;
+            bairro = a.suburb || a.neighbourhood || a.village || a.town || '';
+            cidade = a.city || a.town || a.village || a.county || a.state || '';
           }
-          // Buscar clima
-          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current_weather=true`)
+
+          // Buscar clima: inclui hourly para obter umidade/precipitação/pressão no mesmo timestamp do current_weather
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current_weather=true&hourly=relativehumidity_2m,precipitation,pressure_msl&timezone=auto`;
+          return fetch(url)
             .then(res => res.json())
-            .then(data => {
-              if (data && data.current_weather) {
-                document.getElementById('current-temp').textContent = `${data.current_weather.temperature}°C`;
-                document.getElementById('city-name').textContent = bairro;
-                document.getElementById('humidity').textContent = data.current_weather.relative_humidity ? `${data.current_weather.relative_humidity}%` : '--%';
-                document.getElementById('wind-speed').textContent = `${data.current_weather.windspeed} km/h`;
-                document.getElementById('pressure').textContent = data.current_weather.pressure ? `${data.current_weather.pressure} hPa` : '--';
-                document.getElementById('rain').textContent = data.current_weather.precipitation ? `${data.current_weather.precipitation} mm` : '--mm';
-                if (alerta) alerta.style.display = 'none';
-              } else {
-                if (alerta) alerta.style.display = '';
-              }
-            })
-            .catch(() => { if (alerta) alerta.style.display = ''; });
+            .then(data => ({ data, bairro, cidade }));
         })
-        .catch(() => { if (alerta) alerta.style.display = ''; });
+        .then(({ data, bairro, cidade }) => {
+          try {
+            if (!data || !data.current_weather) {
+              if (alerta) alerta.style.display = '';
+              return;
+            }
+
+            const cw = data.current_weather;
+            const tempEl = document.getElementById('current-temp');
+            const cityEl = document.getElementById('city-name');
+            const humEl = document.getElementById('humidity');
+            const windEl = document.getElementById('wind-speed');
+            const presEl = document.getElementById('pressure');
+            const rainEl = document.getElementById('rain');
+
+            if (tempEl) tempEl.textContent = `${cw.temperature}°C`;
+            // Iniciar alternância entre bairro e cidade (cidade pode ficar vazia)
+            if (cityEl) {
+              // se bairro vazio usa cidade; se ambos vazios usa 'Localização'
+              const fallback = cidade || bairro || 'Localização';
+              cityEl.textContent = bairro || fallback;
+              // iniciar alternância
+              startCidadeBairroToggle(cidade, bairro);
+            }
+            if (windEl) windEl.textContent = `${cw.windspeed} km/h`;
+
+            // Atualiza ícone com base no weathercode do Open-Meteo (WMO codes)
+            try {
+              const iconEl = document.querySelector('.weather-icon');
+              if (iconEl && cw.weathercode != null) {
+                const code = Number(cw.weathercode);
+                let wiClass = 'wi-day-sunny';
+                let semantic = 'sunny';
+                if (code === 0) { wiClass = 'wi-day-sunny'; semantic = 'sunny'; }
+                else if (code >= 1 && code <= 3) { wiClass = 'wi-day-cloudy'; semantic = 'cloud'; }
+                else if (code === 45 || code === 48) { wiClass = 'wi-fog'; semantic = 'cloud'; }
+                else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) { wiClass = 'wi-rain'; semantic = 'rain'; }
+                else if (code >= 95) { wiClass = 'wi-thunderstorm'; semantic = 'storm'; }
+                else { wiClass = 'wi-day-sunny'; semantic = 'sunny'; }
+                iconEl.className = `wi ${wiClass} weather-icon`;
+                iconEl.classList.remove('sunny','rain','cloud','storm');
+                iconEl.classList.add(semantic);
+              }
+            } catch (e) { console.warn('Não foi possível atualizar ícone do clima:', e); }
+
+            // tenta extrair umidade/precipitação/pressão a partir de hourly no mesmo timestamp do current_weather
+            let humidity = '--%';
+            let precipitation = '--mm';
+            let pressure = '--';
+            if (data.hourly && Array.isArray(data.hourly.time)) {
+              let idx = data.hourly.time.indexOf(cw.time);
+              // se não encontrou correspondência exata, procura o índice com timestamp mais próximo
+              if (idx === -1) {
+                try {
+                  const times = data.hourly.time.map(t => Date.parse(t));
+                  const target = cw.time ? Date.parse(cw.time) : Date.now();
+                  let best = -1;
+                  let bestDiff = Infinity;
+                  for (let i = 0; i < times.length; i++) {
+                    const d = Math.abs(times[i] - target);
+                    if (d < bestDiff) { bestDiff = d; best = i; }
+                  }
+                  if (best !== -1) idx = best;
+                } catch (e) {
+                  // falha ao parsear datas — deixa idx como -1 e usa valores default
+                  console.warn('Não foi possível casar timestamps do hourly com current_weather:', e);
+                }
+              }
+              if (idx !== -1) {
+                if (data.hourly.relativehumidity_2m && data.hourly.relativehumidity_2m[idx] != null) humidity = `${data.hourly.relativehumidity_2m[idx]}%`;
+                if (data.hourly.precipitation && data.hourly.precipitation[idx] != null) precipitation = `${data.hourly.precipitation[idx]} mm`;
+                if (data.hourly.pressure_msl && data.hourly.pressure_msl[idx] != null) pressure = `${data.hourly.pressure_msl[idx]} hPa`;
+              }
+            }
+
+            // Debug: logar informações importantes para investigação
+            try {
+              console.debug('Open-Meteo response keys:', Object.keys(data || {}));
+              if (data && data.hourly) {
+                console.debug('hourly keys:', Object.keys(data.hourly));
+                console.debug('hourly.time length:', data.hourly.time ? data.hourly.time.length : 0);
+              }
+              console.debug('current_weather.time:', cw.time, 'matched idx:', typeof idx !== 'undefined' ? idx : 'n/a');
+              if (data && data.hourly && data.hourly.precipitation) {
+                // se toda a série de precipitação for zeros, apresentar 0 mm
+                const allZero = data.hourly.precipitation.every(v => v === 0);
+                if (allZero) precipitation = '0 mm';
+                console.debug('sample precipitation values (first 10):', data.hourly.precipitation.slice(0,10));
+              }
+            } catch (e) {
+              console.debug('Erro ao logar debug de clima:', e);
+            }
+
+            if (humEl) humEl.textContent = humidity;
+            if (rainEl) rainEl.textContent = precipitation;
+            if (presEl) presEl.textContent = pressure;
+
+            if (alerta) alerta.style.display = 'none';
+          } catch (err) {
+            console.error('Erro processando dados de clima:', err);
+            if (alerta) alerta.style.display = '';
+          }
+        })
+        .catch(err => {
+          console.error('Erro ao buscar clima ou localização:', err);
+          if (alerta) alerta.style.display = '';
+        });
     }
 
     // Centraliza o mapa na localização do usuário
@@ -1245,6 +1357,59 @@ function fecharSelecaoLocalizacao() {
         window.userMarker.setLatLng([userLocation.lat, userLocation.lon]);
       }
     }
+
+    // Alterna o conteúdo do elemento #city-name entre cidade e bairro a cada 5 segundos
+    function startCidadeBairroToggle(cidade, bairro) {
+      try {
+        // limpa intervalo anterior, se houver
+        if (window._toggleCidadeBairroInterval) {
+          clearInterval(window._toggleCidadeBairroInterval);
+          window._toggleCidadeBairroInterval = null;
+        }
+        const el = document.getElementById('city-name');
+        if (!el) return;
+        // Normaliza valores
+        const cidadeNorm = (cidade && String(cidade).trim()) || '';
+        const bairroNorm = (bairro && String(bairro).trim()) || '';
+        // Se ambos vazios, mostra Localização e não inicia alternância
+        if (!cidadeNorm && !bairroNorm) {
+          el.textContent = 'Localização';
+          return;
+        }
+        // Estado interno
+        let showBairro = true;
+  // Inicial
+  el.textContent = bairroNorm || cidadeNorm || 'Localização';
+  // garante estado sem classe de troca
+  el.classList.remove('city-switching');
+        // Se não há bairro ou cidade, talvez não precise alternar
+        if (!cidadeNorm || !bairroNorm) return;
+        // Cria intervalo
+        window._toggleCidadeBairroInterval = setInterval(() => {
+          showBairro = !showBairro;
+          const newText = showBairro ? (bairroNorm || cidadeNorm) : (cidadeNorm || bairroNorm);
+          // animação: fade out -> trocar texto -> fade in
+          try {
+            // usa classe para animar (fade-out + slide), depois troca o texto e remove a classe (fade-in)
+            el.classList.add('city-switching');
+            setTimeout(() => {
+              el.textContent = newText;
+              // remove a classe para acionar fade-in
+              el.classList.remove('city-switching');
+            }, 380);
+          } catch (e) {
+            el.textContent = newText;
+          }
+        }, 5000);
+      } catch (e) {
+        console.warn('Erro ao iniciar alternância cidade/bairro:', e);
+      }
+    }
+
+    // Limpa intervalo ao descarregar a página
+    window.addEventListener('beforeunload', function() {
+      if (window._toggleCidadeBairroInterval) clearInterval(window._toggleCidadeBairroInterval);
+    });
 
     // Função para localizar usuário via botão no mapa
     function locateUser(btn) {
@@ -1290,26 +1455,7 @@ function fecharSelecaoLocalizacao() {
       }
     }
 
-    // Função para preencher o campo de endereço com a localização atual ao abrir a aba Relatar
-    function preencherEnderecoAtual() {
-      const addressInput = document.getElementById('address');
-      const latInput = document.getElementById('latitude');
-      const lonInput = document.getElementById('longitude');
-      if (!addressInput || !navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        if (latInput) latInput.value = lat;
-        if (lonInput) lonInput.value = lon;
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`)
-          .then(res => res.json())
-          .then(data => {
-            if (data && data.display_name) {
-              addressInput.value = data.display_name;
-            }
-          });
-      });
-    }
+    // preencherEnderecoAtual já definido acima — removida definição duplicada
 
     document.addEventListener('DOMContentLoaded', function() {
       // Solicita localização ao abrir o site
@@ -1323,28 +1469,7 @@ function fecharSelecaoLocalizacao() {
           }
           if (e.target.getAttribute('href') === '#clima') {
             atualizarClimaComLocalizacao();
-              // Atualiza ícone do clima ao acessar aba
-              setTimeout(function() {
-                if (window.userLocation) {
-                  fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${window.userLocation.lat}&lon=${window.userLocation.lon}&appid=API_KEY&units=metric&lang=pt_br`)
-                    .then(res => res.json())
-                    .then(data => {
-                      if (data && data.weather && data.weather[0]) {
-                        var iconEl = document.querySelector('.weather-icon');
-                        if (iconEl) {
-                    iconEl.className = `wi wi-owm-${data.weather[0].id} weather-icon`;
-                    // Varia tamanho conforme clima
-                    let clima = data.weather[0].main.toLowerCase();
-                    iconEl.classList.remove('sunny','rain','cloud','storm');
-                    if (clima.includes('rain')) iconEl.classList.add('rain');
-                    else if (clima.includes('cloud')) iconEl.classList.add('cloud');
-                    else if (clima.includes('storm') || clima.includes('thunder')) iconEl.classList.add('storm');
-                    else iconEl.classList.add('sunny');
-                        }
-                      }
-                    });
-                }
-              }, 400);
+              // ícone do clima será atualizado dentro de atualizarClimaComLocalizacao() usando o weathercode do Open-Meteo
           }
           if (e.target.getAttribute('href') === '#mapa') {
             // Delega para script.js (evita múltiplas inicializações)
