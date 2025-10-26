@@ -1,26 +1,30 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Perfil — ClimaJá!</title>
+
+  <!-- Bootstrap + Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="styles.css">
+
   <style>
     body { background: linear-gradient(180deg,#f0f9ff 0%, #e6fffa 100%); }
     .profile-card {
-      max-width: 900px; margin: 3rem auto; padding: 2rem; border-radius:1.2rem; background:linear-gradient(120deg,#fff 60%, #f0fbff 100%); box-shadow:0 10px 40px rgba(37,99,235,0.08);
+      max-width: 900px; margin: 3rem auto; padding: 2rem;
+      border-radius:1.2rem; background:linear-gradient(120deg,#fff 60%, #f0fbff 100%);
+      box-shadow:0 10px 40px rgba(37,99,235,0.08);
     }
     .avatar-lg { width:110px;height:110px;border-radius:16px;object-fit:cover;border:4px solid #38bdf8;box-shadow:0 8px 24px rgba(37,99,235,0.12); }
-    .profile-stats .stat { border-radius:0.9rem;background:#fff;padding:10px 14px;box-shadow:0 6px 18px rgba(37,99,235,0.06); }
+    .profile-stats .stat { border-radius:0.9rem;background:#fff;padding:10px 14px;box-shadow:0 6px 18px rgba(37,99,235,0.06); min-width:90px; }
     .btn-edit { background: linear-gradient(90deg,#38bdf8 0,#f9f871 100%); border:none; color:#123; font-weight:700; }
-              <label class="form-label">Avatar (imagem)</label>
-              <div class="d-flex gap-3 align-items-center">
-                <input type="file" id="edit-avatar" accept="image/*" class="form-control" style="max-width:320px;">
-                <img id="edit-avatar-preview" src="logo.png" alt="Preview" style="width:72px;height:72px;border-radius:12px;object-fit:cover;border:2px solid #38bdf8;">
-              </div>
-              <small class="text-muted">A imagem será salva temporariamente como DataURL (demo). Em produção, use Firebase Storage.</small>
+    .section { margin-top:1.25rem; }
+    /* Modal tweaks to work without bootstrap JS (we'll toggle via JS) */
+    .custom-modal { display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:1050; }
+    .custom-modal .modal-dialog { max-width:600px; width:100%; }
+  </style>
+</head>
 <body>
   <div class="container">
     <div class="profile-card">
@@ -30,11 +34,12 @@
           <h2 id="profile-name">- Nome do Usuário -</h2>
           <div class="text-muted" id="profile-email">usuario@example.com</div>
           <div class="mt-3">
-        <a href="#" class="btn btn-edit me-2" id="profile-edit"><i class="fas fa-user-edit"></i> Editar Perfil</a>
-        <a href="index.html" class="btn btn-outline-secondary me-2" id="profile-back-home"><i class="fas fa-arrow-left"></i> Voltar para Início</a>
-        <a href="#" class="btn btn-outline-primary" id="profile-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+            <a href="#" class="btn btn-edit me-2" id="profile-edit"><i class="fas fa-user-edit"></i> Editar Perfil</a>
+            <a href="index.html" class="btn btn-outline-secondary me-2" id="profile-back-home"><i class="fas fa-arrow-left"></i> Voltar para Início</a>
+            <a href="#" class="btn btn-outline-primary" id="profile-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
           </div>
         </div>
+
         <div class="ms-auto text-end profile-actions">
           <div class="profile-stats d-flex gap-2">
             <div class="stat text-center">
@@ -61,221 +66,341 @@
       <div class="section d-flex gap-3">
         <div style="flex:1">
           <h6>Meus Relatos</h6>
-          <div id="profile-relatos-list">Nenhum relato publicado ainda.</div>
+          <div id="profile-relatos-list" class="mt-2">Nenhum relato publicado ainda.</div>
         </div>
+
         <div style="width:320px">
           <h6>Configurações</h6>
           <div class="list-group">
             <a href="#" class="list-group-item list-group-item-action" id="link-notifications">Configurar notificações</a>
             <a href="#" class="list-group-item list-group-item-action" id="link-privacy">Privacidade e segurança</a>
-            <a href="#" class="list-group-item list-group-item-action" id="link-delete">Excluir conta</a>
+            <a href="#" class="list-group-item list-group-item-action text-danger" id="link-delete">Excluir conta</a>
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Modal de edição (custom para evitar depender do JS do Bootstrap) -->
+  <div id="profile-edit-modal" class="custom-modal d-flex">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Perfil</h5>
+          <button type="button" class="btn-close modal-close" aria-label="Fechar"></button>
+        </div>
+        <form id="profile-edit-form" class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label">Nome</label>
+            <input type="text" id="edit-displayName" class="form-control" placeholder="Seu nome público">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Avatar (imagem)</label>
+            <div class="d-flex gap-3 align-items-center">
+              <input type="file" id="edit-avatar" accept="image/*" class="form-control" style="max-width:320px;">
+              <img id="edit-avatar-preview" src="logo.png" alt="Preview" style="width:72px;height:72px;border-radius:12px;object-fit:cover;border:2px solid #38bdf8;">
+            </div>
+            <small class="text-muted">A imagem será salva temporariamente como DataURL (demo). Em produção, use Firebase Storage.</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Bio</label>
+            <textarea id="edit-bio" class="form-control" rows="3" placeholder="Fale um pouco sobre você"></textarea>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar alterações</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
   <script>
-    // Integração com Firebase Auth: preenche os dados reais do usuário e permite editar displayName/photoURL
-    document.addEventListener('DOMContentLoaded', async function(){
-      // Elementos
+    (function () {
+      // Elements
       const nameEl = document.getElementById('profile-name');
       const emailEl = document.getElementById('profile-email');
       const relatosCountEl = document.getElementById('profile-relatos-count');
+      const upvotesEl = document.getElementById('profile-upvotes');
       const sinceEl = document.getElementById('profile-since');
       const bioEl = document.getElementById('profile-bio');
       const avatarEl = document.getElementById('profile-avatar');
+      const relatosListEl = document.getElementById('profile-relatos-list');
 
-      // Função para popular campos com dados do usuário
+      const editBtn = document.getElementById('profile-edit');
+      const logoutBtn = document.getElementById('profile-logout');
+      const backHomeBtn = document.getElementById('profile-back-home');
+
+      const modal = document.getElementById('profile-edit-modal');
+      const modalCloseBtns = document.querySelectorAll('.modal-close');
+      const form = document.getElementById('profile-edit-form');
+      const fileInput = document.getElementById('edit-avatar');
+      const nameInput = document.getElementById('edit-displayName');
+      const bioInput = document.getElementById('edit-bio');
+      const avatarPreview = document.getElementById('edit-avatar-preview');
+
+      // Utils
+      function showModal() { modal.style.display = 'flex'; }
+      function hideModal() { modal.style.display = 'none'; }
+
+      // Fallback user storage (localStorage) structure:
+      // localStorage.setItem('user', JSON.stringify({ displayName, email, photoURL, bio, uid, metadata }))
+      function getLocalUser() {
+        try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch (e) { return null; }
+      }
+      function saveLocalUser(obj) {
+        const cur = getLocalUser() || {};
+        const merged = Object.assign({}, cur, obj);
+        localStorage.setItem('user', JSON.stringify(merged));
+      }
+
+      // Preenche UI com dados do user (Firebase user-like object or local fallback)
       function fillUser(user) {
         if (!user) {
           nameEl.textContent = '- Usuário ClimaJá -';
           emailEl.textContent = 'usuario@exemplo.com';
           relatosCountEl.textContent = '0';
+          upvotesEl.textContent = '0';
           sinceEl.textContent = '--';
           bioEl.textContent = 'Nenhuma informação adicional disponível.';
           avatarEl.src = 'logo.png';
+          relatosListEl.innerHTML = 'Nenhum relato publicado ainda.';
           return;
         }
+
         nameEl.textContent = user.displayName || user.email || 'Usuário';
         emailEl.textContent = user.email || '-';
-        // dados adicionais podem vir do Firestore; por enquanto deixamos valores locais/placeholder
-        relatosCountEl.textContent = '—';
-        sinceEl.textContent = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).getFullYear() : '--';
+        relatosCountEl.textContent = (user.relatosCount !== undefined) ? String(user.relatosCount) : '—';
+        upvotesEl.textContent = (user.upvotes !== undefined) ? String(user.upvotes) : '—';
+
+        // creationTime pode ser string (Firebase) ou metadata.creationTime
+        let created = '--';
+        if (user.metadata && user.metadata.creationTime) {
+          try { created = new Date(user.metadata.creationTime).toLocaleDateString(); } catch (e) { created = user.metadata.creationTime; }
+        } else if (user.creationTime) {
+          try { created = new Date(user.creationTime).toLocaleDateString(); } catch (e) { created = user.creationTime; }
+        }
+        sinceEl.textContent = created;
         bioEl.textContent = user.bio || 'Nenhuma informação adicional disponível.';
         avatarEl.src = user.photoURL || 'logo.png';
+
+        // Preenche formulário de edição com dados existentes (fallback)
+        if (nameInput) nameInput.value = user.displayName || '';
+        if (bioInput) bioInput.value = user.bio || '';
+        if (avatarPreview) avatarPreview.src = user.photoURL || 'logo.png';
       }
 
-      // Importa funções do SDK e observa auth
-      try {
-        const authModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
-        // window.auth é inicializado em script.js; caso não exista, cria um observer simples no localStorage
-        const auth = window.auth || null;
-        if (auth) {
-          authModule.onAuthStateChanged(auth, user => {
-            fillUser(user);
+      // Carregar relatos do Firestore (opcional) — só se Firestore estiver inicializado
+      async function loadRelatos(uid) {
+        relatosListEl.innerHTML = 'Carregando relatos...';
+        try {
+          if (!window.firebaseApp && !window.firebase) {
+            relatosListEl.innerHTML = 'Relatos indisponíveis (Firebase não inicializado).';
+            return;
+          }
+          // Tenta importar dinamicamente o módulo Firestore
+          const firestoreModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js');
+          const { getFirestore, collection, query, where, orderBy, limit, getDocs } = firestoreModule;
+          const db = getFirestore();
+          const q = query(collection(db, 'relatos'), where('uid', '==', uid), orderBy('dataHora', 'desc'), limit(50));
+          const snap = await getDocs(q);
+
+          if (!snap || snap.empty) {
+            relatosListEl.innerHTML = 'Nenhum relato publicado ainda.';
+            relatosCountEl.textContent = '0';
+            return;
+          }
+          const items = [];
+          snap.forEach(doc => {
+            const d = doc.data();
+            const when = d.dataHora ? new Date(d.dataHora).toLocaleString() : '—';
+            items.push(`<div class="card mb-2"><div class="card-body p-2"><div class="d-flex justify-content-between"><div><strong>${escapeHtml(d.ocorridoPrimario || 'Relato')}</strong><div class="small text-muted">${escapeHtml(d.address || 'Local não informado')}</div></div><div class="text-muted small">${when}</div></div></div></div>`);
           });
-        } else {
-          // fallback para demo: usa localStorage
-          const demo = JSON.parse(localStorage.getItem('user') || 'null');
-          fillUser(demo);
+          relatosListEl.innerHTML = items.join('');
+          relatosCountEl.textContent = String(snap.size || items.length);
+        } catch (e) {
+          console.warn('Não foi possível carregar relatos (Firestore):', e);
+          relatosListEl.innerHTML = 'Relatos indisponíveis.';
         }
-      } catch (e) {
-        console.warn('Erro ao inicializar auth em profile:', e);
-        const demo = JSON.parse(localStorage.getItem('user') || 'null');
+      }
+
+      // Segurança simples para texto inserido em templates
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // Inicialização: observa estado do Auth se disponível, senão fallback localStorage
+      async function initAuthObserver() {
+        try {
+          const authModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
+          const { onAuthStateChanged } = authModule;
+          const auth = window.auth || null;
+
+          if (auth && typeof onAuthStateChanged === 'function') {
+            onAuthStateChanged(auth, async (user) => {
+              if (!user) {
+                // fallback local user
+                const demo = getLocalUser();
+                fillUser(demo);
+              } else {
+                // Converte user Firebase para objeto leve (pegue metadata se disponível)
+                const lightweight = {
+                  displayName: user.displayName,
+                  email: user.email,
+                  photoURL: user.photoURL,
+                  uid: user.uid,
+                  metadata: user.metadata || {},
+                };
+                // Se quiser carregar relatos do Firestore:
+                if (user.uid) loadRelatos(user.uid);
+                fillUser(lightweight);
+              }
+            });
+            return;
+          }
+        } catch (e) {
+          console.warn('Erro ao inicializar auth (import):', e);
+        }
+
+        // Fallback: tenta carregar do localStorage
+        const demo = getLocalUser();
         fillUser(demo);
       }
 
-      // Editar perfil: abrir modal
-      const editBtn = document.getElementById('profile-edit');
-      const logoutBtn = document.getElementById('profile-logout');
-  const backHomeBtn = document.getElementById('profile-back-home');
-  if (backHomeBtn) backHomeBtn.addEventListener('click', function(e){ /* link já faz a navegação; apenas prevenir se necessário */ });
-      if (editBtn) editBtn.addEventListener('click', function(e){ e.preventDefault(); document.getElementById('profile-edit-modal').classList.add('show'); document.getElementById('profile-edit-modal').style.display = 'block'; });
-      if (logoutBtn) logoutBtn.addEventListener('click', function(e){ e.preventDefault(); if (window.auth && window.signOut) { window.signOut(window.auth).then(()=>{ location.href = '/'; }).catch(()=>alert('Erro ao sair')); } else { alert('Logout não disponível'); } });
+      // Event handlers
+      editBtn && editBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        // Preenche o modal com os dados atuais (já preenchidos via fillUser)
+        showModal();
+      });
 
-      // Handler de formulário de edição
-        // Integração com Firebase Auth e Firestore: preenche perfil, lista relatos e permite editar displayName/photoURL (preview)
-        document.addEventListener('DOMContentLoaded', async function(){
-          // Elementos
-          const nameEl = document.getElementById('profile-name');
-          const emailEl = document.getElementById('profile-email');
-          const relatosCountEl = document.getElementById('profile-relatos-count');
-          const sinceEl = document.getElementById('profile-since');
-          const bioEl = document.getElementById('profile-bio');
-          const avatarEl = document.getElementById('profile-avatar');
-          const relatosListEl = document.getElementById('profile-relatos-list');
+      modalCloseBtns.forEach(btn => btn.addEventListener('click', function () {
+        hideModal();
+      }));
 
-          // Helper: form elements
-          const editBtn = document.getElementById('profile-edit');
-          const logoutBtn = document.getElementById('profile-logout');
-          const form = document.getElementById('profile-edit-form');
-          const fileInput = document.getElementById('edit-avatar');
-          const nameInput = document.getElementById('edit-displayName');
-          const avatarPreview = document.getElementById('edit-avatar-preview');
-
-          // Preenche campos com dados do usuário
-          function fillUser(user) {
-            if (!user) {
-              nameEl.textContent = '- Usuário ClimaJá -';
-              emailEl.textContent = 'usuario@exemplo.com';
-              relatosCountEl.textContent = '0';
-              sinceEl.textContent = '--';
-              bioEl.textContent = 'Nenhuma informação adicional disponível.';
-              avatarEl.src = 'logo.png';
-              relatosListEl.innerHTML = 'Nenhum relato publicado ainda.';
-              return;
-            }
-            nameEl.textContent = user.displayName || user.email || 'Usuário';
-            emailEl.textContent = user.email || '-';
-            relatosCountEl.textContent = '—';
-            sinceEl.textContent = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : '--';
-            bioEl.textContent = user.bio || 'Nenhuma informação adicional disponível.';
-            avatarEl.src = user.photoURL || 'logo.png';
-            // Pré-preenche formulário de edição
-            if (nameInput) nameInput.value = user.displayName || '';
-            if (avatarPreview) avatarPreview.src = user.photoURL || 'logo.png';
-            // Carregar relatos do Firestore (se disponível)
-            if (user && user.uid) loadRelatos(user.uid);
+      logoutBtn && logoutBtn.addEventListener('click', async function (e) {
+        e.preventDefault();
+        // Se existir autenticação Firebase, usa signOut; senão limpa localStorage demo
+        try {
+          if (window.auth && window.signOut) {
+            await window.signOut(window.auth);
+            location.href = '/';
+          } else {
+            localStorage.removeItem('user');
+            alert('Desconectado (modo demo).');
+            location.href = '/';
           }
+        } catch (err) {
+          console.error('Erro ao sair:', err);
+          alert('Erro ao sair: ' + (err && err.message ? err.message : err));
+        }
+      });
 
-          // Carrega relatos do Firestore (opcional)
-          async function loadRelatos(uid) {
-            relatosListEl.innerHTML = 'Carregando relatos...';
-            try {
-              const firestoreModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js');
-              const { getFirestore, collection, query, where, orderBy, limit, getDocs } = firestoreModule;
-              if (!window.firebaseApp && !window.firebase) {
-                relatosListEl.innerHTML = 'Relatos indisponíveis (Firebase não inicializado).';
-                return;
-              }
-              const db = getFirestore();
-              const q = query(collection(db, 'relatos'), where('uid', '==', uid), orderBy('dataHora', 'desc'), limit(50));
-              const snap = await getDocs(q);
-              if (!snap || snap.empty) {
-                relatosListEl.innerHTML = 'Nenhum relato publicado ainda.';
-                relatosCountEl.textContent = '0';
-                return;
-              }
-              const items = [];
-              snap.forEach(doc => {
-                const d = doc.data();
-                const when = d.dataHora ? new Date(d.dataHora).toLocaleString() : '—';
-                items.push(`<div class="card mb-2"><div class="card-body p-2"><div class="d-flex justify-content-between"><div><strong>${d.ocorridoPrimario || 'Relato'}</strong><div class="small text-muted">${d.address || 'Local não informado'}</div></div><div class="text-muted small">${when}</div></div></div></div>`);
-              });
-              relatosListEl.innerHTML = items.join('');
-              relatosCountEl.textContent = String(snap.size || items.length);
-            } catch (e) {
-              console.warn('Não foi possível carregar relatos (Firestore):', e);
-              relatosListEl.innerHTML = 'Relatos indisponíveis.';
-            }
+      // Preview do avatar ao selecionar arquivo
+      if (fileInput && avatarPreview) {
+        fileInput.addEventListener('change', function () {
+          const f = fileInput.files && fileInput.files[0];
+          if (!f) {
+            // restaura preview para avatar atual
+            avatarPreview.src = avatarEl.src || 'logo.png';
+            return;
           }
+          const reader = new FileReader();
+          reader.onload = () => { avatarPreview.src = reader.result; };
+          reader.readAsDataURL(f);
+        });
+      }
 
-          // Observa estado do auth (usa window.auth se disponível)
-          try {
-            const authModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
-            const auth = window.auth || null;
-            if (auth) {
-              authModule.onAuthStateChanged(auth, user => {
-                fillUser(user);
-              });
-            } else {
-              const demo = JSON.parse(localStorage.getItem('user') || 'null');
-              fillUser(demo);
-            }
-          } catch (e) {
-            console.warn('Erro ao inicializar auth em profile:', e);
-            const demo = JSON.parse(localStorage.getItem('user') || 'null');
-            fillUser(demo);
-          }
+      // Submissão do formulário de edição
+      if (form) {
+        form.addEventListener('submit', async function (ev) {
+          ev.preventDefault();
+          const newName = nameInput ? nameInput.value.trim() : '';
+          const newBio = bioInput ? bioInput.value.trim() : '';
+          let photoDataURL = null;
 
-          // Abrir modal de edição
-          if (editBtn) editBtn.addEventListener('click', function(e){ e.preventDefault(); document.getElementById('profile-edit-modal').classList.add('show'); document.getElementById('profile-edit-modal').style.display = 'block'; });
-          if (logoutBtn) logoutBtn.addEventListener('click', function(e){ e.preventDefault(); if (window.auth && window.signOut) { window.signOut(window.auth).then(()=>{ location.href = '/'; }).catch(()=>alert('Erro ao sair')); } else { alert('Logout não disponível'); } });
-
-          // Preview do avatar ao selecionar arquivo
-          if (fileInput && avatarPreview) {
-            fileInput.addEventListener('change', function(){
-              const f = fileInput.files && fileInput.files[0];
-              if (!f) { avatarPreview.src = avatarEl.src || 'logo.png'; return; }
-              const reader = new FileReader();
-              reader.onload = () => { avatarPreview.src = reader.result; };
-              reader.readAsDataURL(f);
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            photoDataURL = await new Promise(res => {
+              const r = new FileReader();
+              r.onload = () => res(r.result);
+              r.readAsDataURL(fileInput.files[0]);
             });
           }
 
-          // Submissão do formulário de edição
-          if (form) {
-            form.addEventListener('submit', async function(ev){
-              ev.preventDefault();
-              const newName = nameInput ? nameInput.value.trim() : '';
-              let photoDataURL = null;
-              if (fileInput && fileInput.files && fileInput.files[0]) {
-                photoDataURL = await new Promise(res => { const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(fileInput.files[0]); });
-              }
+          try {
+            // Se Firebase Auth estiver disponível e usuário autenticado, atualiza lá.
+            // Caso contrário, salva em localStorage (modo demo).
+            let updatedUser = null;
+
+            // Tenta importar updateProfile da SDK (se auth estiver presente)
+            if (window.auth && window.auth.currentUser) {
               try {
                 const authModule2 = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
-                if (window.auth && window.auth.currentUser) {
-                  const user = window.auth.currentUser;
-                  const updates = {};
-                  if (newName) updates.displayName = newName;
-                  if (photoDataURL) updates.photoURL = photoDataURL; // Nota: em produção carregue ao Firebase Storage e use a URL
-                  await authModule2.updateProfile(user, updates);
-                  fillUser(Object.assign({}, user, updates));
-                  // fecha modal
-                  document.getElementById('profile-edit-modal').classList.remove('show');
-                  document.getElementById('profile-edit-modal').style.display = 'none';
-                  alert('Perfil atualizado com sucesso.');
-                } else {
-                  alert('Usuário não autenticado');
-                }
-              } catch (err) {
-                console.error('Erro ao atualizar perfil:', err);
-                alert('Erro ao atualizar perfil: ' + (err && err.message ? err.message : err));
+                const { updateProfile } = authModule2;
+                const user = window.auth.currentUser;
+                const updates = {};
+                if (newName) updates.displayName = newName;
+                if (photoDataURL) updates.photoURL = photoDataURL; // em produção suba ao Storage e use URL pública
+                // Nota: updateProfile pode receber apenas displayName/photoURL
+                await updateProfile(user, updates);
+                // Opcional: se quiser também atualizar o documento no Firestore, faça aqui
+                updatedUser = Object.assign({}, user, updates);
+                // Recarregar UI com novos dados
+                fillUser({
+                  displayName: updatedUser.displayName || newName,
+                  email: user.email,
+                  photoURL: updatedUser.photoURL || avatarEl.src,
+                  bio: newBio || '',
+                  uid: user.uid,
+                  metadata: user.metadata || {}
+                });
+              } catch (errUpdate) {
+                console.warn('Falha ao atualizar profile via Firebase:', errUpdate);
+                // fallback para localStorage
               }
-            });
-          }
+            }
 
-          // Fechar modal
-          document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', function(){ document.getElementById('profile-edit-modal').classList.remove('show'); document.getElementById('profile-edit-modal').style.display = 'none'; }));
+            // Se não atualizou via Firebase, salva em localStorage
+            if (!updatedUser) {
+              const demoUpdate = {
+                displayName: newName || nameEl.textContent,
+                photoURL: photoDataURL || avatarEl.src,
+                bio: newBio || bioEl.textContent,
+                email: getLocalUser() && getLocalUser().email ? getLocalUser().email : emailEl.textContent,
+                metadata: getLocalUser() && getLocalUser().metadata ? getLocalUser().metadata : { creationTime: new Date().toISOString() }
+              };
+              saveLocalUser(demoUpdate);
+              fillUser(demoUpdate);
+            }
+
+            hideModal();
+            alert('Perfil atualizado com sucesso.');
+          } catch (err) {
+            console.error('Erro ao atualizar perfil:', err);
+            alert('Erro ao atualizar perfil: ' + (err && err.message ? err.message : err));
+          }
         });
+      }
+
+      // Ao carregar a página: inicializa observador de autenticação/fallback
+      document.addEventListener('DOMContentLoaded', function () {
+        initAuthObserver();
+      });
+
+    })();
+  </script>
+
+  <!-- Optionally include Bootstrap JS (not required for modal here) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+</body>
+</html>
