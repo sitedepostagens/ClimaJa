@@ -72,18 +72,130 @@
   </div>
 
   <script>
-    // App: preencher com dados fictícios até integração real
-    document.addEventListener('DOMContentLoaded', function(){
-      // Se houver integração Firebase, aqui preencheremos os dados reais
-      // Exemplo demo:
-      document.getElementById('profile-name').textContent = localStorage.getItem('demo_name') || '- Usuário ClimaJá -';
-      document.getElementById('profile-email').textContent = localStorage.getItem('demo_email') || 'usuario@exemplo.com';
-      document.getElementById('profile-relatos-count').textContent = localStorage.getItem('demo_relatos') || '0';
-      document.getElementById('profile-since').textContent = localStorage.getItem('demo_since') || '2023';
-      // Botões
-      document.getElementById('profile-edit').addEventListener('click', function(e){ e.preventDefault(); alert('Função de edição de perfil (a integrar)'); });
-      document.getElementById('profile-logout').addEventListener('click', function(e){ e.preventDefault(); alert('Logout (a integrar)'); });
+    // Integração com Firebase Auth: preenche os dados reais do usuário e permite editar displayName/photoURL
+    document.addEventListener('DOMContentLoaded', async function(){
+      // Elementos
+      const nameEl = document.getElementById('profile-name');
+      const emailEl = document.getElementById('profile-email');
+      const relatosCountEl = document.getElementById('profile-relatos-count');
+      const sinceEl = document.getElementById('profile-since');
+      const bioEl = document.getElementById('profile-bio');
+      const avatarEl = document.getElementById('profile-avatar');
+
+      // Função para popular campos com dados do usuário
+      function fillUser(user) {
+        if (!user) {
+          nameEl.textContent = '- Usuário ClimaJá -';
+          emailEl.textContent = 'usuario@exemplo.com';
+          relatosCountEl.textContent = '0';
+          sinceEl.textContent = '--';
+          bioEl.textContent = 'Nenhuma informação adicional disponível.';
+          avatarEl.src = 'logo.png';
+          return;
+        }
+        nameEl.textContent = user.displayName || user.email || 'Usuário';
+        emailEl.textContent = user.email || '-';
+        // dados adicionais podem vir do Firestore; por enquanto deixamos valores locais/placeholder
+        relatosCountEl.textContent = '—';
+        sinceEl.textContent = user.metadata && user.metadata.creationTime ? new Date(user.metadata.creationTime).getFullYear() : '--';
+        bioEl.textContent = user.bio || 'Nenhuma informação adicional disponível.';
+        avatarEl.src = user.photoURL || 'logo.png';
+      }
+
+      // Importa funções do SDK e observa auth
+      try {
+        const authModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
+        // window.auth é inicializado em script.js; caso não exista, cria um observer simples no localStorage
+        const auth = window.auth || null;
+        if (auth) {
+          authModule.onAuthStateChanged(auth, user => {
+            fillUser(user);
+          });
+        } else {
+          // fallback para demo: usa localStorage
+          const demo = JSON.parse(localStorage.getItem('user') || 'null');
+          fillUser(demo);
+        }
+      } catch (e) {
+        console.warn('Erro ao inicializar auth em profile:', e);
+        const demo = JSON.parse(localStorage.getItem('user') || 'null');
+        fillUser(demo);
+      }
+
+      // Editar perfil: abrir modal
+      const editBtn = document.getElementById('profile-edit');
+      const logoutBtn = document.getElementById('profile-logout');
+      if (editBtn) editBtn.addEventListener('click', function(e){ e.preventDefault(); document.getElementById('profile-edit-modal').classList.add('show'); document.getElementById('profile-edit-modal').style.display = 'block'; });
+      if (logoutBtn) logoutBtn.addEventListener('click', function(e){ e.preventDefault(); if (window.auth && window.signOut) { window.signOut(window.auth).then(()=>{ location.href = '/'; }).catch(()=>alert('Erro ao sair')); } else { alert('Logout não disponível'); } });
+
+      // Handler de formulário de edição
+      const form = document.getElementById('profile-edit-form');
+      if (form) {
+        form.addEventListener('submit', async function(ev){
+          ev.preventDefault();
+          const newName = document.getElementById('edit-displayName').value.trim();
+          const fileInput = document.getElementById('edit-avatar');
+          let photoURL = null;
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            // Lê como DataURL e usa temporariamente como photoURL (pode ser substituído por upload ao Storage)
+            photoURL = await new Promise(res => { const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(fileInput.files[0]); });
+          }
+          try {
+            const authModule2 = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
+            if (window.auth) {
+              const user = window.auth.currentUser;
+              if (user) {
+                const updates = {};
+                if (newName) updates.displayName = newName;
+                if (photoURL) updates.photoURL = photoURL;
+                await authModule2.updateProfile(user, updates);
+                fillUser(Object.assign({}, user, updates));
+                // fecha modal
+                document.getElementById('profile-edit-modal').classList.remove('show');
+                document.getElementById('profile-edit-modal').style.display = 'none';
+                alert('Perfil atualizado com sucesso.');
+              } else alert('Usuário não autenticado');
+            } else {
+              alert('Autenticação não disponível');
+            }
+          } catch (err) {
+            console.error('Erro ao atualizar perfil:', err);
+            alert('Erro ao atualizar perfil: ' + (err && err.message ? err.message : err));
+          }
+        });
+      }
+      // Fechar modal
+      document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', function(){ document.getElementById('profile-edit-modal').classList.remove('show'); document.getElementById('profile-edit-modal').style.display = 'none'; }));
     });
   </script>
+
+  <!-- Modal simples de edição de perfil -->
+  <div id="profile-edit-modal" class="modal" tabindex="-1" role="dialog" style="display:none; background:rgba(0,0,0,0.35);">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Perfil</h5>
+          <button type="button" class="btn-close modal-close" aria-label="Close"></button>
+        </div>
+        <form id="profile-edit-form">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Nome público</label>
+              <input type="text" id="edit-displayName" class="form-control" placeholder="Seu nome que será exibido">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Avatar (imagem)</label>
+              <input type="file" id="edit-avatar" accept="image/*" class="form-control">
+              <small class="text-muted">A imagem será salva temporariamente como DataURL (para demo). Em produção, use Firebase Storage.</small>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
