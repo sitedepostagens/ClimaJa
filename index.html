@@ -1562,5 +1562,45 @@ function carregarRelatosPublicos() {
     }
   });
 </script>
+<!-- Ajuste: inverter posição do botão 'Baixar APP' e o 'perfil' quando o usuário estiver logado -->
+<script>
+  (function() {
+    const baixarId = 'baixar-app-btn';
+    const perfilId = 'perfil-area';
+
+    function swapIfLogged() {
+      const baixar = document.getElementById(baixarId);
+      const perfil = document.getElementById(perfilId);
+      if (!baixar || !perfil) return;
+      // Se perfil visível (não tem classe d-none), invertemos a ordem para "baixar" antes de "perfil"
+      const isVisible = !perfil.classList.contains('d-none');
+      const parent = perfil.parentNode;
+      if (isVisible) {
+        // Se já estiver na ordem desejada (baixar antes de perfil), não faz nada
+        if (parent && parent.firstElementChild === baixar) return;
+        try {
+          parent.insertBefore(baixar, perfil);
+        } catch (e) { console.warn('Erro ao mover botões:', e); }
+      } else {
+        // Quando não logado, restaurar ordem original: perfil (oculto) antes de baixar
+        try {
+          parent.insertBefore(perfil, baixar);
+        } catch (e) { /* ignore */ }
+      }
+    }
+
+    // Observe mudanças na classe do elemento de perfil para detectar login/logout
+    document.addEventListener('DOMContentLoaded', function() {
+      const perfil = document.getElementById(perfilId);
+      if (!perfil) return;
+      const obs = new MutationObserver(() => swapIfLogged());
+      obs.observe(perfil, { attributes: true, attributeFilter: ['class'] });
+      // Chamada inicial (caso já esteja logado)
+      setTimeout(swapIfLogged, 300);
+      // também tenta novamente depois de 1500ms (em caso de scripts externos trocarem a ordem depois)
+      setTimeout(swapIfLogged, 1500);
+    });
+  })();
+</script>
 </body>
 </html>
