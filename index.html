@@ -108,8 +108,7 @@ function fecharSelecaoLocalizacao() {
       border-radius: 1.2rem !important;
     }
     /* Ajuste mais suave para inputs e botões */
-    /* Removido .dropdown-menu daqui para evitar sobrescrever menus específicos (ex.: perfil, sugestões) */
-    .form-control, .btn {
+    .form-control, .btn, .dropdown-menu {
       border-radius: 0.8rem !important;
     }
     /* Certifique-se que popups do leaflet estejam arredondados */
@@ -202,62 +201,106 @@ function fecharSelecaoLocalizacao() {
       color: inherit !important;
       cursor: default;
     }
-    /* Perfil Dropdown: estilo enxuto e responsivo */
-    /* Perfil: regras mais específicas para sobrepor estilos globais (.btn, .dropdown-menu) */
-    .main-header .dropdown-menu[aria-labelledby="perfilDropdown"] {
-      min-width: 220px;
-      border-radius: 0.9rem !important; /* sobrepõe regras globais */
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,250,255,0.98));
-      padding: 0.45rem;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.08);
-      z-index: 3000 !important; /* garante estar acima de elementos complexos do header */
+    /* Perfil Dropdown: Gradiente, bordas arredondadas, paleta azul/aqua/amarelo */
+    .dropdown-menu[aria-labelledby="perfilDropdown"] {
+      background: #fff;
+      border-radius: 1.5rem;
+      box-shadow: 0 8px 32px -8px #2563eb44, 0 0 40px 0 #5ee7df33 inset;
+      border: 2px solid #38bdf8;
+      padding: 1.2rem 1rem 1rem 1rem;
+      animation: sobreFadeIn 0.8s cubic-bezier(.23,1.02,.32,1) both;
     }
-    .main-header .dropdown-menu[aria-labelledby="perfilDropdown"] .dropdown-item {
-      border-radius: 0.6rem;
-      margin: 0.12rem 0;
-      padding: 0.45rem 0.6rem;
+    .dropdown-menu[aria-labelledby="perfilDropdown"] .dropdown-item {
+      border-radius: 1rem;
+      margin-bottom: 0.5rem;
+      background: rgba(255,255,255,0.85);
+      color: #232946;
+      font-weight: 600;
+      transition: background 0.3s, color 0.3s;
     }
-    .main-header .dropdown-menu[aria-labelledby="perfilDropdown"] .dropdown-item:hover {
-      background: rgba(56, 189, 248, 0.06);
+    .dropdown-menu[aria-labelledby="perfilDropdown"] .dropdown-item:hover {
+      background: rgba(56, 189, 248, 0.09); /* azul claro, ainda mais transparente */
+      color: #2563eb;
     }
     #perfil-dados {
-      display: inline-flex;
-      align-items: center;
-      gap: .6rem;
-      padding: .18rem .4rem;
-      cursor: pointer;
+      background: linear-gradient(120deg, #e0f2fe 60%, #f9f871 100%);
+      border-radius: 1.2rem;
+      box-shadow: 0 2px 12px #2563eb22;
+      padding: 1rem 0.5rem 0.7rem 0.5rem;
+      margin-bottom: 0.7rem;
     }
-    /* Estiliza o botão que abre o dropdown para evitar bordas/paddings indesejados */
-    .btn-profile {
-      background: transparent;
-      border: none;
-      padding: 0;
-      margin: 0;
-      display: inline-flex;
-      align-items: center;
-      color: inherit;
-    }
-    .btn-profile:focus { outline: none; box-shadow: none; }
     #perfil-dados img {
-      width: 42px;
-      height: 42px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.5);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      border: 3px solid #38bdf8;
+      box-shadow: 0 2px 12px #5ee7df44;
     }
-    #perfil-nome { font-weight: 700; font-size: .9rem; line-height:1; }
-    #perfil-email { font-size: .75rem; color: #6b7280; }
-    #logout-btn { color:#c92a2a; }
-    #logout-btn:hover { background: rgba(201,42,42,0.06); }
+    #perfil-nome {
+      color: #2563eb;
+      font-weight: 800;
+      font-size: 1.3rem;
+      text-shadow: 0 2px 8px #bae6fd99;
+    }
+    #perfil-email {
+      color: #3a506b;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .badge.bg-primary {
+      background: linear-gradient(90deg, #38bdf8 60%, #f9f871 100%);
+      color: #232946;
+      font-weight: 700;
+      border-radius: 0.7rem;
+      box-shadow: 0 2px 8px #2563eb22;
+    }
+    #logout-btn {
+      border-radius: 0.7rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #f87171 60%, #fbbf24 100%);
+      color: #232946;
+      border: none;
+      box-shadow: 0 2px 8px #f8717133;
+      transition: background 0.3s, color 0.3s;
+    }
+    #logout-btn:hover {
+      background: linear-gradient(90deg, #fbbf24 60%, #f87171 100%);
+      color: #fff;
+    }
     @media (max-width: 600px) {
-      #perfil-dados .d-none.d-md-block { display: none !important; }
-      #perfil-dados img { width:36px; height:36px; }
-      .main-header .dropdown-menu[aria-labelledby="perfilDropdown"] { min-width: 90vw !important; }
+      .dropdown-menu[aria-labelledby="perfilDropdown"] {
+        min-width: 90vw;
+        padding: 1.1rem 0.3rem 1rem 0.3rem;
+      }
+      #perfil-dados {
+        padding: 0.7rem 0.2rem 0.5rem 0.2rem;
+      }
     }
-    [data-theme="dark"] .main-header .dropdown-menu[aria-labelledby="perfilDropdown"] {
-      background: linear-gradient(180deg, rgba(18,24,33,0.9), rgba(10,14,20,0.9));
-      color: #e6eef8;
+    [data-theme="dark"] .dropdown-menu[aria-labelledby="perfilDropdown"] {
+      background: linear-gradient(120deg, #1e293b 60%, #0f172a 100%) !important;
+      color: #f8fafc !important;
+      border-color: #60a5fa;
+    }
+    [data-theme="dark"] #perfil-dados {
+      background: linear-gradient(120deg, #334155 60%, #1e293b 100%) !important;
+      color: #f8fafc !important;
+      border-color: #60a5fa;
+    }
+    [data-theme="dark"] #perfil-nome {
+      color: #60a5fa !important;
+      text-shadow: 0 2px 8px #0f172a99;
+    }
+    [data-theme="dark"] #perfil-email {
+      color: #f8fafc !important;
+    }
+    [data-theme="dark"] .badge.bg-primary {
+      background: linear-gradient(90deg, #60a5fa 60%, #f9f871 100%) !important;
+      color: #232946 !important;
+    }
+    [data-theme="dark"] #logout-btn {
+      background: linear-gradient(90deg, #f87171 60%, #fbbf24 100%) !important;
+      color: #232946 !important;
+    }
+    [data-theme="dark"] #logout-btn:hover {
+      background: linear-gradient(90deg, #fbbf24 60%, #f87171 100%) !important;
+      color: #fff !important;
     }
   </style>
   <style>
@@ -390,71 +433,6 @@ function fecharSelecaoLocalizacao() {
       font-weight: 600;
       opacity: 0.98;
       color: #e0e7ff;
-    }
-    /* ===== Documentação rápida: Harmonização de design =====
-       - Removemos .dropdown-menu do seletor global para evitar sobrescrever menus
-         específicos (perfil, sugestões de endereço).
-       - Estilos de botão foram centralizados (.btn, .btn-modern, .btn-outline-*)
-         para garantir padding, radius e sombra consistentes.
-       - Menus específicos (perfil e sugestões) têm regras próprias e z-index
-         para evitar recorte por elementos do header.
-       Próximo passo: mover essas regras para `styles.css` ou um arquivo de tema
-       e reduzir o uso de `!important` em outros arquivos (animacao-global.css).
-    */
-    /* Uniformização de botões no site */
-    .btn, .btn-outline-primary, .btn-outline-secondary, .btn-modern {
-      border-radius: 0.8rem !important;
-      font-weight: 700;
-      padding: 0.45rem 0.7rem;
-      box-shadow: 0 6px 20px rgba(37,99,235,0.08);
-      transition: background 0.25s, transform 0.12s, box-shadow 0.12s;
-    }
-    .btn-outline-primary {
-      color: #2563eb;
-      border-color: #38bdf8;
-      background: #fff;
-    }
-    .btn-outline-primary:hover {
-      background: #bae6fd;
-      color: #0f172a;
-    }
-    .btn-outline-secondary {
-      color: #374151;
-      border-color: #94a3b8;
-      background: #fff;
-    }
-    .badge.site-badge {
-      background: linear-gradient(90deg, #38bdf8 60%, #f9f871 100%);
-      color: #232946;
-      font-weight: 700;
-      border-radius: 0.7rem;
-      box-shadow: 0 2px 8px #2563eb22;
-      padding: 0.25rem 0.5rem;
-    }
-    /* CSS para sugestões de endereço (autocomplete) - mantém aparência limpa e não conflita com global */
-    #address-suggestions, #address-suggestions-motorista {
-      position: absolute;
-      top: calc(100% + 6px);
-      left: 0;
-      width: 100%;
-      max-width: 600px;
-      background: #fff;
-      border-radius: 0.6rem;
-      box-shadow: 0 8px 30px rgba(2,6,23,0.08);
-      overflow: hidden;
-      z-index: 2500;
-      display: none; /* controlado via JS */
-    }
-    #address-suggestions .dropdown-item, #address-suggestions-motorista .dropdown-item {
-      display: block;
-      width: 100%;
-      text-align: left;
-      padding: 0.5rem 0.75rem;
-      background: transparent;
-      border: none;
-    }
-    #address-suggestions .dropdown-item:hover, #address-suggestions-motorista .dropdown-item:hover {
-      background: #f1f9ff;
     }
     /* Ajuste para o container do mapa */
     #map {
@@ -730,26 +708,34 @@ function fecharSelecaoLocalizacao() {
   <!-- Botão de perfil substitui login/cadastro quando logado -->
   <div id="perfil-area" class="d-none">
     <div class="dropdown">
-      <button class="btn btn-profile dropdown-toggle p-0" type="button" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
-        <div id="perfil-dados" class="align-items-center text-start">
-          <img id="perfil-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'><rect width='100%' height='100%' fill='%23e6f7ff'/><circle cx='48' cy='36' r='20' fill='%2386d1ff'/><rect x='16' y='64' width='64' height='16' rx='8' fill='%2386d1ff'/></svg>" alt="Avatar" />
-          <div>
-            <div id="perfil-nome">Usuário</div>
-            <div id="perfil-email">email@exemplo.com</div>
-          </div>
-        </div>
+      <button class="btn btn-gradient btn-sm fw-bold dropdown-toggle d-flex align-items-center" type="button" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <img src="logo.png" alt="Avatar" style="width:32px;height:32px;border-radius:50%;margin-right:8px;box-shadow:0 2px 8px #2563eb22;">
+        <span id="perfil-nome-area" style="font-weight:600;">Perfil</span>
       </button>
-      <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="perfilDropdown">
-  <li><a class="dropdown-item" href="profile.html"><i class="fas fa-user me-2"></i>Ver Perfil</a></li>
-  <li><a class="dropdown-item" href="profile-edit.html"><i class="fas fa-edit me-2"></i>Editar Perfil</a></li>
-  <!-- Configurações removido do perfil: disponível somente via menu 'Segurança e Acesso' -->
-  <li><a class="dropdown-item" href="#" id="perfil-ajuda"><i class="fas fa-question-circle me-2 text-info"></i>Ajuda</a></li>
-  <li><a class="dropdown-item" href="security-pannel.html" id="perfil-seguranca"><i class="fas fa-lock me-2"></i>Segurança e Acesso</a></li>
+      <ul class="dropdown-menu" aria-labelledby="perfilDropdown" style="min-width:260px;border-radius:0;">
+        <li>
+          <div class="dropdown-item text-center" id="perfil-dados" style="min-width:220px;padding-bottom:10px;">
+            <img src="logo.png" alt="Avatar" style="width:72px;height:72px;border-radius:50%;box-shadow:0 2px 8px #2563eb22;margin-bottom:10px;">
+            <div style="font-size:1.25rem;font-weight:800;color:#2563eb;margin-bottom:2px;" id="perfil-nome">-</div>
+            <div style="font-size:1rem;color:#555;margin-bottom:8px;" id="perfil-email">-</div>
+            <span class="badge bg-primary mb-2" style="font-size:0.9rem;">Usuário ClimaJá!</span>
+            <hr style="margin:10px 0 6px 0;">
+            <button class="btn btn-danger btn-sm fw-bold w-100" id="logout-btn" type="button">
+              <i class="fas fa-sign-out-alt me-1"></i>Sair
+            </button>
+          </div>
+        </li>
         <li><hr class="dropdown-divider"></li>
-        <li><button class="dropdown-item" id="logout-btn"><i class="fas fa-sign-out-alt me-2"></i>Sair</button></li>
+        <li><a class="dropdown-item" href="profile.html" id="perfil-acessar"><i class="fas fa-user me-1 text-primary"></i>Acessar Perfil</a></li>
+        <li><a class="dropdown-item" href="#" id="perfil-relatos"><i class="fas fa-list me-1 text-primary"></i>Meus Relatos</a></li>
+  <!-- Removido item duplicado 'Editar Perfil' daqui para evitar opções repetidas; edição disponível em profile.html -->
+        <li><a class="dropdown-item" href="#" id="perfil-ajuda"><i class="fas fa-question-circle me-1 text-info"></i>Ajuda</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><hr class="dropdown-divider"></li>
       </ul>
     </div>
   </div>
+  </a>
   <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="baixar-app-btn" href="app.html">
     <i class="fas fa-download me-1"></i>Baixar APP
   </a>
@@ -766,6 +752,66 @@ function fecharSelecaoLocalizacao() {
 <!-- Controle de autenticação e exibição do perfil/relato é feito apenas pelo script.js -->
 <!-- ...código seguinte... -->
   </header>
+
+  <script>
+    (function(){
+      // Atualiza a área do header com dados do usuário
+      function updateHeaderUser(user) {
+        const perfilArea = document.getElementById('perfil-area');
+        const entrarBtn = document.getElementById('entrar-btn');
+        const cadastrarBtn = document.getElementById('cadastrar-btn');
+        const acessarPerfilBtn = document.getElementById('acessar-perfil-btn');
+        const perfilNomeArea = document.getElementById('perfil-nome-area');
+        const perfilNome = document.getElementById('perfil-nome');
+        const perfilEmail = document.getElementById('perfil-email');
+        const perfilImgs = document.querySelectorAll('#perfil-area img, #perfil-dados img');
+
+        if (user) {
+          // Mostrar área de perfil
+          perfilArea && perfilArea.classList.remove('d-none');
+          // Ocultar botões de login/cadastro
+          entrarBtn && entrarBtn.classList.add('d-none');
+          cadastrarBtn && cadastrarBtn.classList.add('d-none');
+          acessarPerfilBtn && acessarPerfilBtn.classList.remove('d-none');
+
+          const name = user.displayName || user.name || user.email || 'Usuário';
+          const email = user.email || (user.email && user.email) || '';
+          const photo = user.photoURL || user.photo || 'logo.png';
+
+          perfilNomeArea && (perfilNomeArea.textContent = name);
+          perfilNome && (perfilNome.textContent = name);
+          perfilEmail && (perfilEmail.textContent = email || '—');
+          // Atualiza todas as imagens da área de perfil (dropdown + botão)
+          perfilImgs && perfilImgs.forEach(img => { img.src = photo; });
+        } else {
+          // Usuário não autenticado — ocultar area de perfil e mostrar botões
+          perfilArea && perfilArea.classList.add('d-none');
+          entrarBtn && entrarBtn.classList.remove('d-none');
+          cadastrarBtn && cadastrarBtn.classList.remove('d-none');
+          acessarPerfilBtn && acessarPerfilBtn.classList.add('d-none');
+        }
+      }
+
+      // Tenta carregar usuário do localStorage como fallback
+      function loadLocalUser() {
+        try {
+          const raw = localStorage.getItem('user');
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) { return null; }
+      }
+
+      // Inicializa com localStorage e escuta evento global 'auth-changed'
+      document.addEventListener('DOMContentLoaded', function(){
+        const local = loadLocalUser();
+        updateHeaderUser(local);
+      });
+
+      document.addEventListener('auth-changed', function(ev){
+        try { updateHeaderUser(ev && ev.detail ? ev.detail : null); } catch(e){ console.warn('auth-changed handler error', e); }
+      });
+    })();
+  </script>
 
   <div class="container my-4">
     <ul class="nav nav-pills justify-content-center mb-4">
@@ -1565,59 +1611,36 @@ function carregarRelatosPublicos() {
     const baixarId = 'baixar-app-btn';
     const perfilId = 'perfil-area';
 
-    function updateProfileArea(user) {
-      try {
-        const avatar = document.getElementById('perfil-avatar');
-        const nome = document.getElementById('perfil-nome');
-        const email = document.getElementById('perfil-email');
-        if (!user) return;
-        if (avatar && (user.photoURL || user.avatar)) avatar.src = user.photoURL || user.avatar;
-        if (nome) nome.textContent = user.displayName || user.nome || 'Usuário';
-        if (email) email.textContent = user.email || '';
-      } catch (e) { console.warn('updateProfileArea', e); }
-    }
-
     function swapIfLogged() {
-      const perfilEl = document.getElementById(perfilId);
-      const baixarEl = document.getElementById(baixarId);
-      if (!perfilEl || !baixarEl) return;
-      // Exemplo: se window.currentUser existir, considera logado
-      const user = window.currentUser || (window.auth && window.auth.currentUser) || null;
-      console.debug('[swapIfLogged] user present?', !!user, 'perfilEl?', !!perfilEl, 'baixarEl?', !!baixarEl);
-      if (user) {
-        perfilEl.classList.remove('d-none');
-        baixarEl.classList.add('d-none');
-        updateProfileArea(user);
+      const baixar = document.getElementById(baixarId);
+      const perfil = document.getElementById(perfilId);
+      if (!baixar || !perfil) return;
+      // Se perfil visível (não tem classe d-none), invertemos a ordem para "baixar" antes de "perfil"
+      const isVisible = !perfil.classList.contains('d-none');
+      const parent = perfil.parentNode;
+      if (isVisible) {
+        // Se já estiver na ordem desejada (baixar antes de perfil), não faz nada
+        if (parent && parent.firstElementChild === baixar) return;
+        try {
+          parent.insertBefore(baixar, perfil);
+        } catch (e) { console.warn('Erro ao mover botões:', e); }
       } else {
-        perfilEl.classList.add('d-none');
-        baixarEl.classList.remove('d-none');
+        // Quando não logado, restaurar ordem original: perfil (oculto) antes de baixar
+        try {
+          parent.insertBefore(perfil, baixar);
+        } catch (e) { /* ignore */ }
       }
     }
 
-    // Logout: tenta usar função global signOut, firebase auth ou local fallback
-    document.addEventListener('click', function(e) {
-      if (e.target && (e.target.id === 'logout-btn' || e.target.closest('#logout-btn'))) {
-        e.preventDefault();
-        if (window.signOut) return window.signOut();
-        if (window.firebase && window.firebase.auth && window.firebase.auth().signOut) {
-          return window.firebase.auth().signOut();
-        }
-        // fallback local: limpar currentUser e atualizar UI
-        window.currentUser = null;
-        swapIfLogged();
-      }
-    });
-
-    // Permite que scripts externos notifiquem mudança de auth
-    // Ex: document.dispatchEvent(new CustomEvent('auth-changed',{detail: user}));
-    document.addEventListener('auth-changed', function(e) {
-      try { window.currentUser = e && e.detail ? e.detail : null; } catch (err) { window.currentUser = null; }
-      swapIfLogged();
-    });
-
+    // Observe mudanças na classe do elemento de perfil para detectar login/logout
     document.addEventListener('DOMContentLoaded', function() {
-      // Observa alterações de autenticação feitas por scripts externos que setam window.currentUser
+      const perfil = document.getElementById(perfilId);
+      if (!perfil) return;
+      const obs = new MutationObserver(() => swapIfLogged());
+      obs.observe(perfil, { attributes: true, attributeFilter: ['class'] });
+      // Chamada inicial (caso já esteja logado)
       setTimeout(swapIfLogged, 300);
+      // também tenta novamente depois de 1500ms (em caso de scripts externos trocarem a ordem depois)
       setTimeout(swapIfLogged, 1500);
     });
   })();

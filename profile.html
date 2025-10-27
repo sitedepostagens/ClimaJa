@@ -8,53 +8,7 @@
   <!-- Bootstrap + Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <style>
-    :root{
-      --accent:#06b6d4;
-      --accent-2:#38bdf8;
-      --muted:#6b7280;
-      --card-bg: linear-gradient(120deg,#ffffff 0%, #f7fdff 100%);
-      --glass: rgba(255,255,255,0.7);
-    }
-    body { background: radial-gradient(circle at 10% 10%, rgba(56,189,248,0.04), transparent 20%), linear-gradient(180deg,#f8feff 0%, #eefcff 100%); font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:#0f172a; }
-    .profile-card {
-      max-width: 980px; margin: 2.6rem auto; padding: 1.8rem; border-radius:1.2rem;
-      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,252,255,0.9));
-      box-shadow: 0 18px 48px rgba(2,6,23,0.08); border:1px solid rgba(6,182,212,0.07);
-    }
-    .d-flex.align-items-center.gap-4 { gap:1rem; }
-    .avatar-lg { width:128px;height:128px;border-radius:50%;object-fit:cover;border:4px solid rgba(56,189,248,0.12);box-shadow:0 14px 36px rgba(56,189,248,0.10); }
-    .profile-meta { margin-left:0.9rem; display:flex; flex-direction:column; justify-content:center; }
-    .profile-meta h2 { margin:0; font-size:1.6rem; letter-spacing: -0.3px; font-weight:800; color:#05283a; }
-    .profile-email { font-size:0.95rem; color:var(--muted); margin-top:4px; }
-    .profile-actions .btn { min-width:140px; }
-    .profile-stats .stat { border-radius:0.9rem; background:linear-gradient(180deg,#ffffff,#f7fdff); padding:12px 16px; box-shadow:0 12px 32px rgba(2,6,23,0.06); min-width:100px; }
-    .profile-stats .stat .small { color:var(--muted); }
-    .btn-edit { background: linear-gradient(90deg,var(--accent-2) 0%, #f9f871 100%); border:none; color:#04263a; font-weight:800; box-shadow:0 12px 36px rgba(56,189,248,0.12); border-radius:0.9rem; padding:0.5rem 0.9rem; }
-    .section { margin-top:1.25rem; }
-    /* Modal tweaks: backdrop blur e transições suaves */
-    .custom-modal { display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(2,6,23,0.45); z-index:1050; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-    .custom-modal .modal-dialog { max-width:760px; width:100%; transform: translateY(6px); transition: transform .22s ease, opacity .2s ease; }
-    .custom-modal.d-flex .modal-dialog { transform: translateY(0); }
-    .modal-content { border-radius:14px; overflow:hidden; border:none; box-shadow:0 18px 50px rgba(2,6,23,0.12); }
-    .modal-header { background: linear-gradient(90deg, rgba(8,145,178,0.04), rgba(56,189,248,0.02)); padding:0.9rem 1.25rem; border-bottom:none; }
-    .modal-title { font-weight:700; color:#053244; }
-    #avatar-dropzone { border-radius:12px; min-height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(240,250,255,0.6)); }
-    #edit-avatar-preview { width:140px; height:140px; border-radius:50%; object-fit:cover; border:3px solid rgba(56,189,248,0.12); box-shadow:0 12px 36px rgba(56,189,248,0.09); }
-    .btn-primary { background: linear-gradient(90deg,#0ea5a4 0%, #06b6d4 100%); border:none; box-shadow:0 10px 30px rgba(6,182,212,0.12); }
-    .btn-outline-secondary { border-color: rgba(2,6,23,0.06); }
-    .profile-header-bar { display:flex; align-items:center; gap:1rem; padding:0.9rem; border-radius:0.8rem; background:linear-gradient(90deg, rgba(6,182,212,0.06), rgba(56,189,248,0.03)); margin-bottom:0.9rem; }
-    @media (max-width: 767px) {
-      .profile-card { margin:1rem 0.6rem; padding:0.9rem; }
-      .avatar-lg { width:96px;height:96px; }
-      .custom-modal .modal-dialog { margin: 1rem; }
-      .profile-meta { margin-left:0.4rem; }
-      .profile-actions .btn { min-width:unset; }
-      .profile-stats { gap:8px; }
-    }
-    /* (Removido) Highlight for anchored settings — configurações agora ficam apenas no menu */
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
@@ -97,8 +51,6 @@
             </div>
           </div>
 
-        </div>
-
       <div class="section">
         <h5>Sobre</h5>
         <p id="profile-bio" class="text-muted">Nenhuma informação adicional disponível.</p>
@@ -115,30 +67,7 @@
     </div>
   </div>
   <style>
-    /* Animações e estilo profissional para o profile hero */
-    .profile-hero { display:flex; gap:1.25rem; align-items:center; justify-content:space-between; width:100%; }
-    .hero-left { display:flex; gap:1rem; align-items:center; }
-    .avatar-wrap { position:relative; width:128px; height:128px; }
-    .avatar-ring { position:absolute; inset:0; border-radius:50%; box-shadow: 0 0 0 6px rgba(56,189,248,0.06), 0 0 40px rgba(56,189,248,0.06) ; pointer-events:none; transform:scale(0.95); transition:transform .45s cubic-bezier(.2,.9,.25,1); }
-    .avatar-lg { width:128px;height:128px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,0.6); box-shadow: 0 12px 44px rgba(3,50,79,0.12); transform: translateZ(0); transition: transform .45s cubic-bezier(.2,.9,.25,1), box-shadow .3s; }
-    .avatar-wrap:hover .avatar-lg { transform: scale(1.04) rotate(-2deg); box-shadow: 0 20px 60px rgba(3,50,79,0.16); }
-    .avatar-wrap:hover .avatar-ring { transform: scale(1.06) rotate(6deg); }
-    .verified-badge { position:absolute; right:-6px; bottom:-6px; background:linear-gradient(90deg,#06b6d4,#3dd5ff); color:#04263a; padding:6px; border-radius:999px; font-size:0.9rem; box-shadow:0 6px 18px rgba(3,50,79,0.12); }
-    .profile-meta h2 { font-size:1.55rem; margin-bottom:0.15rem; }
-    .profile-email { font-size:0.98rem; color:var(--muted); }
-    .profile-role { margin-top:6px; }
-    .hero-right .profile-actions { width:320px; }
-    .profile-stats .stat { width:100px; padding:10px 12px; border-radius:0.9rem; background:linear-gradient(180deg,#ffffff,#f6feff); }
-    .stat .count { font-size:1.25rem; color:#05283a; }
-
-    /* small animated accent under hero */
-    .profile-hero::after { content:''; display:block; height:6px; width:100%; margin-top:8px; border-radius:8px; background:linear-gradient(90deg,#38bdf8, #f9f871); opacity:0.14; }
-
-    /* Animar contadores (simples) */
-    .count.up-anim { transition: none; }
-    /* Entrada do card: fade + slide */
-    .profile-card.card-enter { opacity: 0; transform: translateY(18px) scale(0.995); }
-    .profile-card.card-enter.active { opacity: 1; transform: translateY(0) scale(1); transition: transform 560ms cubic-bezier(.2,.9,.25,1), opacity 420ms ease; }
+  </style>
   </style>
 
   <!-- Modal de edição (custom para evitar depender do JS do Bootstrap) -->
@@ -155,8 +84,8 @@
           <div class="row g-3">
             <div class="col-md-5">
               <label class="form-label">Avatar</label>
-              <div id="avatar-dropzone" class="p-3 text-center" style="border:1px dashed #cbd5e1;border-radius:12px;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
-                <img id="edit-avatar-preview" src="logo.png" alt="Preview" style="width:110px;height:110px;border-radius:16px;object-fit:cover;border:3px solid #38bdf8;box-shadow:0 6px 18px rgba(37,99,235,0.08);">
+              <div id="avatar-dropzone" class="p-3 text-center">
+                <img id="edit-avatar-preview" src="logo.png" alt="Preview">
                 <div>
                   <input type="file" id="edit-avatar" accept="image/*" class="form-control d-none" aria-label="Escolher avatar">
                   <button type="button" id="choose-avatar-btn" class="btn btn-outline-primary btn-sm">Escolher imagem</button>
