@@ -10,53 +10,94 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    body { background: linear-gradient(180deg,#f0f9ff 0%, #e6fffa 100%); }
-    .profile-card {
-      max-width: 900px; margin: 3rem auto; padding: 2rem;
-      border-radius:1.2rem; background:linear-gradient(120deg,#fff 60%, #f0fbff 100%);
-      box-shadow:0 10px 40px rgba(37,99,235,0.08);
+    :root{
+      --accent:#06b6d4;
+      --accent-2:#38bdf8;
+      --muted:#6b7280;
+      --card-bg: linear-gradient(120deg,#ffffff 0%, #f7fdff 100%);
+      --glass: rgba(255,255,255,0.7);
     }
-    .avatar-lg { width:110px;height:110px;border-radius:16px;object-fit:cover;border:4px solid #38bdf8;box-shadow:0 8px 24px rgba(37,99,235,0.12); }
-    .profile-stats .stat { border-radius:0.9rem;background:#fff;padding:10px 14px;box-shadow:0 6px 18px rgba(37,99,235,0.06); min-width:90px; }
-    .btn-edit { background: linear-gradient(90deg,#38bdf8 0,#f9f871 100%); border:none; color:#123; font-weight:700; }
+    body { background: radial-gradient(circle at 10% 10%, rgba(56,189,248,0.04), transparent 20%), linear-gradient(180deg,#f8feff 0%, #eefcff 100%); font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:#0f172a; }
+    .profile-card {
+      max-width: 980px; margin: 2.6rem auto; padding: 1.8rem; border-radius:1.2rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,252,255,0.9));
+      box-shadow: 0 18px 48px rgba(2,6,23,0.08); border:1px solid rgba(6,182,212,0.07);
+    }
+    .d-flex.align-items-center.gap-4 { gap:1rem; }
+    .avatar-lg { width:128px;height:128px;border-radius:50%;object-fit:cover;border:4px solid rgba(56,189,248,0.12);box-shadow:0 14px 36px rgba(56,189,248,0.10); }
+    .profile-meta { margin-left:0.9rem; display:flex; flex-direction:column; justify-content:center; }
+    .profile-meta h2 { margin:0; font-size:1.6rem; letter-spacing: -0.3px; font-weight:800; color:#05283a; }
+    .profile-email { font-size:0.95rem; color:var(--muted); margin-top:4px; }
+    .profile-actions .btn { min-width:140px; }
+    .profile-stats .stat { border-radius:0.9rem; background:linear-gradient(180deg,#ffffff,#f7fdff); padding:12px 16px; box-shadow:0 12px 32px rgba(2,6,23,0.06); min-width:100px; }
+    .profile-stats .stat .small { color:var(--muted); }
+    .btn-edit { background: linear-gradient(90deg,var(--accent-2) 0%, #f9f871 100%); border:none; color:#04263a; font-weight:800; box-shadow:0 12px 36px rgba(56,189,248,0.12); border-radius:0.9rem; padding:0.5rem 0.9rem; }
     .section { margin-top:1.25rem; }
-    /* Modal tweaks to work without bootstrap JS (we'll toggle via JS) */
-    .custom-modal { display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:1050; }
-    .custom-modal .modal-dialog { max-width:600px; width:100%; }
+    /* Modal tweaks: backdrop blur e transições suaves */
+    .custom-modal { display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(2,6,23,0.45); z-index:1050; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .custom-modal .modal-dialog { max-width:760px; width:100%; transform: translateY(6px); transition: transform .22s ease, opacity .2s ease; }
+    .custom-modal.d-flex .modal-dialog { transform: translateY(0); }
+    .modal-content { border-radius:14px; overflow:hidden; border:none; box-shadow:0 18px 50px rgba(2,6,23,0.12); }
+    .modal-header { background: linear-gradient(90deg, rgba(8,145,178,0.04), rgba(56,189,248,0.02)); padding:0.9rem 1.25rem; border-bottom:none; }
+    .modal-title { font-weight:700; color:#053244; }
+    #avatar-dropzone { border-radius:12px; min-height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(240,250,255,0.6)); }
+    #edit-avatar-preview { width:140px; height:140px; border-radius:50%; object-fit:cover; border:3px solid rgba(56,189,248,0.12); box-shadow:0 12px 36px rgba(56,189,248,0.09); }
+    .btn-primary { background: linear-gradient(90deg,#0ea5a4 0%, #06b6d4 100%); border:none; box-shadow:0 10px 30px rgba(6,182,212,0.12); }
+    .btn-outline-secondary { border-color: rgba(2,6,23,0.06); }
+    .profile-header-bar { display:flex; align-items:center; gap:1rem; padding:0.9rem; border-radius:0.8rem; background:linear-gradient(90deg, rgba(6,182,212,0.06), rgba(56,189,248,0.03)); margin-bottom:0.9rem; }
+    @media (max-width: 767px) {
+      .profile-card { margin:1rem 0.6rem; padding:0.9rem; }
+      .avatar-lg { width:96px;height:96px; }
+      .custom-modal .modal-dialog { margin: 1rem; }
+      .profile-meta { margin-left:0.4rem; }
+      .profile-actions .btn { min-width:unset; }
+      .profile-stats { gap:8px; }
+    }
+    /* (Removido) Highlight for anchored settings — configurações agora ficam apenas no menu */
   </style>
 </head>
 <body>
   <div class="container">
     <div class="profile-card">
-      <div class="d-flex align-items-center gap-4">
-        <img src="logo.png" alt="Avatar" class="avatar-lg" id="profile-avatar">
-        <div>
-          <h2 id="profile-name">- Nome do Usuário -</h2>
-          <div class="text-muted" id="profile-email">usuario@example.com</div>
-          <div class="mt-3">
-            <a href="#" class="btn btn-edit me-2" id="profile-edit"><i class="fas fa-user-edit"></i> Editar Perfil</a>
-            <a href="index.html" class="btn btn-outline-secondary me-2" id="profile-back-home"><i class="fas fa-arrow-left"></i> Voltar para Início</a>
-            <a href="#" class="btn btn-outline-primary" id="profile-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
-          </div>
-        </div>
+          <div class="profile-hero">
+            <div class="hero-left">
+              <div class="avatar-wrap">
+                <img src="logo.png" alt="Avatar" class="avatar-lg" id="profile-avatar">
+                <div class="avatar-ring" aria-hidden="true"></div>
+                <span id="verified-badge" class="verified-badge" title="Email verificado" style="display:none;"><i class="fas fa-check-circle"></i></span>
+              </div>
+              <div class="profile-meta">
+                <h2 id="profile-name">- Nome do Usuário -</h2>
+                <div class="profile-email" id="profile-email">usuario@example.com</div>
+                <p class="profile-role small text-muted">Membro ativo • Contribuidor da comunidade</p>
+              </div>
+            </div>
 
-        <div class="ms-auto text-end profile-actions">
-          <div class="profile-stats d-flex gap-2">
-            <div class="stat text-center">
-              <div class="small text-muted">Relatos</div>
-              <div class="fw-bold" id="profile-relatos-count">0</div>
-            </div>
-            <div class="stat text-center">
-              <div class="small text-muted">Upvotes</div>
-              <div class="fw-bold" id="profile-upvotes">0</div>
-            </div>
-            <div class="stat text-center">
-              <div class="small text-muted">Membro desde</div>
-              <div class="fw-bold" id="profile-since">--</div>
+            <div class="hero-right">
+              <div class="profile-actions d-flex flex-column align-items-end">
+                <div class="d-flex gap-2 mb-2">
+                  <a href="#" class="btn btn-edit" id="profile-edit"><i class="fas fa-user-edit me-1"></i>Editar Perfil</a>
+                  <a href="#" class="btn btn-outline-primary" id="profile-logout"><i class="fas fa-sign-out-alt me-1"></i>Sair</a>
+                </div>
+                <div class="profile-stats d-flex gap-2 align-items-center">
+                  <div class="stat text-center">
+                    <div class="small text-muted">Relatos</div>
+                    <div class="fw-bold count" data-target="0" id="profile-relatos-count">0</div>
+                  </div>
+                  <div class="stat text-center">
+                    <div class="small text-muted">Upvotes</div>
+                    <div class="fw-bold count" data-target="0" id="profile-upvotes">0</div>
+                  </div>
+                  <div class="stat text-center">
+                    <div class="small text-muted">Membro desde</div>
+                    <div class="fw-bold" id="profile-since">--</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+
         </div>
-      </div>
 
       <div class="section">
         <h5>Sobre</h5>
@@ -69,51 +110,125 @@
           <div id="profile-relatos-list" class="mt-2">Nenhum relato publicado ainda.</div>
         </div>
 
-        <div style="width:320px">
-          <h6>Configurações</h6>
-          <div class="list-group">
-            <a href="#" class="list-group-item list-group-item-action" id="link-notifications">Configurar notificações</a>
-            <a href="#" class="list-group-item list-group-item-action" id="link-privacy">Privacidade e segurança</a>
-            <a href="#" class="list-group-item list-group-item-action text-danger" id="link-delete">Excluir conta</a>
-          </div>
-        </div>
+        <!-- Configurações removidas do perfil (agora acessíveis via menu) -->
       </div>
     </div>
   </div>
+  <style>
+    /* Animações e estilo profissional para o profile hero */
+    .profile-hero { display:flex; gap:1.25rem; align-items:center; justify-content:space-between; width:100%; }
+    .hero-left { display:flex; gap:1rem; align-items:center; }
+    .avatar-wrap { position:relative; width:128px; height:128px; }
+    .avatar-ring { position:absolute; inset:0; border-radius:50%; box-shadow: 0 0 0 6px rgba(56,189,248,0.06), 0 0 40px rgba(56,189,248,0.06) ; pointer-events:none; transform:scale(0.95); transition:transform .45s cubic-bezier(.2,.9,.25,1); }
+    .avatar-lg { width:128px;height:128px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,0.6); box-shadow: 0 12px 44px rgba(3,50,79,0.12); transform: translateZ(0); transition: transform .45s cubic-bezier(.2,.9,.25,1), box-shadow .3s; }
+    .avatar-wrap:hover .avatar-lg { transform: scale(1.04) rotate(-2deg); box-shadow: 0 20px 60px rgba(3,50,79,0.16); }
+    .avatar-wrap:hover .avatar-ring { transform: scale(1.06) rotate(6deg); }
+    .verified-badge { position:absolute; right:-6px; bottom:-6px; background:linear-gradient(90deg,#06b6d4,#3dd5ff); color:#04263a; padding:6px; border-radius:999px; font-size:0.9rem; box-shadow:0 6px 18px rgba(3,50,79,0.12); }
+    .profile-meta h2 { font-size:1.55rem; margin-bottom:0.15rem; }
+    .profile-email { font-size:0.98rem; color:var(--muted); }
+    .profile-role { margin-top:6px; }
+    .hero-right .profile-actions { width:320px; }
+    .profile-stats .stat { width:100px; padding:10px 12px; border-radius:0.9rem; background:linear-gradient(180deg,#ffffff,#f6feff); }
+    .stat .count { font-size:1.25rem; color:#05283a; }
+
+    /* small animated accent under hero */
+    .profile-hero::after { content:''; display:block; height:6px; width:100%; margin-top:8px; border-radius:8px; background:linear-gradient(90deg,#38bdf8, #f9f871); opacity:0.14; }
+
+    /* Animar contadores (simples) */
+    .count.up-anim { transition: none; }
+    /* Entrada do card: fade + slide */
+    .profile-card.card-enter { opacity: 0; transform: translateY(18px) scale(0.995); }
+    .profile-card.card-enter.active { opacity: 1; transform: translateY(0) scale(1); transition: transform 560ms cubic-bezier(.2,.9,.25,1), opacity 420ms ease; }
+  </style>
 
   <!-- Modal de edição (custom para evitar depender do JS do Bootstrap) -->
-  <div id="profile-edit-modal" class="custom-modal d-flex">
+  <!-- Observação: removi a classe `d-flex` do markup inicial para evitar que o modal
+    fique visível por padrão; o script agora controla visibilidade via classe + style. -->
+  <div id="profile-edit-modal" class="custom-modal">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header d-flex align-items-center">
           <h5 class="modal-title">Editar Perfil</h5>
-          <button type="button" class="btn-close modal-close" aria-label="Fechar"></button>
+          <button type="button" class="btn-close modal-close ms-auto" aria-label="Fechar"></button>
         </div>
-        <form id="profile-edit-form" class="modal-body p-4">
-          <div class="mb-3">
-            <label class="form-label">Nome</label>
-            <input type="text" id="edit-displayName" class="form-control" placeholder="Seu nome público">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Avatar (imagem)</label>
-            <div class="d-flex gap-3 align-items-center">
-              <input type="file" id="edit-avatar" accept="image/*" class="form-control" style="max-width:320px;">
-              <img id="edit-avatar-preview" src="logo.png" alt="Preview" style="width:72px;height:72px;border-radius:12px;object-fit:cover;border:2px solid #38bdf8;">
+        <form id="profile-edit-form" class="modal-body p-3">
+          <div class="row g-3">
+            <div class="col-md-5">
+              <label class="form-label">Avatar</label>
+              <div id="avatar-dropzone" class="p-3 text-center" style="border:1px dashed #cbd5e1;border-radius:12px;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+                <img id="edit-avatar-preview" src="logo.png" alt="Preview" style="width:110px;height:110px;border-radius:16px;object-fit:cover;border:3px solid #38bdf8;box-shadow:0 6px 18px rgba(37,99,235,0.08);">
+                <div>
+                  <input type="file" id="edit-avatar" accept="image/*" class="form-control d-none" aria-label="Escolher avatar">
+                  <button type="button" id="choose-avatar-btn" class="btn btn-outline-primary btn-sm">Escolher imagem</button>
+                  <button type="button" id="remove-avatar-btn" class="btn btn-outline-secondary btn-sm ms-2">Remover</button>
+                </div>
+                <small class="text-muted">Arraste e solte ou escolha uma imagem (PNG/JPG). Em produção, salve no Storage.</small>
+              </div>
             </div>
-            <small class="text-muted">A imagem será salva temporariamente como DataURL (demo). Em produção, use Firebase Storage.</small>
+            <div class="col-md-7">
+              <div class="mb-2">
+                <label class="form-label">Nome público</label>
+                <input type="text" id="edit-displayName" class="form-control" placeholder="Seu nome público" aria-label="Nome público">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Bio</label>
+                <textarea id="edit-bio" class="form-control" rows="4" placeholder="Fale um pouco sobre você" aria-label="Biografia"></textarea>
+              </div>
+              <div class="d-flex align-items-center mt-2">
+                <div id="profile-save-spinner" class="spinner-border text-primary me-2 d-none" role="status" aria-hidden="true"></div>
+                <div id="profile-save-msg" class="text-success small d-none">Salvo com sucesso!</div>
+              </div>
+            </div>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label">Bio</label>
-            <textarea id="edit-bio" class="form-control" rows="3" placeholder="Fale um pouco sobre você"></textarea>
-          </div>
-
-          <div class="d-flex justify-content-end gap-2">
+          <div class="d-flex justify-content-end gap-2 mt-3">
             <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Salvar alterações</button>
+            <button type="submit" class="btn btn-primary" id="profile-save-btn">Salvar alterações</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal de Segurança e Acesso -->
+  <div id="security-modal" class="custom-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header d-flex align-items-center">
+          <h5 class="modal-title"><i class="fas fa-lock me-2"></i>Segurança e Acesso</h5>
+          <button type="button" class="btn-close security-close ms-auto" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body p-3">
+          <p class="small text-muted">Aqui você pode gerenciar opções básicas de segurança. Em produção, ações sensíveis (troca de senha, revogar sessões) são realizadas via Firebase Auth ou backend seguro.</p>
+          <div class="mb-3">
+            <label class="form-label">Email de conta</label>
+            <div id="security-email" class="form-control-plaintext">usuario@example.com</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Redefinir senha</label>
+            <div class="d-flex gap-2">
+              <button id="send-reset-btn" class="btn btn-outline-primary">Enviar link de redefinição</button>
+              <button id="local-reset-btn" class="btn btn-outline-secondary">Modo demo: marcar como redefinida</button>
+            </div>
+            <small class="form-text text-muted">Será enviado um e-mail com instruções (se o serviço de autenticação estiver ativo).</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Sessões ativas</label>
+            <div id="sessions-list" class="small text-muted">Nenhuma informação disponível localmente.</div>
+            <div class="mt-2"><button id="revoke-sessions-btn" class="btn btn-sm btn-danger">Revogar todas as sessões</button></div>
+          </div>
+          <div class="mb-0">
+            <label class="form-label">Autenticação em 2 fatores</label>
+            <div class="form-check form-switch mt-2">
+              <input class="form-check-input" type="checkbox" id="toggle-2fa">
+              <label class="form-check-label small" for="toggle-2fa">Ativar verificação em duas etapas (placeholder)</label>
+            </div>
+            <small class="text-muted">Ativação de 2FA deve ser implementada com provedores externos (Authenticator / SMS) em produção.</small>
+          </div>
+        </div>
+        <div class="modal-footer p-3">
+          <button type="button" class="btn btn-secondary security-close">Fechar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -143,9 +258,26 @@
       const bioInput = document.getElementById('edit-bio');
       const avatarPreview = document.getElementById('edit-avatar-preview');
 
-      // Utils
-      function showModal() { modal.style.display = 'flex'; }
-      function hideModal() { modal.style.display = 'none'; }
+      // Utils: controlar visibilidade via classe + style para evitar conflitos com
+      // classes utilitárias externas (ex: Bootstrap `.d-flex`).
+      function showModal() {
+        if (!modal) return;
+        console.debug('profile modal: showModal() called');
+        // adiciona classe para layout e força display via style com priority important
+        modal.classList.add('d-flex');
+        modal.style.setProperty('display', 'flex', 'important');
+        // acessibilidade
+        modal.setAttribute('aria-hidden', 'false');
+      }
+
+      function hideModal() {
+        if (!modal) return;
+        console.debug('profile modal: hideModal() called');
+        // remove classe e força display:none com priority important para vencer !important externos
+        modal.classList.remove('d-flex');
+        modal.style.setProperty('display', 'none', 'important');
+        modal.setAttribute('aria-hidden', 'true');
+      }
 
       // Fallback user storage (localStorage) structure:
       // localStorage.setItem('user', JSON.stringify({ displayName, email, photoURL, bio, uid, metadata }))
@@ -284,9 +416,35 @@
         showModal();
       });
 
-      modalCloseBtns.forEach(btn => btn.addEventListener('click', function () {
+      // Fechar modal ao clicar nos botões com a classe `modal-close`
+      modalCloseBtns.forEach(btn => btn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        console.debug('profile modal: modal-close clicked', btn);
         hideModal();
       }));
+
+      // Fechar modal ao clicar no overlay (clicar fora da caixa de diálogo)
+      if (modal) {
+        modal.addEventListener('click', function (ev) {
+          // Se o alvo do clique for o próprio overlay, fecha o modal
+          if (ev.target === modal) {
+            console.debug('profile modal: overlay clicked');
+            hideModal();
+          }
+        });
+      }
+
+      // Fecha ao pressionar Esc — somente quando o modal estiver visível
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape' || ev.key === 'Esc') {
+          try {
+            if (modal && modal.style && (modal.style.getPropertyValue('display') === 'flex' || modal.classList.contains('d-flex'))) {
+              console.debug('profile modal: Escape pressed — closing modal');
+              hideModal();
+            }
+          } catch (e) { /* silencioso */ }
+        }
+      });
 
       logoutBtn && logoutBtn.addEventListener('click', async function (e) {
         e.preventDefault();
@@ -306,95 +464,334 @@
         }
       });
 
-      // Preview do avatar ao selecionar arquivo
-      if (fileInput && avatarPreview) {
-        fileInput.addEventListener('change', function () {
-          const f = fileInput.files && fileInput.files[0];
-          if (!f) {
-            // restaura preview para avatar atual
-            avatarPreview.src = avatarEl.src || 'logo.png';
-            return;
-          }
-          const reader = new FileReader();
-          reader.onload = () => { avatarPreview.src = reader.result; };
-          reader.readAsDataURL(f);
+      // Preview do avatar ao selecionar arquivo + drag & drop
+      (function() {
+        const dropzone = document.getElementById('avatar-dropzone');
+        const chooseBtn = document.getElementById('choose-avatar-btn');
+        const removeBtn = document.getElementById('remove-avatar-btn');
+        const spinner = document.getElementById('profile-save-spinner');
+        const saveMsg = document.getElementById('profile-save-msg');
+
+        function readFileAsDataURL(file) {
+          return new Promise((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(r.result);
+            r.onerror = () => rej(new Error('Falha ao ler arquivo'));
+            r.readAsDataURL(file);
+          });
+        }
+
+        // Choose button opens native file picker
+        chooseBtn && chooseBtn.addEventListener('click', function() {
+          fileInput && fileInput.click();
         });
-      }
 
-      // Submissão do formulário de edição
-      if (form) {
-        form.addEventListener('submit', async function (ev) {
-          ev.preventDefault();
-          const newName = nameInput ? nameInput.value.trim() : '';
-          const newBio = bioInput ? bioInput.value.trim() : '';
-          let photoDataURL = null;
-
-          if (fileInput && fileInput.files && fileInput.files[0]) {
-            photoDataURL = await new Promise(res => {
-              const r = new FileReader();
-              r.onload = () => res(r.result);
-              r.readAsDataURL(fileInput.files[0]);
-            });
+        // Remove avatar -> reset to default
+        removeBtn && removeBtn.addEventListener('click', function() {
+          if (confirm('Remover avatar atual?')) {
+            avatarPreview.src = 'logo.png';
+            // Clear file input
+            if (fileInput) { fileInput.value = ''; }
           }
+        });
 
-          try {
-            // Se Firebase Auth estiver disponível e usuário autenticado, atualiza lá.
-            // Caso contrário, salva em localStorage (modo demo).
-            let updatedUser = null;
+        // File input change
+        if (fileInput && avatarPreview) {
+          fileInput.addEventListener('change', async function () {
+            const f = fileInput.files && fileInput.files[0];
+            if (!f) {
+              avatarPreview.src = avatarEl.src || 'logo.png';
+              return;
+            }
+            try {
+              const data = await readFileAsDataURL(f);
+              avatarPreview.src = data;
+            } catch (e) {
+              console.warn('Erro ao ler imagem:', e);
+            }
+          });
+        }
 
-            // Tenta importar updateProfile da SDK (se auth estiver presente)
-            if (window.auth && window.auth.currentUser) {
-              try {
-                const authModule2 = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
-                const { updateProfile } = authModule2;
-                const user = window.auth.currentUser;
-                const updates = {};
-                if (newName) updates.displayName = newName;
-                if (photoDataURL) updates.photoURL = photoDataURL; // em produção suba ao Storage e use URL pública
-                // Nota: updateProfile pode receber apenas displayName/photoURL
-                await updateProfile(user, updates);
-                // Opcional: se quiser também atualizar o documento no Firestore, faça aqui
-                updatedUser = Object.assign({}, user, updates);
-                // Recarregar UI com novos dados
-                fillUser({
+        // Drag & drop support
+        if (dropzone) {
+          dropzone.addEventListener('dragover', function(e) { e.preventDefault(); dropzone.style.borderColor = '#60a5fa'; });
+          dropzone.addEventListener('dragleave', function(e) { dropzone.style.borderColor = '#cbd5e1'; });
+          dropzone.addEventListener('drop', async function(e) {
+            e.preventDefault(); dropzone.style.borderColor = '#cbd5e1';
+            const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (!f) return;
+            if (!f.type.startsWith('image/')) { alert('Por favor, selecione uma imagem.'); return; }
+            try {
+              const data = await readFileAsDataURL(f);
+              avatarPreview.src = data;
+              // populate fileInput (not all browsers allow setting FileList programmatically) -- we keep UI in sync
+              if (fileInput) { fileInput.files = e.dataTransfer.files; }
+            } catch (err) { console.warn('Erro ao processar imagem:', err); }
+          });
+        }
+
+        // Helpers para spinner / mensagem
+        function showSpinner() { spinner && spinner.classList.remove('d-none'); saveMsg && saveMsg.classList.add('d-none'); }
+        function hideSpinner() { spinner && spinner.classList.add('d-none'); }
+        function showSavedMsg() { saveMsg && (saveMsg.classList.remove('d-none')); }
+
+        // Submissão do formulário de edição (com spinner, feedback e dispatch de evento)
+        if (form) {
+          form.addEventListener('submit', async function (ev) {
+            ev.preventDefault();
+            const saveBtn = document.getElementById('profile-save-btn');
+            const newName = nameInput ? nameInput.value.trim() : '';
+            const newBio = bioInput ? bioInput.value.trim() : '';
+            let photoDataURL = null;
+
+            try {
+              // Ler imagem se existir
+              if (fileInput && fileInput.files && fileInput.files[0]) {
+                photoDataURL = await readFileAsDataURL(fileInput.files[0]);
+              }
+
+              // UI: spinner + disable
+              showSpinner();
+              if (saveBtn) saveBtn.disabled = true;
+
+              let updatedUser = null;
+
+              // Tenta atualizar via Firebase Auth se disponível
+              if (window.auth && window.auth.currentUser) {
+                try {
+                  const authModule2 = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
+                  const { updateProfile } = authModule2;
+                  const user = window.auth.currentUser;
+                  const updates = {};
+                  if (newName) updates.displayName = newName;
+                  if (photoDataURL) updates.photoURL = photoDataURL; // em produção, suba a Storage
+                  await updateProfile(user, updates);
+                  updatedUser = Object.assign({}, user, updates);
+                  // Atualiza UI local
+                  fillUser({
+                    displayName: updatedUser.displayName || newName,
+                    email: user.email,
+                    photoURL: updatedUser.photoURL || avatarEl.src,
+                    bio: newBio || '',
+                    uid: user.uid,
+                    metadata: user.metadata || {}
+                  });
+                } catch (errUpdate) {
+                  console.warn('Falha ao atualizar via Firebase:', errUpdate);
+                }
+              }
+
+              // Se não atualizou via Firebase, salva localmente
+              let finalUserObj = null;
+              if (!updatedUser) {
+                const local = getLocalUser() || {};
+                const demoUpdate = {
+                  displayName: newName || local.displayName || nameEl.textContent,
+                  photoURL: photoDataURL || local.photoURL || avatarEl.src,
+                  bio: newBio || local.bio || bioEl.textContent,
+                  email: local.email || emailEl.textContent,
+                  metadata: local.metadata || { creationTime: new Date().toISOString() }
+                };
+                saveLocalUser(demoUpdate);
+                fillUser(demoUpdate);
+                finalUserObj = demoUpdate;
+              } else {
+                // atualizar também localStorage para consistência
+                const up = {
                   displayName: updatedUser.displayName || newName,
-                  email: user.email,
                   photoURL: updatedUser.photoURL || avatarEl.src,
                   bio: newBio || '',
-                  uid: user.uid,
-                  metadata: user.metadata || {}
-                });
-              } catch (errUpdate) {
-                console.warn('Falha ao atualizar profile via Firebase:', errUpdate);
-                // fallback para localStorage
+                  email: updatedUser.email || (getLocalUser() && getLocalUser().email) || emailEl.textContent,
+                  metadata: updatedUser.metadata || {}
+                };
+                saveLocalUser(up);
+                finalUserObj = up;
               }
-            }
 
-            // Se não atualizou via Firebase, salva em localStorage
-            if (!updatedUser) {
-              const demoUpdate = {
-                displayName: newName || nameEl.textContent,
-                photoURL: photoDataURL || avatarEl.src,
-                bio: newBio || bioEl.textContent,
-                email: getLocalUser() && getLocalUser().email ? getLocalUser().email : emailEl.textContent,
-                metadata: getLocalUser() && getLocalUser().metadata ? getLocalUser().metadata : { creationTime: new Date().toISOString() }
-              };
-              saveLocalUser(demoUpdate);
-              fillUser(demoUpdate);
-            }
+              // Dispatch global event para atualizar header/UI
+              try {
+                document.dispatchEvent(new CustomEvent('auth-changed', { detail: finalUserObj }));
+              } catch (ee) { console.debug('Não foi possível dispatch auth-changed:', ee); }
 
-            hideModal();
-            alert('Perfil atualizado com sucesso.');
-          } catch (err) {
-            console.error('Erro ao atualizar perfil:', err);
-            alert('Erro ao atualizar perfil: ' + (err && err.message ? err.message : err));
-          }
-        });
-      }
+              // Feedback
+              hideSpinner();
+              showSavedMsg();
+              setTimeout(() => { hideModal(); saveBtn && (saveBtn.disabled = false); saveMsg && saveMsg.classList.add('d-none'); }, 900);
+            } catch (err) {
+              console.error('Erro ao atualizar perfil:', err);
+              hideSpinner();
+              if (saveBtn) saveBtn.disabled = false;
+              alert('Erro ao atualizar perfil: ' + (err && err.message ? err.message : err));
+            }
+          });
+        }
+      })();
 
       // Ao carregar a página: inicializa observador de autenticação/fallback
       document.addEventListener('DOMContentLoaded', function () {
         initAuthObserver();
+      });
+
+      // Small UI animations: animate counters and show verified badge
+      function animateCounts() {
+        document.querySelectorAll('.count').forEach(function(el) {
+          const target = parseInt(el.getAttribute('data-target') || el.textContent || '0', 10) || 0;
+          const start = 0;
+          const duration = 900;
+          let startTime = null;
+          function step(ts) {
+            if (!startTime) startTime = ts;
+            const progress = Math.min((ts - startTime) / duration, 1);
+            const value = Math.floor(progress * (target - start) + start);
+            el.textContent = value;
+            if (progress < 1) requestAnimationFrame(step);
+            else el.textContent = String(target);
+          }
+          requestAnimationFrame(step);
+        });
+      }
+
+      function markVerifiedIfNeeded(user) {
+        try {
+          const badge = document.getElementById('verified-badge');
+          if (!badge) return;
+          const isVerified = (user && (user.emailVerified || (user.email && user.email.endsWith('@example.com') && false))) || false;
+          if (isVerified) badge.style.display = 'inline-flex';
+          else badge.style.display = 'none';
+        } catch (e) { /* silent */ }
+      }
+
+      // Trigger animations after fillUser is called — wrap existing fillUser
+      const origFillUser = window.fillUser || null;
+      // If fillUser exists in this scope, it's the inner function; we will call animateCounts after initAuthObserver fires
+      document.addEventListener('DOMContentLoaded', function () {
+        // Small delay to allow data to render
+        setTimeout(function() {
+          // populate data-target attributes from content so counts animate to correct numbers
+          document.querySelectorAll('#profile-relatos-count, #profile-upvotes').forEach(function(el){
+            const v = parseInt(el.textContent || el.getAttribute('data-target') || '0', 10) || 0;
+            el.setAttribute('data-target', String(v));
+            el.textContent = '0';
+          });
+          animateCounts();
+          // mark verified based on localStorage/user
+          let local = null;
+          try { local = JSON.parse(localStorage.getItem('user')||'null'); } catch(e){ local = null; }
+          const candidate = (window.auth && window.auth.currentUser) || local;
+          markVerifiedIfNeeded(candidate);
+          // Entry animation: add class then activate
+          try {
+            const card = document.querySelector('.profile-card');
+            if (card) {
+              card.classList.add('card-enter');
+              // force reflow then activate (ensures transition)
+              requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('active')));
+            }
+          } catch (e) { console.warn('entry animation error', e); }
+          // Configurações removidas do profile; rolagem por âncora não é mais necessária.
+        }, 450);
+      });
+
+      // Handlers para modal de Segurança e Acesso
+      document.addEventListener('DOMContentLoaded', function () {
+        const secModal = document.getElementById('security-modal');
+        const secClose = document.querySelectorAll('.security-close');
+        const linkPrivacy = document.getElementById('link-privacy');
+        const securityEmail = document.getElementById('security-email');
+        const sendResetBtn = document.getElementById('send-reset-btn');
+        const localResetBtn = document.getElementById('local-reset-btn');
+        const revokeSessionsBtn = document.getElementById('revoke-sessions-btn');
+        const sessionsList = document.getElementById('sessions-list');
+        const toggle2fa = document.getElementById('toggle-2fa');
+
+        function openSecModal() {
+          if (!secModal) return;
+          secModal.classList.add('d-flex');
+          secModal.style.setProperty('display','flex','important');
+          secModal.setAttribute('aria-hidden','false');
+          // preencher email
+          const local = (function(){ try { return JSON.parse(localStorage.getItem('user')||'null'); } catch(e){return null;} })();
+          const candidate = (window.auth && window.auth.currentUser && window.auth.currentUser.email) || (local && local.email) || document.getElementById('profile-email') && document.getElementById('profile-email').textContent || '';
+          if (securityEmail) securityEmail.textContent = candidate || '—';
+          // placeholder sessions
+          if (sessionsList) sessionsList.textContent = 'Nenhuma sessão detectada localmente.';
+        }
+
+        function closeSecModal() {
+          if (!secModal) return;
+          secModal.classList.remove('d-flex');
+          secModal.style.setProperty('display','none','important');
+          secModal.setAttribute('aria-hidden','true');
+        }
+
+        linkPrivacy && linkPrivacy.addEventListener('click', function(e){ e.preventDefault(); openSecModal(); });
+        secClose && secClose.forEach(btn => btn.addEventListener('click', function(ev){ ev.preventDefault(); closeSecModal(); }));
+        if (secModal) secModal.addEventListener('click', function(ev){ if (ev.target === secModal) closeSecModal(); });
+
+        // Enviar email de redefinição de senha via Firebase Auth (se disponível)
+        sendResetBtn && sendResetBtn.addEventListener('click', async function(e){
+          e.preventDefault();
+          const email = securityEmail ? securityEmail.textContent : null;
+          if (!email) { alert('Email não disponível.'); return; }
+          try {
+            if (window.firebase && window.firebase.auth && window.firebase.auth().sendPasswordResetEmail) {
+              // SDK namespace: firebase.auth().sendPasswordResetEmail
+              await window.firebase.auth().sendPasswordResetEmail(email);
+              alert('Email de redefinição enviado para ' + email);
+            } else if (window.auth && window.firebase) {
+              // tenta usar nova API modular se exposta
+              try {
+                const authMod = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
+                const { sendPasswordResetEmail } = authMod;
+                await sendPasswordResetEmail(window.auth, email);
+                alert('Email de redefinição enviado para ' + email);
+              } catch (modErr) {
+                console.warn('Modular sendPasswordResetEmail falhou:', modErr);
+                alert('Não foi possível enviar o email de redefinição: serviço não disponível.');
+              }
+            } else {
+              // fallback: modo demo
+              alert('Serviço de autenticação não disponível — em modo demo você pode redefinir a senha manualmente nas configurações do backend.');
+            }
+          } catch (err) {
+            console.error('Erro ao enviar email de redefinição:', err);
+            alert('Erro ao enviar email de redefinição: ' + (err && err.message ? err.message : err));
+          }
+        });
+
+        // Fallback local — apenas marca no localStorage
+        localResetBtn && localResetBtn.addEventListener('click', function(e){
+          e.preventDefault();
+          const email = securityEmail ? securityEmail.textContent : null;
+          if (!email) { alert('Email não disponível.'); return; }
+          const local = (function(){ try { return JSON.parse(localStorage.getItem('user')||'null'); } catch(e){return null;} })() || {};
+          local.passwordResetRequested = new Date().toISOString();
+          localStorage.setItem('user', JSON.stringify(local));
+          alert('Modo demo: redefinição marcada localmente para ' + email);
+        });
+
+        revokeSessionsBtn && revokeSessionsBtn.addEventListener('click', function(e){
+          e.preventDefault();
+          if (!confirm('Revogar todas as sessões para esta conta? (apenas placeholder em modo demo)')) return;
+          // Em produção, chamar endpoint administrativo para revogar tokens
+          // Aqui fazemos fallback local
+          try {
+            const local = (function(){ try { return JSON.parse(localStorage.getItem('user')||'null'); } catch(e){return null;} })();
+            if (local) { local.sessionsRevokedAt = new Date().toISOString(); localStorage.setItem('user', JSON.stringify(local)); }
+            if (sessionsList) sessionsList.textContent = 'Sessões revogadas localmente.';
+            alert('Sessões revogadas (modo demo).');
+          } catch (ee) { console.warn('Erro ao revogar sessões localmente', ee); alert('Erro ao tentar revogar sessões.'); }
+        });
+
+        // Toggle 2FA placeholder — salva preferência local
+        toggle2fa && toggle2fa.addEventListener('change', function(e){
+          try {
+            const local = (function(){ try { return JSON.parse(localStorage.getItem('user')||'null'); } catch(e){return null;} })() || {};
+            local.twoFactorEnabled = !!toggle2fa.checked;
+            localStorage.setItem('user', JSON.stringify(local));
+            alert('Configuração 2FA atualizada (modo demo): ' + (toggle2fa.checked ? 'Ativado' : 'Desativado'));
+          } catch (err) { console.warn('Erro ao salvar 2FA localmente', err); }
+        });
       });
 
     })();
