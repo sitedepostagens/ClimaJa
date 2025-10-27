@@ -72,7 +72,6 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 let map, markers, userMarker, reportMarker = null;
 let currentTheme = 'light';
-const API_KEY = '71907d1b560a5fae3ee6d175e1d9129b';
 let geocodeTimeout, vehicleTimeout;
 let currentReportType = 'pedestre';
 let selectedVehicle = null;
@@ -256,40 +255,77 @@ function addUserMarker(lat, lng, accuracy) {
 }
 
 async function getWeatherData(lat, lon) {
-  try {
-    const resp = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=pt_br`
-    );
-    const data = await resp.json();
-    if (!data || !data.main || typeof data.main.temp === 'undefined') {
-      throw new Error('Dados de clima inválidos');
-    }
-    document.getElementById('current-temp').textContent = (data.main && typeof data.main.temp !== 'undefined')
-      ? `${Math.round(data.main.temp)}°C`
-      : 'Não disponível';
-    document.getElementById('humidity').textContent = (data.main && typeof data.main.humidity !== 'undefined')
-      ? `${data.main.humidity}%`
-      : 'Não disponível';
-    document.getElementById('wind-speed').textContent = (data.wind && typeof data.wind.speed !== 'undefined')
-      ? `${(data.wind.speed*3.6).toFixed(1)}km/h`
-      : 'Não disponível';
-    document.getElementById('pressure').textContent = (data.main && typeof data.main.pressure !== 'undefined')
-      ? `${data.main.pressure}hPa`
-      : 'Não disponível';
-    document.getElementById('rain').textContent = (data.rain && typeof data.rain['1h'] !== 'undefined')
-      ? `${(data.rain['1h']||0).toFixed(1)}mm`
-      : 'Não disponível';
-    document.querySelector('.weather-icon').className = `wi wi-owm-${data.weather[0].id} weather-icon`;
-    getCityName(lat, lon);
-    // Limpa alerta se sucesso
-    const alerta = document.getElementById('clima-alerta-localizacao');
-    if (alerta) alerta.style.display = 'none';
-  } catch (err) {
-    console.error('[Clima] Erro ao carregar dados do clima:', err);
-    showNotification('Erro ao carregar dados do clima', 'danger');
-    const alerta = document.getElementById('clima-alerta-localizacao');
-    if (alerta) alerta.style.display = 'block';
-  }
+  try {
+    // Usa Open-Meteo (sem necessidade de API key)
+    const resp = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m,precipitation,pressure_msl&timezone=auto`
+    );
+    if (!resp.ok) throw new Error('Open-Meteo retornou status ' + resp.status);
+    const j = await resp.json();
+    if (!j || !j.current_weather) throw new Error('Open-Meteo sem current_weather');
+
+    const cw = j.current_weather;
+    document.getElementById('current-temp').textContent = (typeof cw.temperature !== 'undefined') ? `${Math.round(cw.temperature)}°C` : 'Não disponível';
+    document.getElementById('wind-speed').textContent = (typeof cw.windspeed !== 'undefined') ? `${cw.windspeed} km/h` : 'Não disponível';
+
+    // Extrai umidade/precipitação/pressão a partir de hourly
+    let humidity = 'Não disponível';
+    let precipitation = 'Não disponível';
+    let pressure = 'Não disponível';
+    if (j.hourly && Array.isArray(j.hourly.time)) {
+      let idx = j.hourly.time.indexOf(cw.time);
+      if (idx === -1) {
+        try {
+          const times = j.hourly.time.map(t => Date.parse(t));
+          const target = cw.time ? Date.parse(cw.time) : Date.now();
+          let best = -1; let bestDiff = Infinity;
+          for (let i = 0; i < times.length; i++) {
+            const d = Math.abs(times[i] - target);
+            if (d < bestDiff) { bestDiff = d; best = i; }
+          }
+          if (best !== -1) idx = best;
+        } catch (e) { /* ignore */ }
+      }
+      if (idx !== -1) {
+        if (j.hourly.relativehumidity_2m && typeof j.hourly.relativehumidity_2m[idx] !== 'undefined') humidity = `${j.hourly.relativehumidity_2m[idx]}%`;
+        if (j.hourly.precipitation && typeof j.hourly.precipitation[idx] !== 'undefined') precipitation = `${j.hourly.precipitation[idx]} mm`;
+        if (j.hourly.pressure_msl && typeof j.hourly.pressure_msl[idx] !== 'undefined') pressure = `${j.hourly.pressure_msl[idx]} hPa`;
+      }
+    }
+
+    document.getElementById('humidity').textContent = humidity;
+    document.getElementById('rain').textContent = precipitation;
+    document.getElementById('pressure').textContent = pressure;
+
+    // Atualiza ícone com base no weathercode
+    try {
+      const iconEl = document.querySelector('.weather-icon');
+      if (iconEl && typeof cw.weathercode !== 'undefined') {
+        const code = Number(cw.weathercode);
+        let wiClass = 'wi-day-sunny';
+        let semantic = 'sunny';
+        if (code === 0) { wiClass = 'wi-day-sunny'; semantic = 'sunny'; }
+        else if (code >= 1 && code <= 3) { wiClass = 'wi-day-cloudy'; semantic = 'cloud'; }
+        else if (code === 45 || code === 48) { wiClass = 'wi-fog'; semantic = 'cloud'; }
+        else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) { wiClass = 'wi-rain'; semantic = 'rain'; }
+        else if (code >= 95) { wiClass = 'wi-thunderstorm'; semantic = 'storm'; }
+        else { wiClass = 'wi-day-sunny'; semantic = 'sunny'; }
+        iconEl.className = `wi ${wiClass} weather-icon`;
+        iconEl.classList.remove('sunny','rain','cloud','storm');
+        iconEl.classList.add(semantic);
+      }
+    } catch (e) { console.warn('Erro ao atualizar ícone do clima:', e); }
+
+    getCityName(lat, lon);
+    const alerta = document.getElementById('clima-alerta-localizacao');
+    if (alerta) alerta.style.display = 'none';
+    return;
+  } catch (err) {
+    console.error('[Clima] Erro ao carregar dados do clima (Open-Meteo):', err);
+    showNotification('Erro ao carregar dados do clima', 'danger');
+    const alerta = document.getElementById('clima-alerta-localizacao');
+    if (alerta) alerta.style.display = 'block';
+  }
 }
 
 async function getCityName(lat, lon) {
