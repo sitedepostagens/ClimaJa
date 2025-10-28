@@ -24,6 +24,12 @@ window.addEventListener('DOMContentLoaded', async function() {
   firebaseAuthModule.onAuthStateChanged(auth, function(user) {
     updateAuthUI(user);
     handleProfileAndRelato(user);
+    try {
+      const u = user ? { email: user.email || null, displayName: user.displayName || null, uid: user.uid || null, photoURL: user.photoURL || null } : null;
+      if (u) localStorage.setItem('user', JSON.stringify(u)); else localStorage.removeItem('user');
+      document.dispatchEvent(new CustomEvent('auth-changed', { detail: u }));
+      window.currentUser = u;
+    } catch (e) { console.warn('Não foi possível propagar evento auth-changed:', e); }
   });
   // Expor signOut globalmente para logout
   window.signOut = firebaseAuthModule.signOut;
@@ -69,6 +75,34 @@ window.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+  // Também conecta o botão de logout do modal (mobile) ao mesmo fluxo
+  try {
+    var modalLogout = document.getElementById('modal-logout-btn');
+    if (modalLogout) {
+      modalLogout.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Fecha o modal se possível
+        try { if (window.bootstrap && bootstrap.Modal) { const m = bootstrap.Modal.getInstance(document.getElementById('perfilModal')); if (m) m.hide(); } } catch (e) {}
+        if (window.auth && window.signOut) {
+          window.signOut(window.auth).then(function() {
+            showNotification('Logout realizado com sucesso!', 'success');
+            setTimeout(function(){ window.location.reload(); }, 800);
+          }).catch(function(){ alert('Erro ao sair. Tente novamente.'); });
+        } else {
+          // Fallback: limpa localStorage e recarrega
+          try { localStorage.removeItem('user'); } catch (e) {}
+          window.location.reload();
+        }
+      });
+    }
+  } catch (e) { console.warn('Erro ao conectar modal logout:', e); }
+  // Conecta botões do modal para reutilizar handlers existentes
+  try {
+    var modalRelatos = document.getElementById('modal-meus-relatos');
+    if (modalRelatos) modalRelatos.addEventListener('click', function(e){ e.preventDefault(); try { document.getElementById('perfil-relatos') && document.getElementById('perfil-relatos').click(); } catch(e){} });
+    var modalAjuda = document.getElementById('modal-ajuda');
+    if (modalAjuda) modalAjuda.addEventListener('click', function(e){ e.preventDefault(); try { document.getElementById('perfil-ajuda') && document.getElementById('perfil-ajuda').click(); } catch(e){} });
+  } catch (e) { console.warn('Erro ao conectar botões do modal:', e); }
 });
 let map, markers, userMarker, reportMarker = null;
 let currentTheme = 'light';
@@ -265,13 +299,19 @@ async function getWeatherData(lat, lon) {
     if (!j || !j.current_weather) throw new Error('Open-Meteo sem current_weather');
 
     const cw = j.current_weather;
-    document.getElementById('current-temp').textContent = (typeof cw.temperature !== 'undefined') ? `${Math.round(cw.temperature)}°C` : 'Não disponível';
-    document.getElementById('wind-speed').textContent = (typeof cw.windspeed !== 'undefined') ? `${cw.windspeed} km/h` : 'Não disponível';
+    const tempEl = document.getElementById('current-temp');
+    const windEl = document.getElementById('wind-speed');
+    const humEl = document.getElementById('humidity');
+    const rainEl = document.getElementById('rain');
+    const presEl = document.getElementById('pressure');
+
+    if (tempEl) tempEl.textContent = (typeof cw.temperature !== 'undefined') ? `${Math.round(cw.temperature)}°C` : '—';
+    if (windEl) windEl.textContent = (typeof cw.windspeed !== 'undefined') ? `${Math.round(cw.windspeed)} km/h` : '—';
 
     // Extrai umidade/precipitação/pressão a partir de hourly
-    let humidity = 'Não disponível';
-    let precipitation = 'Não disponível';
-    let pressure = 'Não disponível';
+    let humidity = null;
+    let precipitation = null;
+    let pressure = null;
     if (j.hourly && Array.isArray(j.hourly.time)) {
       let idx = j.hourly.time.indexOf(cw.time);
       if (idx === -1) {
@@ -293,9 +333,22 @@ async function getWeatherData(lat, lon) {
       }
     }
 
-    document.getElementById('humidity').textContent = humidity;
-    document.getElementById('rain').textContent = precipitation;
-    document.getElementById('pressure').textContent = pressure;
+    // Fallbacks
+    if (!humidity && j.hourly && j.hourly.relativehumidity_2m && j.hourly.relativehumidity_2m.length) {
+      // usa o último valor conhecido
+      humidity = `${j.hourly.relativehumidity_2m[j.hourly.relativehumidity_2m.length-1]}%`;
+    }
+    if (!precipitation && j.hourly && j.hourly.precipitation && j.hourly.precipitation.length) {
+      const allZero = j.hourly.precipitation.every(v => v === 0);
+      precipitation = allZero ? '0 mm' : `${j.hourly.precipitation[j.hourly.precipitation.length-1]} mm`;
+    }
+    if (!pressure && j.hourly && j.hourly.pressure_msl && j.hourly.pressure_msl.length) {
+      pressure = `${j.hourly.pressure_msl[j.hourly.pressure_msl.length-1]} hPa`;
+    }
+
+    if (humEl) humEl.textContent = humidity || '—';
+    if (rainEl) rainEl.textContent = precipitation || '—';
+    if (presEl) presEl.textContent = pressure || '—';
 
     // Atualiza ícone com base no weathercode
     try {
@@ -329,16 +382,18 @@ async function getWeatherData(lat, lon) {
 }
 
 async function getCityName(lat, lon) {
-  try {
-    const resp = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-    );
-    const j = await resp.json();
-    const city = j.address.city || j.address.town || j.address.village || j.address.county;
-    document.getElementById('city-name').textContent = city;
-  } catch (e) {
-    console.error(e);
-  }
+  try {
+    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+    const j = await resp.json();
+    const addr = j && j.address ? j.address : {};
+    const city = addr.city || addr.town || addr.village || addr.county || addr.state || '';
+    const el = document.getElementById('city-name');
+    if (el) el.textContent = city || 'Localização';
+  } catch (e) {
+    console.error(e);
+    const el = document.getElementById('city-name');
+    if (el) el.textContent = 'Localização';
+  }
 }
 
 // Toggle Forms
@@ -1018,6 +1073,11 @@ function updateAuthUI(user) {
       };
     }
     setupProfileButtons();
+    try {
+      const u = { email: user.email || null, displayName: user.displayName || null, uid: user.uid || null, photoURL: user.photoURL || null };
+      localStorage.setItem('user', JSON.stringify(u));
+      document.dispatchEvent(new CustomEvent('auth-changed', { detail: u }));
+    } catch (e) { /* ignore */ }
   } else {
     if (cadastrarBtn) cadastrarBtn.style.display = '';
     if (entrarBtn) entrarBtn.style.display = '';
@@ -1033,6 +1093,10 @@ function updateAuthUI(user) {
       logoutBtn.setAttribute('hidden', 'true');
       logoutBtn.onclick = null;
     }
+      try {
+        localStorage.removeItem('user');
+        document.dispatchEvent(new CustomEvent('auth-changed', { detail: null }));
+      } catch (e) { /* ignore */ }
   }
 }
 

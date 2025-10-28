@@ -89,6 +89,7 @@ function fecharSelecaoLocalizacao() {
               }
             }
             </script>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
@@ -232,6 +233,68 @@ function fecharSelecaoLocalizacao() {
       border: 3px solid #38bdf8;
       box-shadow: 0 2px 12px #5ee7df44;
     }
+    /* Melhorias visuais e responsivas para o cartão de perfil (evita truncamento do e-mail) */
+    /* Nome curto exibido no botão do header */
+    #perfil-nome-area {
+      max-width: 160px;
+      display: inline-block;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* No dropdown, permitir quebra de linha para e-mails longos e melhorar legibilidade */
+    #perfil-nome {
+      color: #2563eb;
+      font-weight: 800;
+      font-size: 1.1rem; /* ligeiramente menor para evitar estouro */
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      margin-bottom: 4px;
+    }
+    #perfil-email {
+      color: #3a506b;
+      font-size: 0.95rem;
+      font-weight: 600;
+      white-space: normal !important;
+      word-break: break-word !important;
+      overflow-wrap: anywhere !important;
+      max-width: 260px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    /* Botão de copiar e-mail dentro do dropdown */
+    #copy-email-btn { font-size:0.85rem; color:#334155; }
+    #copy-email-btn .fa-copy { font-size:0.9rem; }
+    /* Tooltip simples (texto temporário) */
+    .copy-feedback {
+      position: absolute;
+      z-index: 9999;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 6px 8px;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      transform: translateY(-8px);
+      opacity: 0;
+      transition: opacity 180ms ease-in-out, transform 180ms ease-in-out;
+    }
+    .copy-feedback.show { opacity: 1; transform: translateY(-12px); }
+    /* animação slide-up para dropdown mobile */
+    .dropdown-slide-up {
+      animation: slideUpIn 320ms cubic-bezier(.2,.9,.2,1) both;
+      transform-origin: bottom center;
+    }
+    @keyframes slideUpIn {
+      from { opacity: 0; transform: translateY(12px) scale(.995); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    /* esconder avatar em telas muito pequenas para economizar espaço */
+    @media (max-width: 420px) {
+      #perfil-dados img { display: none !important; }
+      #perfil-nome { font-size: 0.98rem; }
+      #perfil-email { font-size: 0.88rem; }
+    }
     #perfil-nome {
       color: #2563eb;
       font-weight: 800;
@@ -300,6 +363,34 @@ function fecharSelecaoLocalizacao() {
     [data-theme="dark"] #logout-btn:hover {
       background: linear-gradient(90deg, #fbbf24 60%, #f87171 100%) !important;
       color: #fff !important;
+    }
+  </style>
+  <!-- Regras responsivas adicionais -->
+  <style>
+    /* Imagens e iframes fluidos */
+    img, .footer-logo-img { max-width: 100%; height: auto; display: inline-block; }
+    iframe, embed, object { max-width: 100%; width: 100%; height: auto; }
+
+    /* Tipografia responsiva para o título principal */
+    .project-title { font-size: clamp(1.6rem, 4.0vw + 1rem, 3.7rem); }
+    .project-desc { font-size: clamp(1rem, 2.2vw + 0.5rem, 2rem); }
+
+    /* Tornar o mapa responsivo: altura adaptativa, não exceder um máximo */
+    #map { height: min(60vh, 600px); width: 100%; }
+    /* Se houver iframe do Windy, garantir altura proporcional (16:9) e responsivo */
+    #windy-embed { width: 100% !important; height: calc(100vw * 9 / 16); max-height: 600px; }
+
+    /* Botões e inputs: empilhamento em telas pequenas */
+    @media (max-width: 760px) {
+      .login-cadastro-area { flex-direction: column; align-items: stretch; }
+      .d-flex.justify-content-center.gap-2 { flex-direction: column; gap: 0.5rem; }
+      .weather-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+    }
+
+    @media (max-width: 420px) {
+      .weather-grid { grid-template-columns: 1fr; }
+      .main-header .logo-box { height: 70px; width: 90px; }
+      .main-header img { height: 56px; width: 72px; }
     }
   </style>
   <style>
@@ -538,6 +629,32 @@ function fecharSelecaoLocalizacao() {
         padding-right: 0.2rem;
       }
     }
+    /* Ajustes específicos para mobile: dropdown de perfil full-width e regras de compactação */
+    @media (max-width: 760px) {
+      .dropdown-menu[aria-labelledby="perfilDropdown"] {
+        position: fixed !important;
+        left: 8px !important;
+        right: 8px !important;
+        bottom: 14px !important;
+        top: auto !important;
+        min-width: unset !important;
+        width: calc(100% - 16px) !important;
+        max-width: calc(100% - 16px) !important;
+        border-radius: 1rem !important;
+        padding: 0.9rem !important;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.18) !important;
+      }
+      /* compacta o conteúdo do dropdown para caber melhor em telas pequenas */
+      #perfil-dados { display: flex; flex-direction: row; align-items: center; gap: 12px; padding: 0.5rem; }
+      #perfil-dados img { width: 56px; height: 56px; }
+      #perfil-nome { font-size: 1rem; text-align: left; }
+      #perfil-email { font-size: 0.9rem; text-align: left; max-width: 100%; }
+      .perfil-email-row { justify-content: flex-start; }
+      #copy-email-btn { display: inline-flex !important; align-items: center; justify-content: center; padding: 0.25rem 0.45rem; }
+      .badge.bg-primary { display: none; }
+      /* evita que o header perca espaço com o dropdown fixo */
+      body { padding-bottom: 90px; }
+    }
     [data-theme="dark"] .main-card.sobre-anim, [data-theme="dark"] .main-card.clima-anim {
       background: linear-gradient(120deg, #1e293b 60%, #0f172a 100%) !important;
       color: #f8fafc !important;
@@ -715,8 +832,13 @@ function fecharSelecaoLocalizacao() {
         <li>
           <div class="dropdown-item text-center" id="perfil-dados" style="min-width:220px;padding-bottom:10px;">
             <img src="logo.png" alt="Avatar" style="width:72px;height:72px;border-radius:50%;box-shadow:0 2px 8px #2563eb22;margin-bottom:10px;">
-            <div style="font-size:1.25rem;font-weight:800;color:#2563eb;margin-bottom:2px;" id="perfil-nome">-</div>
-            <div style="font-size:1rem;color:#555;margin-bottom:8px;" id="perfil-email">-</div>
+            <div style="font-size:1.15rem;font-weight:800;color:#2563eb;margin-bottom:6px;" id="perfil-nome">-</div>
+            <div class="perfil-email-row" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+              <div style="font-size:0.95rem;color:#555;margin-bottom:8px;" id="perfil-email">-</div>
+              <button type="button" id="copy-email-btn" class="btn btn-outline-secondary btn-sm" title="Copiar e-mail" aria-label="Copiar e-mail" style="display:none;padding:0.25rem 0.5rem;border-radius:0.6rem;">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
             <span class="badge bg-primary mb-2" style="font-size:0.9rem;">Usuário ClimaJá!</span>
             <hr style="margin:10px 0 6px 0;">
             <button class="btn btn-danger btn-sm fw-bold w-100" id="logout-btn" type="button">
@@ -727,20 +849,15 @@ function fecharSelecaoLocalizacao() {
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item" href="profile.html" id="perfil-acessar"><i class="fas fa-user me-1 text-primary"></i>Acessar Perfil</a></li>
         <li><a class="dropdown-item" href="#" id="perfil-relatos"><i class="fas fa-list me-1 text-primary"></i>Meus Relatos</a></li>
-  <!-- Removido item duplicado 'Editar Perfil' daqui para evitar opções repetidas; edição disponível em profile.html -->
         <li><a class="dropdown-item" href="#" id="perfil-ajuda"><i class="fas fa-question-circle me-1 text-info"></i>Ajuda</a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><hr class="dropdown-divider"></li>
       </ul>
     </div>
   </div>
-  </a>
+
   <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="baixar-app-btn" href="app.html">
     <i class="fas fa-download me-1"></i>Baixar APP
   </a>
-  <a class="btn btn-outline-secondary btn-sm fw-bold me-2 d-none" id="acessar-perfil-btn" href="profile.html">
-    <i class="fas fa-user me-1"></i>Acessar Perfil
-  </a>
+  <!-- botão 'acessar-perfil-btn' removido conforme solicitado (botão da foto) -->
   <a class="btn btn-outline-primary btn-sm fw-bold me-2" id="cadastrar-btn" href="register.html">
     <i class="fas fa-user-plus me-1"></i>Cadastrar
   </a>
@@ -763,7 +880,8 @@ function fecharSelecaoLocalizacao() {
         const perfilNomeArea = document.getElementById('perfil-nome-area');
         const perfilNome = document.getElementById('perfil-nome');
         const perfilEmail = document.getElementById('perfil-email');
-        const perfilImgs = document.querySelectorAll('#perfil-area img, #perfil-dados img');
+          const perfilImgs = document.querySelectorAll('#perfil-area img, #perfil-dados img');
+        const copyBtn = document.getElementById('copy-email-btn');
 
         if (user) {
           // Mostrar área de perfil
@@ -773,15 +891,53 @@ function fecharSelecaoLocalizacao() {
           cadastrarBtn && cadastrarBtn.classList.add('d-none');
           acessarPerfilBtn && acessarPerfilBtn.classList.remove('d-none');
 
-          const name = user.displayName || user.name || user.email || 'Usuário';
-          const email = user.email || (user.email && user.email) || '';
+          const name = (user.displayName || user.name || '').trim();
+          const email = (user.email || '').trim();
           const photo = user.photoURL || user.photo || 'logo.png';
 
-          perfilNomeArea && (perfilNomeArea.textContent = name);
-          perfilNome && (perfilNome.textContent = name);
-          perfilEmail && (perfilEmail.textContent = email || '—');
+          // Se o nome for igual ao e-mail (usuário sem displayName), evitar duplicação:
+          // - No botão do header mostrar apenas a parte antes do @ (mais curta)
+          // - No dropdown mostrar o e-mail completo e ocultar a linha extra se redundante
+          try {
+            if (email && name && name === email) {
+              // nome é o e-mail completo
+              if (perfilNomeArea) perfilNomeArea.textContent = email.split('@')[0] || email;
+              if (perfilNome) {
+                perfilNome.textContent = email; // mostra o e-mail completo no título do dropdown
+              }
+              if (perfilEmail) {
+                perfilEmail.style.display = 'none'; // evita mostrar duas linhas iguais
+              }
+            } else {
+              // nomes diferentes — mostrar ambos (nome + e-mail)
+              if (perfilNomeArea) perfilNomeArea.textContent = (name || email || 'Usuário');
+              if (perfilNome) perfilNome.textContent = (name || '—');
+              if (perfilEmail) {
+                perfilEmail.style.display = '';
+                perfilEmail.textContent = (email || '—');
+              }
+              if (copyBtn) copyBtn.style.display = email ? '' : 'none';
+            }
+          } catch (e) {
+            // fallback simples
+            if (perfilNomeArea) perfilNomeArea.textContent = name || email || 'Usuário';
+            if (perfilNome) perfilNome.textContent = name || email || 'Usuário';
+              if (perfilEmail) { perfilEmail.style.display = ''; perfilEmail.textContent = email || '—'; }
+              if (copyBtn) copyBtn.style.display = email ? '' : 'none';
+          }
+
           // Atualiza todas as imagens da área de perfil (dropdown + botão)
           perfilImgs && perfilImgs.forEach(img => { img.src = photo; });
+          // Atualiza elementos do modal mobile, se existirem
+          const modalName = document.getElementById('modal-perfil-nome');
+          const modalEmail = document.getElementById('modal-perfil-email');
+          const modalImgs = document.querySelectorAll('#perfilModal img');
+          if (modalName) modalName.textContent = perfilNome ? perfilNome.textContent : (name || 'Usuário');
+          if (modalEmail) modalEmail.textContent = perfilEmail ? perfilEmail.textContent : (email || '—');
+          modalImgs && modalImgs.forEach(img => { img.src = photo; });
+          // mostrar/ocultar botão de cópia no modal também
+          const modalCopy = document.getElementById('modal-copy-email-btn');
+          if (modalCopy) modalCopy.style.display = email ? '' : 'none';
         } else {
           // Usuário não autenticado — ocultar area de perfil e mostrar botões
           perfilArea && perfilArea.classList.add('d-none');
@@ -804,6 +960,138 @@ function fecharSelecaoLocalizacao() {
       document.addEventListener('DOMContentLoaded', function(){
         const local = loadLocalUser();
         updateHeaderUser(local);
+        // setup do botão de copiar e-mail (delegado)
+        const copyBtn = document.getElementById('copy-email-btn');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            try {
+              const emailEl = document.getElementById('perfil-email');
+              const text = emailEl ? (emailEl.textContent || emailEl.innerText || '') : '';
+              if (!text) return;
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text.trim()).then(() => {
+                  showCopyFeedback(copyBtn, 'E‑mail copiado');
+                }).catch(() => {
+                  fallbackCopyText(text.trim(), copyBtn);
+                });
+              } else {
+                fallbackCopyText(text.trim(), copyBtn);
+              }
+            } catch (err) {
+              console.warn('Erro ao copiar e-mail', err);
+            }
+          });
+        }
+        // modal copy button
+        const modalCopyBtn = document.getElementById('modal-copy-email-btn');
+        if (modalCopyBtn) {
+          modalCopyBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            try {
+              const emailEl = document.getElementById('modal-perfil-email');
+              const text = emailEl ? (emailEl.textContent || emailEl.innerText || '') : '';
+              if (!text) return;
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text.trim()).then(() => { showCopyFeedback(modalCopyBtn, 'E‑mail copiado'); }).catch(() => { fallbackCopyText(text.trim(), modalCopyBtn); });
+              } else {
+                fallbackCopyText(text.trim(), modalCopyBtn);
+              }
+            } catch (err) { console.warn('Erro ao copiar e-mail (modal)', err); }
+          });
+        }
+
+        // abrir modal em telas pequenas ao clicar no botão de perfil (em vez do dropdown)
+        try {
+          const perfilBtn = document.getElementById('perfilDropdown');
+          if (perfilBtn) {
+            perfilBtn.addEventListener('click', function(ev) {
+              if (window.innerWidth <= 760) {
+                // evita que o dropdown padrão abra
+                ev.preventDefault();
+                ev.stopPropagation();
+                try {
+                  const myModalEl = document.getElementById('perfilModal');
+                  if (myModalEl && window.bootstrap && bootstrap.Modal) {
+                    const inst = bootstrap.Modal.getOrCreateInstance(myModalEl);
+                    // atualizar conteúdo (por segurança)
+                    const localUser = loadLocalUser();
+                    if (localUser) updateHeaderUser(localUser);
+                    inst.show();
+                  }
+                } catch (e) { console.warn('Erro ao abrir modal de perfil', e); }
+              }
+            });
+          }
+        } catch (e) { /* ignore */ }
+      });
+
+      function fallbackCopyText(text, anchor) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed'; ta.style.left='-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showCopyFeedback(anchor, 'E‑mail copiado');
+        } catch (e) { alert('Copiar não disponível'); }
+      }
+
+      function showCopyFeedback(anchor, msg) {
+        const fb = document.createElement('div');
+        fb.className = 'copy-feedback';
+        fb.textContent = msg;
+        document.body.appendChild(fb);
+        // after append, compute size and position
+        const fbRect = fb.getBoundingClientRect();
+        const rect = anchor.getBoundingClientRect();
+        // center horizontally relative to anchor, but keep within viewport
+        let left = rect.left + rect.width/2 - fbRect.width/2;
+        left = Math.max(6, Math.min(left, window.innerWidth - fbRect.width - 6));
+        let top = rect.top - fbRect.height - 8;
+        if (top < 6) top = rect.bottom + 8; // if not enough space above, show below
+        fb.style.left = left + 'px';
+        fb.style.top = top + 'px';
+        // Force reflow then show
+        void fb.offsetWidth;
+        fb.classList.add('show');
+        setTimeout(() => { fb.classList.remove('show'); setTimeout(() => fb.remove(), 250); }, 1400);
+      }
+
+      // Animação: quando o dropdown do perfil abrir em mobile, adiciona classe slide-up
+      document.addEventListener('DOMContentLoaded', function() {
+        try {
+          const perfilDropdown = document.getElementById('perfilDropdown');
+          if (perfilDropdown) {
+            perfilDropdown.addEventListener('shown.bs.dropdown', function(e) {
+              const menu = perfilDropdown && perfilDropdown.parentElement ? perfilDropdown.parentElement.querySelector('.dropdown-menu') : null;
+              if (!menu) return;
+              if (window.innerWidth <= 760) {
+                menu.classList.add('dropdown-slide-up');
+              }
+            });
+            perfilDropdown.addEventListener('hidden.bs.dropdown', function(e) {
+              const menu = perfilDropdown && perfilDropdown.parentElement ? perfilDropdown.parentElement.querySelector('.dropdown-menu') : null;
+              if (!menu) return;
+              menu.classList.remove('dropdown-slide-up');
+            });
+          }
+        } catch (e) { /* ignore if bootstrap not present */ }
+        // Quando o modal móvel abrir, ajustar foco para o primeiro elemento interativo
+        try {
+          const perfilModalEl = document.getElementById('perfilModal');
+          if (perfilModalEl) {
+            perfilModalEl.addEventListener('shown.bs.modal', function() {
+              // prioriza botão de copiar, depois botão 'Acessar Perfil', depois fechar
+              const first = perfilModalEl.querySelector('#modal-copy-email-btn') || perfilModalEl.querySelector('.modal-body a, .modal-body button, .modal-body input');
+              if (first && typeof first.focus === 'function') {
+                setTimeout(() => first.focus(), 120);
+              }
+            });
+          }
+        } catch (e) { /* ignore */ }
       });
 
       document.addEventListener('auth-changed', function(ev){
@@ -1113,6 +1401,56 @@ function fecharSelecaoLocalizacao() {
       <p class="text-muted small">Entre em contato: <a href="mailto:oclimaja@hotmail.com">oclimaja@hotmail.com</a></p>
     </div>
   </footer>
+
+  <!-- Modal mobile-friendly para perfil (usado em telas pequenas) -->
+  <div class="modal fade" id="perfilModal" tabindex="-1" aria-labelledby="perfilModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm modal-mobile" role="dialog" aria-modal="true">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="perfilModalLabel">Meu Perfil</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div id="modal-perfil-dados" style="display:flex;gap:12px;align-items:center;">
+            <img src="logo.png" alt="Avatar" style="width:72px;height:72px;border-radius:50%;box-shadow:0 2px 8px #2563eb22;margin:0;">
+            <div style="flex:1;min-width:0;">
+              <div id="modal-perfil-nome" style="font-weight:800;color:#2563eb;margin-bottom:4px;word-break:break-word;">-</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <div id="modal-perfil-email" style="color:#3a506b;font-weight:600;word-break:break-word;">-</div>
+                <button id="modal-copy-email-btn" type="button" class="btn btn-outline-secondary btn-sm" style="display:none;padding:0.25rem 0.45rem;border-radius:0.5rem;" title="Copiar e-mail"><i class="fas fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 d-grid gap-2">
+            <a class="btn btn-primary" href="profile.html">Acessar Perfil</a>
+            <button class="btn btn-outline-primary" id="modal-meus-relatos">Meus Relatos</button>
+            <button class="btn btn-outline-info" id="modal-ajuda">Ajuda</button>
+            <button class="btn btn-danger" id="modal-logout-btn">Sair</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <style>
+    /* Modal mobile fullscreen below 760px */
+    @media (max-width: 760px) {
+      .modal-mobile .modal-dialog {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        max-width: none !important;
+        display: flex;
+        align-items: stretch;
+      }
+      .modal-mobile .modal-content {
+        border-radius: 1rem 1rem 0 0 !important;
+        height: 100vh;
+        overflow: auto;
+      }
+      .modal-mobile .modal-body { padding-bottom: 1.5rem; }
+      .modal-mobile .modal-header { border-bottom: 1px solid #eee; }
+    }
+  </style>
 
   <!-- JS externos -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
