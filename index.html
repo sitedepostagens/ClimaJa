@@ -263,9 +263,7 @@ function fecharSelecaoLocalizacao() {
       margin-left: auto;
       margin-right: auto;
     }
-    /* Botão de copiar e-mail dentro do dropdown */
-    #copy-email-btn { font-size:0.85rem; color:#334155; }
-    #copy-email-btn .fa-copy { font-size:0.9rem; }
+  /* botão de cópia removido - seletores limpos */
     /* Tooltip simples (texto temporário) */
     .copy-feedback {
       position: absolute;
@@ -650,7 +648,7 @@ function fecharSelecaoLocalizacao() {
       #perfil-nome { font-size: 1rem; text-align: left; }
       #perfil-email { font-size: 0.9rem; text-align: left; max-width: 100%; }
       .perfil-email-row { justify-content: flex-start; }
-      #copy-email-btn { display: inline-flex !important; align-items: center; justify-content: center; padding: 0.25rem 0.45rem; }
+  /* botão de cópia removido em mobile também */
       .badge.bg-primary { display: none; }
       /* evita que o header perca espaço com o dropdown fixo */
       body { padding-bottom: 90px; }
@@ -835,9 +833,6 @@ function fecharSelecaoLocalizacao() {
             <div style="font-size:1.15rem;font-weight:800;color:#2563eb;margin-bottom:6px;" id="perfil-nome">-</div>
             <div class="perfil-email-row" style="display:flex;align-items:center;justify-content:center;gap:8px;">
               <div style="font-size:0.95rem;color:#555;margin-bottom:8px;" id="perfil-email">-</div>
-              <button type="button" id="copy-email-btn" class="btn btn-outline-secondary btn-sm" title="Copiar e-mail" aria-label="Copiar e-mail" style="display:none;padding:0.25rem 0.5rem;border-radius:0.6rem;">
-                <i class="fas fa-copy"></i>
-              </button>
             </div>
             <span class="badge bg-primary mb-2" style="font-size:0.9rem;">Usuário ClimaJá!</span>
             <hr style="margin:10px 0 6px 0;">
@@ -881,7 +876,6 @@ function fecharSelecaoLocalizacao() {
         const perfilNome = document.getElementById('perfil-nome');
         const perfilEmail = document.getElementById('perfil-email');
           const perfilImgs = document.querySelectorAll('#perfil-area img, #perfil-dados img');
-        const copyBtn = document.getElementById('copy-email-btn');
 
         if (user) {
           // Mostrar área de perfil
@@ -916,14 +910,13 @@ function fecharSelecaoLocalizacao() {
                 perfilEmail.style.display = '';
                 perfilEmail.textContent = (email || '—');
               }
-              if (copyBtn) copyBtn.style.display = email ? '' : 'none';
+              // botão de cópia removido — nada a ajustar aqui
             }
           } catch (e) {
             // fallback simples
             if (perfilNomeArea) perfilNomeArea.textContent = name || email || 'Usuário';
             if (perfilNome) perfilNome.textContent = name || email || 'Usuário';
               if (perfilEmail) { perfilEmail.style.display = ''; perfilEmail.textContent = email || '—'; }
-              if (copyBtn) copyBtn.style.display = email ? '' : 'none';
           }
 
           // Atualiza todas as imagens da área de perfil (dropdown + botão)
@@ -935,9 +928,6 @@ function fecharSelecaoLocalizacao() {
           if (modalName) modalName.textContent = perfilNome ? perfilNome.textContent : (name || 'Usuário');
           if (modalEmail) modalEmail.textContent = perfilEmail ? perfilEmail.textContent : (email || '—');
           modalImgs && modalImgs.forEach(img => { img.src = photo; });
-          // mostrar/ocultar botão de cópia no modal também
-          const modalCopy = document.getElementById('modal-copy-email-btn');
-          if (modalCopy) modalCopy.style.display = email ? '' : 'none';
         } else {
           // Usuário não autenticado — ocultar area de perfil e mostrar botões
           perfilArea && perfilArea.classList.add('d-none');
@@ -960,46 +950,7 @@ function fecharSelecaoLocalizacao() {
       document.addEventListener('DOMContentLoaded', function(){
         const local = loadLocalUser();
         updateHeaderUser(local);
-        // setup do botão de copiar e-mail (delegado)
-        const copyBtn = document.getElementById('copy-email-btn');
-        if (copyBtn) {
-          copyBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            try {
-              const emailEl = document.getElementById('perfil-email');
-              const text = emailEl ? (emailEl.textContent || emailEl.innerText || '') : '';
-              if (!text) return;
-              if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text.trim()).then(() => {
-                  showCopyFeedback(copyBtn, 'E‑mail copiado');
-                }).catch(() => {
-                  fallbackCopyText(text.trim(), copyBtn);
-                });
-              } else {
-                fallbackCopyText(text.trim(), copyBtn);
-              }
-            } catch (err) {
-              console.warn('Erro ao copiar e-mail', err);
-            }
-          });
-        }
-        // modal copy button
-        const modalCopyBtn = document.getElementById('modal-copy-email-btn');
-        if (modalCopyBtn) {
-          modalCopyBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            try {
-              const emailEl = document.getElementById('modal-perfil-email');
-              const text = emailEl ? (emailEl.textContent || emailEl.innerText || '') : '';
-              if (!text) return;
-              if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text.trim()).then(() => { showCopyFeedback(modalCopyBtn, 'E‑mail copiado'); }).catch(() => { fallbackCopyText(text.trim(), modalCopyBtn); });
-              } else {
-                fallbackCopyText(text.trim(), modalCopyBtn);
-              }
-            } catch (err) { console.warn('Erro ao copiar e-mail (modal)', err); }
-          });
-        }
+        // cópia de e-mail removida (recursos do botão e handlers removidos)
 
         // abrir modal em telas pequenas ao clicar no botão de perfil (em vez do dropdown)
         try {
@@ -1084,8 +1035,8 @@ function fecharSelecaoLocalizacao() {
           const perfilModalEl = document.getElementById('perfilModal');
           if (perfilModalEl) {
             perfilModalEl.addEventListener('shown.bs.modal', function() {
-              // prioriza botão de copiar, depois botão 'Acessar Perfil', depois fechar
-              const first = perfilModalEl.querySelector('#modal-copy-email-btn') || perfilModalEl.querySelector('.modal-body a, .modal-body button, .modal-body input');
+              // foca o primeiro elemento interativo disponível no modal
+              const first = perfilModalEl.querySelector('.modal-body a, .modal-body button, .modal-body input');
               if (first && typeof first.focus === 'function') {
                 setTimeout(() => first.focus(), 120);
               }
@@ -1417,7 +1368,6 @@ function fecharSelecaoLocalizacao() {
               <div id="modal-perfil-nome" style="font-weight:800;color:#2563eb;margin-bottom:4px;word-break:break-word;">-</div>
               <div style="display:flex;gap:8px;align-items:center;">
                 <div id="modal-perfil-email" style="color:#3a506b;font-weight:600;word-break:break-word;">-</div>
-                <button id="modal-copy-email-btn" type="button" class="btn btn-outline-secondary btn-sm" style="display:none;padding:0.25rem 0.45rem;border-radius:0.5rem;" title="Copiar e-mail"><i class="fas fa-copy"></i></button>
               </div>
             </div>
           </div>
@@ -1449,6 +1399,23 @@ function fecharSelecaoLocalizacao() {
       }
       .modal-mobile .modal-body { padding-bottom: 1.5rem; }
       .modal-mobile .modal-header { border-bottom: 1px solid #eee; }
+    }
+  </style>
+  <style>
+    /* Melhor quebra de linha para e-mail e nomes no header/modal */
+    .perfil-email-row #perfil-email,
+    #modal-perfil-email,
+    #perfil-nome,
+    #perfil-nome-area {
+      max-width: 200px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      text-align: center;
+    }
+    @media (max-width:420px) {
+      .perfil-email-row #perfil-email,
+      #modal-perfil-email,
+      #perfil-nome-area { font-size: 0.92rem; max-width: 150px; }
     }
   </style>
 
