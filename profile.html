@@ -59,8 +59,9 @@
 
     /* Ações e stats (direita) */
     .hero-right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
-    .profile-actions{display:flex;gap:0.6rem;align-items:center}
-    .profile-actions .btn{border-radius:0.6rem;padding:0.5rem 0.9rem;font-weight:600}
+  .profile-actions{display:flex;gap:0.6rem;align-items:center}
+  .profile-actions .btn{border-radius:0.6rem;padding:0.5rem 0.9rem;font-weight:600;text-decoration:none}
+  .profile-actions .btn:hover,.profile-actions .btn:focus,.profile-actions .btn:visited{ text-decoration:none }
     .btn-edit{background:linear-gradient(90deg,var(--primary), var(--accent));border:none;color:#fff}
     .btn-edit:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(37,99,235,0.12)}
 
@@ -115,9 +116,9 @@
           <div class="stat"><div class="count" id="profile-relatos-count">0</div><div class="small">Relatos</div></div>
           <div class="stat"><div class="count" id="profile-upvotes">0</div><div class="small">Upvotes</div></div>
         </div>
-        <div class="profile-actions">
-          <button id="profile-edit-btn" class="btn btn-edit"><i class="fas fa-edit me-1"></i>Editar</button>
-          <a id="profile-back-home" class="btn btn-outline-secondary" href="index.html">Voltar</a>
+        <div class="profile-actions" role="group" aria-label="Ações do usuário">
+          <button id="profile-edit-btn" class="btn btn-edit" aria-haspopup="dialog" aria-controls="profile-edit-modal"><i class="fas fa-edit me-1" aria-hidden="true"></i><span class="visually-hidden">Editar perfil</span><span aria-hidden="true">Editar</span></button>
+          <a id="profile-back-home" class="btn btn-edit" href="index.html"><i class="fas fa-arrow-left me-1" aria-hidden="true"></i>Voltar ao Início</a>
         </div>
       </div>
     </div>
@@ -136,11 +137,11 @@
   <!-- Modal de edição (custom para evitar depender do JS do Bootstrap) -->
   <!-- Observação: removi a classe `d-flex` do markup inicial para evitar que o modal
     fique visível por padrão; o script agora controla visibilidade via classe + style. -->
-  <div id="profile-edit-modal" class="custom-modal">
+  <div id="profile-edit-modal" class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header d-flex align-items-center">
-          <h5 class="modal-title">Editar Perfil</h5>
+          <h5 id="edit-modal-title" class="modal-title">Editar Perfil</h5>
           <button type="button" class="btn-close modal-close ms-auto" aria-label="Fechar"></button>
         </div>
         <form id="profile-edit-form" class="modal-body p-3">
@@ -183,11 +184,11 @@
   </div>
   
   <!-- Modal de Segurança e Acesso -->
-  <div id="security-modal" class="custom-modal">
+  <div id="security-modal" class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="security-modal-title" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header d-flex align-items-center">
-          <h5 class="modal-title"><i class="fas fa-lock me-2"></i>Segurança e Acesso</h5>
+          <h5 id="security-modal-title" class="modal-title"><i class="fas fa-lock me-2" aria-hidden="true"></i>Segurança e Acesso</h5>
           <button type="button" class="btn-close security-close ms-auto" aria-label="Fechar"></button>
         </div>
         <div class="modal-body p-3">
@@ -232,6 +233,7 @@
       const modal = document.getElementById('profile-edit-modal');
       const modalCloseBtns = Array.from(document.querySelectorAll('.modal-close'));
       const editBtn = document.getElementById('profile-edit-btn') || document.getElementById('perfil-editar') || null;
+      const backHomeBtn = document.getElementById('profile-back-home') || null;
       const form = document.getElementById('profile-edit-form');
       const nameEl = document.getElementById('profile-name') || document.getElementById('perfil-nome') || null;
       const emailEl = document.getElementById('profile-email') || null;

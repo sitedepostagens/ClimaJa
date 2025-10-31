@@ -35,7 +35,7 @@ body {
   min-height: 100vh;
 }
 
-.btn-modern, .btn-primary, .btn-outline-primary {
+.btn-modern, .btn-primary {
   background: var(--btn-gradient);
   border-radius: 1rem;
   border: 1px solid var(--border);
@@ -47,6 +47,27 @@ body {
   color: #fff !important;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
   margin-bottom: 0.7rem;
+}
+
+.btn-outline-primary {
+  background: transparent;
+  border-radius: 1rem;
+  border: 1px solid var(--primary);
+  box-shadow: none;
+  padding: 0.5rem 1.2rem;
+  font-weight: 600;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 0.97rem;
+  color: var(--primary) !important;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+  margin-bottom: 0.7rem;
+}
+
+.btn-outline-primary:hover {
+  background: var(--primary);
+  color: #fff !important;
+  box-shadow: 0 4px 16px -8px #2563eb33;
+  transform: translateY(-2px);
 }
 
 
