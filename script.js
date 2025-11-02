@@ -112,6 +112,36 @@ let selectedVehicle = null;
 const FIPE_API = 'https://parallelum.com.br/fipe/api/v1/carros/marcas';
 let vehicleCache = {};
 
+// Símbolos e rótulos para Ocorrido Primário
+const OCCORRENCE_ICONS = {
+  'alagamento': '💧',
+  'enxurrada': '🌊',
+  'obstrucao': '🚧',
+  'deslizamento': '⛰️',
+  'fio-duvidoso': '⚡',
+  'outro': '❓'
+};
+const OCCORRENCE_LABELS = {
+  'alagamento': 'Alagamento',
+  'enxurrada': 'Enxurrada',
+  'obstrucao': 'Obstrução de via',
+  'deslizamento': 'Deslizamento',
+  'fio-duvidoso': 'Fio duvidoso',
+  'outro': 'Outro'
+};
+function getOccurrenceIcon(code) {
+  if (!code) return null;
+  const k = String(code).toLowerCase();
+  return OCCORRENCE_ICONS[k] || null;
+}
+function getOccurrenceLabel(code) {
+  if (!code) return null;
+  const k = String(code).toLowerCase();
+  return OCCORRENCE_LABELS[k] || null;
+}
+
+// (duplicado removido)
+
 // --- Firebase Realtime Database ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
 import { child, get, getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
@@ -147,16 +177,17 @@ async function saveReportToDB(report) {
 async function loadReportsFromDB() {
   try {
     const snapshot = await get(child(ref(db), 'relatos'));
-    if (snapshot.exists()) {
-      console.log('Relatos carregados do Realtime Database:', snapshot.val());
-      return snapshot.val();
+    if (snapshot && snapshot.exists && snapshot.exists()) {
+      const val = snapshot.val();
+      // Normaliza para array
+      return Array.isArray(val) ? val.filter(Boolean) : Object.values(val || {});
     } else {
       console.log('Nenhum relato encontrado.');
-      return {};
+      return [];
     }
   } catch (e) {
-    console.error('Erro ao carregar relatos:', e.message);
-    return {};
+    console.error('Erro ao carregar relatos:', e && e.message ? e.message : e);
+    return [];
   }
 }
 // -------------------------------------------------------------------------
@@ -215,7 +246,7 @@ function initMap() {
 async function loadInitialData() {
     // Carrega o tema
     currentTheme = await loadThemeFromDB();
-    applyTheme(currentTheme);
+  try { applyTheme(currentTheme); } catch (_) { /* ignora */ }
 
     // Carrega os relatos salvos
     await loadSavedReports();
@@ -236,8 +267,17 @@ async function loadThemeFromDB() {
   return 'light';
 }
 
-
-// Funções de alternância de tema removidas
+// Aplica tema básico (claro/escuro) — seguro mesmo sem CSS específico
+function applyTheme(theme) {
+  const t = (theme === 'dark') ? 'dark' : 'light';
+  try { document.documentElement.setAttribute('data-theme', t); } catch (_) {}
+  try {
+    if (document.body && document.body.classList) {
+      document.body.classList.remove('dark','light');
+      document.body.classList.add(t);
+    }
+  } catch (_) {}
+}
 
 function locateUser(initial = false) {
   if (navigator.geolocation) {
@@ -576,20 +616,24 @@ function readPhoto() {
 }
 
 function addReportToMap(report) {
-  // Normaliza coordenadas (aceita {lat,lng} ou {lat,lon})
+  // Normaliza coordenadas (aceita {lat,lng}, {lat,lon} e campos flat latitude/longitude)
   let lat = null, lng = null;
   if (report && report.location) {
     if (typeof report.location.lat !== 'undefined') lat = report.location.lat;
     if (typeof report.location.lng !== 'undefined') lng = report.location.lng;
-    if ((lat === null || typeof lat === 'undefined') && typeof report.location.lon !== 'undefined') lat = report.location.lat || report.location.latitude || null;
-    // try lon variants
-    if ((lng === null || typeof lng === 'undefined') && typeof report.location.lon !== 'undefined') lng = report.location.lon;
     if ((lat === null || typeof lat === 'undefined') && typeof report.location.latitude !== 'undefined') lat = report.location.latitude;
     if ((lng === null || typeof lng === 'undefined') && typeof report.location.longitude !== 'undefined') lng = report.location.longitude;
+    if ((lng === null || typeof lng === 'undefined') && typeof report.location.lon !== 'undefined') lng = report.location.lon;
   }
+  if ((lat === null || typeof lat === 'undefined') && typeof report?.latitude !== 'undefined') lat = parseFloat(report.latitude);
+  if ((lng === null || typeof lng === 'undefined') && typeof report?.longitude !== 'undefined') lng = parseFloat(report.longitude);
 
+  // Ícone do marcador: prioriza símbolo do ocorrido primário
+  let markerSymbol = null;
+  if (report && report.ocorridoPrimario) markerSymbol = getOccurrenceIcon(report.ocorridoPrimario);
+  if (!markerSymbol) markerSymbol = (report && report.type === 'pedestre') ? '🚶' : '🚗';
   const color = getColorByLevel(report) || '#2563EB';
-  const iconHtml = `<div style="background:${color};display:flex;align-items:center;justify-content:center;color:white;border-radius:50%;width:40px;height:40px;font-size:16px;" class="report-marker-inline">${ report.type === 'pedestre' ? '🚶' : '🚗' }</div>`;
+  const iconHtml = `<div style="background:${color};display:flex;align-items:center;justify-content:center;color:white;border-radius:50%;width:40px;height:40px;font-size:16px;" class="report-marker-inline">${ markerSymbol }</div>`;
 
   // Garante que o layer de markers exista
   if (typeof markers === 'undefined' || !markers) {
@@ -604,7 +648,7 @@ function addReportToMap(report) {
   if (lat !== null && typeof lat !== 'undefined' && lng !== null && typeof lng !== 'undefined') {
     const mk = L.marker([lat, lng], {
       icon: L.divIcon({ html: iconHtml, className: '' })
-    }).bindPopup(createPopupContent(report));
+    }); // popup removido por solicitação
     if (markers && markers.addLayer) markers.addLayer(mk);
   } else {
     // Sem coordenadas: adiciona apenas card de relato (não marcador)
@@ -613,38 +657,60 @@ function addReportToMap(report) {
 }
 
 function getColorByLevel(report) {
-  const levels = {
-    pedestre: { '0.2':'#10B981','0.5':'#F59E0B','1.0':'#EF4444','1.5':'#DC2626','2.0':'#7C3AED' },
-    motorista: { '25':'#10B981','50':'#F59E0B','75':'#EF4444','100':'#DC2626' }
-  };
-  const key = report.type === 'pedestre'
-    ? report.details.waterLevel
-    : report.details.submersionLevel;
-  return levels[report.type][key];
+  try {
+    const levelsPedestre = { '0':'#10B981','0.2':'#10B981','0.5':'#F59E0B','1.0':'#EF4444','1.5':'#DC2626','2.0':'#7C3AED' };
+    const levelsMotorista = { '0':'#10B981','0.2':'#F59E0B','0.5':'#EF4444','1.0':'#DC2626' };
+    const type = report && report.type ? report.type : null;
+    if (!type) return null;
+    let key = null;
+    if (report && report.details) {
+      if (type === 'pedestre' && report.details.waterLevel != null) key = String(report.details.waterLevel);
+      if (type !== 'pedestre' && report.details.submersionLevel != null) key = String(report.details.submersionLevel);
+    }
+    if (key == null && report && report.nivel != null) key = String(report.nivel);
+    if (key == null) return null;
+    return (type === 'pedestre' ? levelsPedestre : levelsMotorista)[key] || null;
+  } catch (_) {
+    return null;
+  }
 }
 
 function createPopupContent(report) {
-  let vehicleHTML = '';
-  if (report.type === 'motorista' && report.details.vehicle) {
-    vehicleHTML = `
-      <div class="mb-2">
-        <strong>Veículo:</strong> ${report.details.vehicle.brand} ${report.details.vehicle.model}
-      </div>`;
-  }
-  return `
-    <div style="min-width:250px">
-      <h6>${report.type === 'pedestre' ? 'Relato de Pedestre' : 'Relato de Motorista'}</h6>
-      <div class="mb-2">
-        <strong>Nível:</strong> ${report.details.levelText}
-      </div>
-      ${vehicleHTML}
-      ${report.photo ? `<img src="${report.photo}" class="img-fluid mt-2 mb-2">`: ''}
-      <small class="text-muted">${new Date(report.timestamp).toLocaleString()}</small>
-    </div>`;
+  let vehicleHTML = '';
+  try {
+    if (report && report.type === 'motorista' && report.details && report.details.vehicle) {
+      vehicleHTML = `
+        <div class="mb-2">
+          <strong>Veículo:</strong> ${report.details.vehicle.brand} ${report.details.vehicle.model}
+        </div>`;
+    }
+  } catch(_) {}
+
+  // Ocorrido primário
+  let occHTML = '';
+  if (report && report.ocorridoPrimario) {
+    const icon = getOccurrenceIcon(report.ocorridoPrimario);
+    const label = getOccurrenceLabel(report.ocorridoPrimario) || report.ocorridoPrimario;
+    occHTML = `<div class="mb-2"><strong>Ocorrido:</strong> ${icon ? icon + ' ' : ''}${label}</div>`;
+  }
+
+  const title = (report && report.type === 'pedestre') ? 'Relato de Pedestre' : 'Relato de Motorista';
+  const levelText = (report && report.details && report.details.levelText) ? report.details.levelText : (report && report.nivel ? report.nivel : '');
+  const ts = report && report.timestamp ? new Date(report.timestamp).toLocaleString() : '';
+
+  return `
+    <div style="min-width:250px">
+      <h6>${title}</h6>
+      ${occHTML}
+      ${levelText ? `<div class="mb-2"><strong>Nível:</strong> ${levelText}</div>` : ''}
+      ${vehicleHTML}
+      ${report && report.photo ? `<img src="${report.photo}" class="img-fluid mt-2 mb-2">`: ''}
+      <small class="text-muted">${ts}</small>
+    </div>`;
 }
 
 async function loadSavedReports() {
-  const arr = await loadReportsFromDB(); // Usa a função de carregar do "DB"
+  const arr = await loadReportsFromDB(); // Usa a função de carregar do "DB"
   const relatosDiv = document.getElementById('relatos-publicos');
   if (relatosDiv) relatosDiv.innerHTML = '';
   arr.forEach(r => {
@@ -653,14 +719,32 @@ async function loadSavedReports() {
       if (relatosDiv) {
         const card = document.createElement('div');
         card.className = 'relato-card';
-        card.innerHTML = `
-          <div class="relato-titulo">${r.type === 'pedestre' ? '🚶' : '🚗'} ${r.type === 'pedestre' ? 'Relato de Pedestre' : 'Relato de Motorista'}</div>
-          <div class="relato-nivel">${r.details.levelText || '--'}</div>
-          ${r.details.vehicle ? `<div class='relato-endereco'><b>Veículo:</b> ${r.details.vehicle.brand} ${r.details.vehicle.model}</div>` : ''}
-          <div class="relato-endereco"><b>Endereço:</b> ${r.address || (r.location ? `${r.location.lat.toFixed(4)}, ${r.location.lng.toFixed(4)}` : '--')}</div>
-          <div class="relato-descricao"><b>Descrição:</b> ${r.details.descricao || ''}</div>
-          <div class="relato-data">${r.timestamp ? new Date(r.timestamp).toLocaleString('pt-BR') : ''}</div>
-        `;
+        // Determina símbolo: ocorrido primário > tipo do relato
+        const occIcon = (r && r.ocorridoPrimario) ? getOccurrenceIcon(r.ocorridoPrimario) : null;
+        const occLabel = (r && r.ocorridoPrimario) ? (getOccurrenceLabel(r.ocorridoPrimario) || r.ocorridoPrimario) : null;
+        const baseIcon = occIcon || ((r && r.type === 'pedestre') ? '🚶' : '🚗');
+        const baseTitle = (r && r.type === 'pedestre') ? 'Relato de Pedestre' : 'Relato de Motorista';
+
+        // Campos opcionais seguros
+        const levelText = (r && r.details && r.details.levelText) ? r.details.levelText : (r && r.nivel ? r.nivel : '--');
+        const vehicleHTML = (r && r.details && r.details.vehicle) ? `<div class='relato-endereco'><b>Veículo:</b> ${r.details.vehicle.brand} ${r.details.vehicle.model}</div>` : '';
+        let addrTxt = '--';
+        if (r && r.address) addrTxt = r.address;
+        else if (r && r.location && r.location.lat != null && r.location.lng != null) addrTxt = `${Number(r.location.lat).toFixed(4)}, ${Number(r.location.lng).toFixed(4)}`;
+        else if (r && r.latitude != null && r.longitude != null) addrTxt = `${Number(r.latitude).toFixed(4)}, ${Number(r.longitude).toFixed(4)}`;
+
+        const descr = (r && r.details && r.details.descricao) ? r.details.descricao : (r && r.descricao ? r.descricao : '');
+        const dataTxt = (r && r.timestamp) ? new Date(r.timestamp).toLocaleString('pt-BR') : '';
+
+        card.innerHTML = `
+          <div class="relato-titulo">${baseIcon} ${baseTitle}</div>
+          ${occLabel ? `<div class="relato-ocorrido"><b>Ocorrido:</b> ${occIcon ? occIcon + ' ' : ''}${occLabel}</div>` : ''}
+          <div class="relato-nivel">${levelText}</div>
+          ${vehicleHTML}
+          <div class="relato-endereco"><b>Endereço:</b> ${addrTxt}</div>
+          <div class="relato-descricao"><b>Descrição:</b> ${descr}</div>
+          <div class="relato-data">${dataTxt}</div>
+        `;
         relatosDiv.appendChild(card);
       }
     } catch (e) {
@@ -674,6 +758,9 @@ try {
   window.saveReportToDB = saveReportToDB;
   window.carregarRelatosPublicos = loadSavedReports;
   window.loadThemeFromDB = loadThemeFromDB;
+  // Compatibilidade com código inline em index.html
+  window.salvarRelatoFirestore = saveReportToDB;
+  window.applyTheme = window.applyTheme || applyTheme;
 } catch (e) {
   console.warn('Não foi possível expor funções ao window:', e);
 }

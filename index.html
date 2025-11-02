@@ -1478,10 +1478,11 @@ function fecharSelecaoLocalizacao() {
                   input.value = item.textContent;
                   document.getElementById(latId).value = feature.geometry.coordinates[1];
                   document.getElementById(lonId).value = feature.geometry.coordinates[0];
-                  if (window.meuMapa) {
-                    window.meuMapa.setView([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], 16);
-                    L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]).addTo(window.meuMapa).bindPopup(item.textContent).openPopup();
-                  }
+                    if (window.meuMapa) {
+                      window.meuMapa.setView([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], 16);
+                      // Marcador sem popup (solicitação: remover pop-ups, manter apenas avisos do site)
+                      L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]).addTo(window.meuMapa);
+                    }
                   suggestions.style.display = 'none';
                 };
                 suggestions.appendChild(item);
