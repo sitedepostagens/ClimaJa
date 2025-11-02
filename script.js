@@ -602,7 +602,11 @@ document.getElementById('reportForm').addEventListener('submit', async e => {
          },
     photo,
     timestamp: new Date(),
-    address: document.getElementById('address') ? document.getElementById('address').value : ''
+    address: document.getElementById('address') ? document.getElementById('address').value : '',
+    // Dados do usuário autenticado (para contagem no perfil)
+    uid: (window.auth && window.auth.currentUser && window.auth.currentUser.uid) ? window.auth.currentUser.uid : null,
+    userEmail: (window.auth && window.auth.currentUser && window.auth.currentUser.email) ? window.auth.currentUser.email : null,
+    userName: (window.auth && window.auth.currentUser && (window.auth.currentUser.displayName || window.auth.currentUser.email)) ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null
   };
 
   addReportToMap(report);
@@ -741,6 +745,8 @@ try {
   // Compatibilidade com código inline em index.html
   window.salvarRelatoFirestore = saveReportToDB;
   window.applyTheme = window.applyTheme || applyTheme;
+  // Expor utilitário de marcador para evitar marcadores duplicados no autocomplete do index.html
+  window.updateReportMarker = updateReportMarker;
 } catch (e) {
   console.warn('Não foi possível expor funções ao window:', e);
 }
@@ -982,7 +988,11 @@ function showRelatoArea() {
           levelText: waterLevel.selectedOptions[0].text
         },
         photo,
-        timestamp: new Date()
+            timestamp: new Date(),
+            // Dados do usuário autenticado (para contagem no perfil)
+            uid: (window.auth && window.auth.currentUser && window.auth.currentUser.uid) ? window.auth.currentUser.uid : null,
+            userEmail: (window.auth && window.auth.currentUser && window.auth.currentUser.email) ? window.auth.currentUser.email : null,
+            userName: (window.auth && window.auth.currentUser && (window.auth.currentUser.displayName || window.auth.currentUser.email)) ? (window.auth.currentUser.displayName || window.auth.currentUser.email) : null
       };
       addReportToMap(report);
       const result = await saveReportToDB(report);

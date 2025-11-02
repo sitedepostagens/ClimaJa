@@ -843,7 +843,7 @@ function fecharSelecaoLocalizacao() {
         </li>
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item" href="profile.html" id="perfil-acessar"><i class="fas fa-user me-1 text-primary"></i>Acessar Perfil</a></li>
-        <li><a class="dropdown-item" href="#" id="perfil-relatos"><i class="fas fa-list me-1 text-primary"></i>Meus Relatos</a></li>
+        
         <li><a class="dropdown-item" href="#" id="perfil-ajuda"><i class="fas fa-question-circle me-1 text-info"></i>Ajuda</a></li>
       </ul>
     </div>
@@ -1381,7 +1381,6 @@ function fecharSelecaoLocalizacao() {
           </div>
           <div class="mt-3 d-grid gap-2">
             <a class="btn btn-primary" href="profile.html">Acessar Perfil</a>
-            <button class="btn btn-outline-primary" id="modal-meus-relatos">Meus Relatos</button>
             <button class="btn btn-outline-info" id="modal-ajuda">Ajuda</button>
             <button class="btn btn-danger" id="modal-logout-btn">Sair</button>
           </div>
@@ -1486,11 +1485,11 @@ function fecharSelecaoLocalizacao() {
                   input.value = item.textContent;
                   document.getElementById(latId).value = feature.geometry.coordinates[1];
                   document.getElementById(lonId).value = feature.geometry.coordinates[0];
-                    if (window.meuMapa) {
-                      window.meuMapa.setView([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], 16);
-                      // Marcador sem popup (solicitação: remover pop-ups, manter apenas avisos do site)
-                      L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]]).addTo(window.meuMapa);
-                    }
+                  if (window.meuMapa) {
+                    window.meuMapa.setView([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], 16);
+                    // Use o marcador de relatório global para evitar marcadores duplicados
+                    try { if (window.updateReportMarker) window.updateReportMarker(feature.geometry.coordinates[1], feature.geometry.coordinates[0]); } catch (e) {}
+                  }
                   suggestions.style.display = 'none';
                 };
                 suggestions.appendChild(item);
@@ -1503,8 +1502,8 @@ function fecharSelecaoLocalizacao() {
         });
       }
 
-      // Ativa autocomplete Photon nos campos de endereço
-      setupPhotonAutocomplete('address', 'latitude', 'longitude', 'address-suggestions');
+      // Ativa autocomplete Photon apenas no campo de endereço do motorista
+      // O campo de pedestre já possui busca/sugestões via script.js (Nominatim)
       setupPhotonAutocomplete('address-motorista', 'latitude-motorista', 'longitude-motorista', 'address-suggestions-motorista');
 
       // Busca no mapa: sugestões com Photon, aplicação com Nominatim (no script.js)

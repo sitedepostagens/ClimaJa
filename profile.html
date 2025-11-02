@@ -755,47 +755,82 @@
         if (avatarPreview) avatarPreview.src = userData.photoURL;
       }
 
-      // Carregar relatos do Firestore (opcional) — só se Firestore estiver inicializado
-      async function loadRelatos(uid) {
-        relatosListEl.innerHTML = 'Carregando relatos...';
+      // Carregar relatos do Realtime Database e contar por usuário
+      async function loadRelatos(uid, email) {
+        if (!uid && !email) {
+          relatosListEl && (relatosListEl.innerHTML = 'Relatos indisponíveis (não autenticado).');
+          if (relatosCountEl) relatosCountEl.textContent = '0';
+          return;
+        }
+        relatosListEl && (relatosListEl.innerHTML = 'Carregando relatos...');
         try {
-          if (!window.firebaseApp && !window.firebase) {
-            relatosListEl.innerHTML = 'Relatos indisponíveis (Firebase não inicializado).';
-            return;
-          }
-          // Tenta importar dinamicamente o módulo Firestore
-          const firestoreModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js');
-          const { getFirestore, collection, query, where, orderBy, limit, getDocs } = firestoreModule;
-          const db = getFirestore();
-          const q = query(collection(db, 'relatos'), where('uid', '==', uid), orderBy('dataHora', 'desc'), limit(50));
-          const snap = await getDocs(q);
+          // Inicializa Firebase App/DB se necessário
+          let app = null;
+          try {
+            const appMod = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js');
+            const apps = (appMod.getApps && appMod.getApps()) || [];
+            if (apps.length) app = apps[0];
+            else {
+              const firebaseConfig = {
+                apiKey: "AIzaSyCMTSLhey7MMtXy_xV2oSuPe18Tl7sLucY",
+                authDomain: "asenha-project-site.firebaseapp.com",
+                databaseURL: "https://asenha-project-site-default-rtdb.firebaseio.com",
+                projectId: "asenha-project-site",
+                storageBucket: "asenha-project-site.appspot.com",
+                messagingSenderId: "393532682519",
+                appId: "1:393532682519:web:d16a441d5428c676128752",
+                measurementId: "G-38CG9H4XV8"
+              };
+              app = appMod.initializeApp(firebaseConfig);
+            }
+          } catch (e) { /* se falhar, segue abaixo e exibe erro geral */ }
 
-          if (!snap || snap.empty) {
-            relatosListEl.innerHTML = 'Nenhum relato publicado ainda.';
-            relatosCountEl.textContent = '0';
+          const dbMod = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js');
+          const { getDatabase, ref, child, get } = dbMod;
+          const db = getDatabase(app);
+          const snap = await get(child(ref(db), 'relatos'));
+          const list = snap && snap.exists() ? (Array.isArray(snap.val()) ? snap.val().filter(Boolean) : Object.values(snap.val() || {})) : [];
+          const mine = list.filter(r => {
+            if (!r) return false;
+            // Prefer uid; fallback para email (para relatos antigos)
+            if (uid && r.uid) return r.uid === uid;
+            if (email) {
+              return (r.userEmail && r.userEmail === email) || (r.email && r.email === email);
+            }
+            return false;
+          });
+
+          if (!mine.length) {
+            relatosListEl && (relatosListEl.innerHTML = 'Nenhum relato publicado ainda.');
+            if (relatosCountEl) relatosCountEl.textContent = '0';
             return;
           }
-          const items = [];
-          snap.forEach(doc => {
-            const d = doc.data();
-            const when = d.dataHora ? new Date(d.dataHora).toLocaleString('pt-BR', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
-            items.push(`<div class="card">
+
+          const items = mine.sort((a,b) => (new Date(b.timestamp || 0)) - (new Date(a.timestamp || 0))).map(d => {
+            const when = d.timestamp ? new Date(d.timestamp).toLocaleString('pt-BR', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+            const title = d.ocorridoPrimario || (d.type === 'motorista' ? 'Relato de Motorista' : 'Relato');
+            return `<div class="card">
               <div class="card-body">
                 <div class="relato-header">
                   <div>
-                    <h6 class="relato-title">${escapeHtml(d.ocorridoPrimario || 'Relato')}</h6>
+                    <h6 class="relato-title">${escapeHtml(title)}</h6>
                     <div class="relato-address"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> ${escapeHtml(d.address || 'Local não informado')}</div>
                   </div>
                   <div class="relato-date">${when}</div>
                 </div>
               </div>
-            </div>`);
+            </div>`;
           });
-          relatosListEl.innerHTML = items.join('');
-          relatosCountEl.textContent = String(snap.size || items.length);
+          relatosListEl && (relatosListEl.innerHTML = items.join(''));
+          if (relatosCountEl) {
+            relatosCountEl.textContent = String(mine.length);
+            // Garante que animações iniciais não sobreponham o valor carregado
+            setTimeout(function(){ if (relatosCountEl) relatosCountEl.textContent = String(mine.length); }, 900);
+          }
         } catch (e) {
-          console.warn('Não foi possível carregar relatos (Firestore):', e);
-          relatosListEl.innerHTML = 'Relatos indisponíveis.';
+          console.warn('Não foi possível carregar relatos (Realtime DB):', e);
+          relatosListEl && (relatosListEl.innerHTML = 'Relatos indisponíveis.');
+          if (relatosCountEl) relatosCountEl.textContent = '0';
         }
       }
 
@@ -811,20 +846,43 @@
       }
 
       // Inicialização: observa estado do Auth se disponível, senão fallback localStorage
-      async function initAuthObserver() {
+  async function initAuthObserver() {
         try {
+          // Garante Firebase App/Auth
+          let app = null;
+          try {
+            const appMod = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js');
+            const apps = (appMod.getApps && appMod.getApps()) || [];
+            if (apps.length) app = apps[0];
+            else {
+              const firebaseConfig = {
+                apiKey: "AIzaSyCMTSLhey7MMtXy_xV2oSuPe18Tl7sLucY",
+                authDomain: "asenha-project-site.firebaseapp.com",
+                databaseURL: "https://asenha-project-site-default-rtdb.firebaseio.com",
+                projectId: "asenha-project-site",
+                storageBucket: "asenha-project-site.appspot.com",
+                messagingSenderId: "393532682519",
+                appId: "1:393532682519:web:d16a441d5428c676128752",
+                measurementId: "G-38CG9H4XV8"
+              };
+              app = appMod.initializeApp(firebaseConfig);
+            }
+          } catch (e) { /* ok seguir sem app (fallback) */ }
+
           const authModule = await import('https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js');
-          const { onAuthStateChanged } = authModule;
-          const auth = window.auth || null;
+          const { getAuth, onAuthStateChanged } = authModule;
+          let auth = window.auth;
+          if (!auth) {
+            try { auth = getAuth(app); window.auth = auth; } catch (_) {}
+          }
 
           if (auth && typeof onAuthStateChanged === 'function') {
             onAuthStateChanged(auth, async (user) => {
               if (!user) {
-                // fallback local user
                 const demo = getLocalUser();
                 fillUser(demo);
+                // Sem uid, não dá para carregar relatos por usuário
               } else {
-                // Converte user Firebase para objeto leve (pegue metadata se disponível)
                 const lightweight = {
                   displayName: user.displayName,
                   email: user.email,
@@ -832,9 +890,9 @@
                   uid: user.uid,
                   metadata: user.metadata || {},
                 };
-                // Se quiser carregar relatos do Firestore:
-                if (user.uid) loadRelatos(user.uid);
                 fillUser(lightweight);
+                // aguarda breve para não colidir com animação inicial
+                setTimeout(function(){ loadRelatos(user.uid, user.email); }, 500);
               }
             });
             return;
@@ -846,6 +904,7 @@
         // Fallback: tenta carregar do localStorage
         const demo = getLocalUser();
         fillUser(demo);
+        if (demo && (demo.uid || demo.email)) loadRelatos(demo.uid, demo.email);
       }
 
       // Event handlers
