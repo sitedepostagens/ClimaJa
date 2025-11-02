@@ -1103,6 +1103,14 @@ function fecharSelecaoLocalizacao() {
       <!-- === Aba Mapa === -->
       <div class="tab-pane fade" id="mapa">
         <div class="main-card animada">
+          <div class="mb-2">
+            <div class="input-group" id="map-search-group">
+              <input type="text" class="form-control" id="map-search-input" placeholder="Buscar rua ou cidade" autocomplete="off">
+              <button class="btn btn-outline-primary" id="map-search-btn" type="button"><i class="fas fa-search"></i></button>
+            </div>
+            <div id="map-search-suggestions" class="dropdown-menu" style="width:100%"></div>
+            <small class="text-muted">Por padrão, exibimos relatos em um raio de 5 km do centro atual. Busque uma cidade para ver todos os relatos dessa cidade.</small>
+          </div>
           <div id="map" style="width:100%;height:450px;border-radius:1rem;"></div>
           <div class="mt-3 text-center">
             <button class="btn btn-modern" id="btn-localizacao">
@@ -1498,6 +1506,49 @@ function fecharSelecaoLocalizacao() {
       // Ativa autocomplete Photon nos campos de endereço
       setupPhotonAutocomplete('address', 'latitude', 'longitude', 'address-suggestions');
       setupPhotonAutocomplete('address-motorista', 'latitude-motorista', 'longitude-motorista', 'address-suggestions-motorista');
+
+      // Busca no mapa: sugestões com Photon, aplicação com Nominatim (no script.js)
+      (function setupMapSearch(){
+        var input = document.getElementById('map-search-input');
+        var btn = document.getElementById('map-search-btn');
+        var suggestions = document.getElementById('map-search-suggestions');
+        if (!input || !btn || !suggestions) return;
+        let t;
+        input.addEventListener('input', function(){
+          clearTimeout(t);
+          const q = input.value.trim();
+          if (q.length < 3) { suggestions.style.display = 'none'; return; }
+          t = setTimeout(function(){
+            fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=5')
+              .then(r => r.json())
+              .then(data => {
+                suggestions.innerHTML = '';
+                (data.features||[]).forEach(function(f){
+                  var item = document.createElement('button');
+                  item.type = 'button';
+                  item.className = 'dropdown-item';
+                  const label = f.properties && (f.properties.city ? (f.properties.name + ', ' + f.properties.city) : f.properties.name) || q;
+                  item.textContent = label;
+                  item.onclick = function(){
+                    input.value = label;
+                    try { if (window.applyMapSearchByQuery) window.applyMapSearchByQuery(label); } catch(e){}
+                    suggestions.style.display = 'none';
+                  };
+                  suggestions.appendChild(item);
+                });
+                suggestions.style.display = (suggestions.children.length ? 'block' : 'none');
+              })
+              .catch(()=>{ suggestions.style.display = 'none'; });
+          }, 250);
+        });
+        btn.addEventListener('click', function(){
+          const q = input.value.trim();
+          if (!q) return;
+          try { if (window.applyMapSearchByQuery) window.applyMapSearchByQuery(q); } catch(e){}
+          suggestions.style.display = 'none';
+        });
+        input.addEventListener('blur', function(){ setTimeout(()=> suggestions.style.display='none', 200); });
+      })();
     });
   </script>
 <!-- Firebase removido temporariamente -->
@@ -1836,51 +1887,7 @@ function fecharSelecaoLocalizacao() {
       // Relatos locais (em memória) - agora global
       // ...existing code...
 
-const reportForm = document.getElementById('reportForm');
-if (reportForm) {
-  reportForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    // Coleta os dados do formulário
-    const latitude = document.getElementById('latitude').value;
-    const longitude = document.getElementById('longitude').value;
-    const address = document.getElementById('address').value;
-    const ocorridoPrimario = document.getElementById('ocorrido-primario').value;
-    const ocorridoSecundario = document.getElementById('ocorrido-secundario').value;
-    const nivel = document.getElementById('water-level').value;
-    const descricao = document.getElementById('descricao').value;
-    let fotos = [];
-    const photoInput = document.getElementById('flood-photo');
-    if (photoInput && photoInput.files.length > 0) {
-      for (let i = 0; i < Math.min(photoInput.files.length, 3); i++) {
-        fotos.push(photoInput.files[i].name); // ou faça upload e salve o link
-      }
-    }
-
-    const relato = {
-      latitude,
-      longitude,
-      address,
-      ocorridoPrimario,
-      ocorridoSecundario,
-      nivel,
-      descricao,
-      fotos,
-      status: 'publico',
-      uid: auth.currentUser ? auth.currentUser.uid : null
-    };
-
-    const ok = await salvarRelatoFirestore(relato);
-    if (ok) {
-      alert('Relato enviado com sucesso!');
-      reportForm.reset();
-      fecharSelecaoLocalizacao();
-      // Se quiser, chame aqui a função para atualizar a lista de relatos
-      // carregarRelatosPublicos();
-    } else {
-      alert('Erro ao salvar relato no banco de dados!');
-    }
-  });
-}
+// Handler inline removido para evitar duplicidade de envio; o script.js gerencia o submit do formulário
       // Exibe relatos locais ao carregar
       carregarRelatosPublicos();
     });

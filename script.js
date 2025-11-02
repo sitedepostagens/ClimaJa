@@ -112,6 +112,11 @@ let selectedVehicle = null;
 const FIPE_API = 'https://parallelum.com.br/fipe/api/v1/carros/marcas';
 let vehicleCache = {};
 
+// Relatos e filtros (visualização)
+let allReports = [];
+let currentFilter = { mode: 'radius', radiusKm: 5, center: null, userDefined: false, cityBBox: null, cityName: null };
+let autoRadiusModeActive = true; // enquanto o usuário não fizer uma busca manual
+
 // Símbolos e rótulos para Ocorrido Primário
 const OCCORRENCE_ICONS = {
   'alagamento': '💧',
@@ -301,6 +306,14 @@ function updateUserPosition(lat, lng) {
     icon: L.icon({ iconUrl: 'user-marker.png', iconSize: [40,40], iconAnchor: [20,40], popupAnchor: [0,-40] })
   }).addTo(map);
   map.flyTo([lat, lng], 17); // Zoom maior para precisão
+  // Se estamos no modo padrão de raio (não definido pelo usuário), centraliza filtro no usuário
+  try {
+    if (currentFilter && currentFilter.mode === 'radius' && autoRadiusModeActive) {
+      currentFilter.center = { lat, lon: lng };
+      currentFilter.radiusKm = currentFilter.radiusKm || 5;
+      if (typeof applyReportFilter === 'function') applyReportFilter();
+    }
+  } catch (_) {}
 }
 
 function addUserMarker(lat, lng, accuracy) {
@@ -711,46 +724,13 @@ function createPopupContent(report) {
 
 async function loadSavedReports() {
   const arr = await loadReportsFromDB(); // Usa a função de carregar do "DB"
-  const relatosDiv = document.getElementById('relatos-publicos');
-  if (relatosDiv) relatosDiv.innerHTML = '';
-  arr.forEach(r => {
-    try {
-      addReportToMap(r);
-      if (relatosDiv) {
-        const card = document.createElement('div');
-        card.className = 'relato-card';
-        // Determina símbolo: ocorrido primário > tipo do relato
-        const occIcon = (r && r.ocorridoPrimario) ? getOccurrenceIcon(r.ocorridoPrimario) : null;
-        const occLabel = (r && r.ocorridoPrimario) ? (getOccurrenceLabel(r.ocorridoPrimario) || r.ocorridoPrimario) : null;
-        const baseIcon = occIcon || ((r && r.type === 'pedestre') ? '🚶' : '🚗');
-        const baseTitle = (r && r.type === 'pedestre') ? 'Relato de Pedestre' : 'Relato de Motorista';
-
-        // Campos opcionais seguros
-        const levelText = (r && r.details && r.details.levelText) ? r.details.levelText : (r && r.nivel ? r.nivel : '--');
-        const vehicleHTML = (r && r.details && r.details.vehicle) ? `<div class='relato-endereco'><b>Veículo:</b> ${r.details.vehicle.brand} ${r.details.vehicle.model}</div>` : '';
-        let addrTxt = '--';
-        if (r && r.address) addrTxt = r.address;
-        else if (r && r.location && r.location.lat != null && r.location.lng != null) addrTxt = `${Number(r.location.lat).toFixed(4)}, ${Number(r.location.lng).toFixed(4)}`;
-        else if (r && r.latitude != null && r.longitude != null) addrTxt = `${Number(r.latitude).toFixed(4)}, ${Number(r.longitude).toFixed(4)}`;
-
-        const descr = (r && r.details && r.details.descricao) ? r.details.descricao : (r && r.descricao ? r.descricao : '');
-        const dataTxt = (r && r.timestamp) ? new Date(r.timestamp).toLocaleString('pt-BR') : '';
-
-        card.innerHTML = `
-          <div class="relato-titulo">${baseIcon} ${baseTitle}</div>
-          ${occLabel ? `<div class="relato-ocorrido"><b>Ocorrido:</b> ${occIcon ? occIcon + ' ' : ''}${occLabel}</div>` : ''}
-          <div class="relato-nivel">${levelText}</div>
-          ${vehicleHTML}
-          <div class="relato-endereco"><b>Endereço:</b> ${addrTxt}</div>
-          <div class="relato-descricao"><b>Descrição:</b> ${descr}</div>
-          <div class="relato-data">${dataTxt}</div>
-        `;
-        relatosDiv.appendChild(card);
-      }
-    } catch (e) {
-      console.warn('Erro ao adicionar relato salvo:', e);
-    }
-  });
+  allReports = Array.isArray(arr) ? arr : [];
+  // Define um centro padrão para o filtro de raio
+  try {
+    const center = map && map.getCenter ? map.getCenter() : { lat: -15.788, lng: -47.879 };
+    if (!currentFilter.center) currentFilter.center = { lat: center.lat, lon: center.lng };
+  } catch (_) {}
+  applyReportFilter();
 }
 
 // Exponha operações importantes para o código inline em index.html
@@ -1030,6 +1010,158 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// =========================
+// Utilidades de filtro/visualização de relatos
+// =========================
+
+function normalizeReportLatLng(r) {
+  try {
+    if (!r) return null;
+    if (r.location) {
+      const la = (typeof r.location.lat !== 'undefined') ? Number(r.location.lat) : (typeof r.location.latitude !== 'undefined' ? Number(r.location.latitude) : null);
+      const lo = (typeof r.location.lng !== 'undefined') ? Number(r.location.lng) : (typeof r.location.lon !== 'undefined' ? Number(r.location.lon) : (typeof r.location.longitude !== 'undefined' ? Number(r.location.longitude) : null));
+      if (isFinite(la) && isFinite(lo)) return { lat: la, lon: lo };
+    }
+    const la2 = (typeof r.latitude !== 'undefined') ? Number(r.latitude) : null;
+    const lo2 = (typeof r.longitude !== 'undefined') ? Number(r.longitude) : (typeof r.lon !== 'undefined' ? Number(r.lon) : null);
+    if (isFinite(la2) && isFinite(lo2)) return { lat: la2, lon: lo2 };
+  } catch (_) {}
+  return null;
+}
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // raio da Terra em km
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function clearRenderedReports() {
+  try { if (markers && markers.clearLayers) markers.clearLayers(); } catch (_) {}
+  const relatosDiv = document.getElementById('relatos-publicos');
+  if (relatosDiv) relatosDiv.innerHTML = '';
+}
+
+function buildReportCard(r) {
+  const card = document.createElement('div');
+  card.className = 'relato-card';
+  const occIcon = (r && r.ocorridoPrimario) ? getOccurrenceIcon(r.ocorridoPrimario) : null;
+  const occLabel = (r && r.ocorridoPrimario) ? (getOccurrenceLabel(r.ocorridoPrimario) || r.ocorridoPrimario) : null;
+  const baseIcon = occIcon || ((r && r.type === 'pedestre') ? '🚶' : '🚗');
+  const baseTitle = (r && r.type === 'pedestre') ? 'Relato de Pedestre' : 'Relato de Motorista';
+  const levelText = (r && r.details && r.details.levelText) ? r.details.levelText : (r && r.nivel ? r.nivel : '--');
+  const vehicleHTML = (r && r.details && r.details.vehicle) ? `<div class='relato-endereco'><b>Veículo:</b> ${r.details.vehicle.brand} ${r.details.vehicle.model}</div>` : '';
+  let addrTxt = '--';
+  if (r && r.address) addrTxt = r.address;
+  else {
+    const ll = normalizeReportLatLng(r);
+    if (ll) addrTxt = `${Number(ll.lat).toFixed(4)}, ${Number(ll.lon).toFixed(4)}`;
+  }
+  const descr = (r && r.details && r.details.descricao) ? r.details.descricao : (r && r.descricao ? r.descricao : '');
+  const dataTxt = (r && r.timestamp) ? new Date(r.timestamp).toLocaleString('pt-BR') : '';
+  card.innerHTML = `
+    <div class="relato-header" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+      <div class="relato-titulo" style="font-weight:700;">${baseIcon} ${baseTitle}</div>
+      <div class="relato-toggle" style="color:#2563eb;font-size:.9rem">Clique para detalhes</div>
+    </div>
+    <div class="relato-detalhes" style="display:none;margin-top:.5rem;">
+      ${occLabel ? `<div class=\"relato-ocorrido\"><b>Ocorrido:</b> ${occIcon ? occIcon + ' ' : ''}${occLabel}</div>` : ''}
+      <div class="relato-nivel"><b>Nível:</b> ${levelText}</div>
+      ${vehicleHTML}
+      <div class="relato-endereco"><b>Endereço:</b> ${addrTxt}</div>
+      <div class="relato-descricao"><b>Descrição:</b> ${descr}</div>
+      <div class="relato-data">${dataTxt}</div>
+    </div>
+  `;
+  const header = card.querySelector('.relato-header');
+  const detalhes = card.querySelector('.relato-detalhes');
+  if (header && detalhes) {
+    header.addEventListener('click', () => {
+      const isOpen = detalhes.style.display !== 'none';
+      detalhes.style.display = isOpen ? 'none' : '';
+    });
+  }
+  return card;
+}
+
+function renderReports(list) {
+  clearRenderedReports();
+  const relatosDiv = document.getElementById('relatos-publicos');
+  list.forEach(r => {
+    try {
+      addReportToMap(r);
+      if (relatosDiv) relatosDiv.appendChild(buildReportCard(r));
+    } catch (e) { console.warn('Erro ao renderizar relato:', e); }
+  });
+}
+
+function applyReportFilter() {
+  try {
+    let subset = [];
+    if (!Array.isArray(allReports) || !allReports.length) { renderReports([]); return; }
+    if (currentFilter.mode === 'city' && currentFilter.cityBBox) {
+      const [south, north, west, east] = currentFilter.cityBBox;
+      subset = allReports.filter(r => {
+        const ll = normalizeReportLatLng(r);
+        if (!ll) return false;
+        return ll.lat >= south && ll.lat <= north && ll.lon >= west && ll.lon <= east;
+      });
+    } else {
+      const c = currentFilter.center;
+      const rad = Number(currentFilter.radiusKm) || 5;
+      if (c && isFinite(c.lat) && isFinite(c.lon)) {
+        subset = allReports.filter(r => {
+          const ll = normalizeReportLatLng(r);
+          if (!ll) return false;
+          const d = haversineKm(c.lat, c.lon, ll.lat, ll.lon);
+          return d <= rad;
+        });
+      } else {
+        subset = [];
+      }
+    }
+    renderReports(subset);
+  } catch (e) {
+    console.warn('Falha ao aplicar filtro de relatos:', e);
+  }
+}
+
+async function applyMapSearchByQuery(query) {
+  try {
+    if (!query || !query.trim()) return;
+    const resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=' + encodeURIComponent(query));
+    const arr = await resp.json();
+    if (!arr || !arr.length) { showNotification('Local não encontrado', 'warning'); return; }
+    const it = arr[0];
+    const lat = Number(it.lat), lon = Number(it.lon);
+    const typ = (it.type || '').toLowerCase();
+    const bbox = it.boundingbox ? it.boundingbox.map(n => Number(n)) : null; // [south, north, west, east]
+
+    const isCity = ['city', 'town', 'village', 'municipality', 'county'].includes(typ);
+    if (isCity && bbox && bbox.length === 4) {
+      currentFilter = { mode: 'city', cityBBox: [bbox[0], bbox[1], bbox[2], bbox[3]], cityName: it.display_name || query };
+      autoRadiusModeActive = false;
+      try { if (map && map.fitBounds) map.fitBounds([[bbox[0], bbox[2]], [bbox[1], bbox[3]]]); } catch (_) {}
+      applyReportFilter();
+    } else {
+      currentFilter = { mode: 'radius', radiusKm: 5, center: { lat, lon }, userDefined: true, cityBBox: null, cityName: null };
+      autoRadiusModeActive = false;
+      try { if (map && map.setView) map.setView([lat, lon], 15); } catch (_) {}
+      applyReportFilter();
+    }
+  } catch (e) {
+    console.warn('Erro na busca de local:', e);
+    showNotification('Erro ao buscar local', 'danger');
+  }
+}
+
+try {
+  window.applyMapSearchByQuery = applyMapSearchByQuery;
+  window.applyReportFilter = applyReportFilter;
+} catch (_) {}
 function setupProfileButtons() {
   const relatosBtn = document.getElementById('perfil-relatos');
   const editarBtn = document.getElementById('perfil-editar');
